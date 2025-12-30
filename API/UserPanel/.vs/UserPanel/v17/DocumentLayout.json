@@ -1,0 +1,122 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F3DE3FDA-6794-4E33-A4BC-A4F71F22F23E}|Infrastructure\\Infrastructure.csproj|c:\\users\\administrator\\downloads\\userpanel 4\\userpanel\\infrastructure\\repositories\\invoicesrepository..cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F3DE3FDA-6794-4E33-A4BC-A4F71F22F23E}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\repositories\\invoicesrepository..cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FBB7D33B-3BCB-4306-AD2B-F0217D672FC2}|Core\\Core.csproj|c:\\users\\administrator\\downloads\\userpanel 4\\userpanel\\core\\ordermng\\invoices\\invoiceitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FBB7D33B-3BCB-4306-AD2B-F0217D672FC2}|Core\\Core.csproj|solutionrelative:core\\ordermng\\invoices\\invoiceitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2AE7324F-72E1-400E-8972-D1FFAA57EFF3}|UserPanel\\UserPanel.csproj|c:\\users\\administrator\\downloads\\userpanel 4\\userpanel\\userpanel\\controllers\\ordermanagement\\packinganddo\\packinganddocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2AE7324F-72E1-400E-8972-D1FFAA57EFF3}|UserPanel\\UserPanel.csproj|solutionrelative:userpanel\\controllers\\ordermanagement\\packinganddo\\packinganddocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2AE7324F-72E1-400E-8972-D1FFAA57EFF3}|UserPanel\\UserPanel.csproj|c:\\users\\administrator\\downloads\\userpanel 4\\userpanel\\userpanel\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{2AE7324F-72E1-400E-8972-D1FFAA57EFF3}|UserPanel\\UserPanel.csproj|solutionrelative:userpanel\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F3DE3FDA-6794-4E33-A4BC-A4F71F22F23E}|Infrastructure\\Infrastructure.csproj|c:\\users\\administrator\\downloads\\userpanel 4\\userpanel\\infrastructure\\repositories\\quotationrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F3DE3FDA-6794-4E33-A4BC-A4F71F22F23E}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\repositories\\quotationrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FBB7D33B-3BCB-4306-AD2B-F0217D672FC2}|Core\\Core.csproj|c:\\users\\administrator\\downloads\\userpanel 4\\userpanel\\core\\ordermng\\quotation\\quotationitems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FBB7D33B-3BCB-4306-AD2B-F0217D672FC2}|Core\\Core.csproj|solutionrelative:core\\ordermng\\quotation\\quotationitems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 195,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "InvoiceItem.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Core\\OrderMng\\Invoices\\InvoiceItem.cs",
+              "RelativeDocumentMoniker": "Core\\OrderMng\\Invoices\\InvoiceItem.cs",
+              "ToolTip": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Core\\OrderMng\\Invoices\\InvoiceItem.cs",
+              "RelativeToolTip": "Core\\OrderMng\\Invoices\\InvoiceItem.cs",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAgwC0AAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T05:31:15.713Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "PackingAndDOController.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\UserPanel\\Controllers\\OrderManagement\\PackingAndDO\\PackingAndDOController.cs",
+              "RelativeDocumentMoniker": "UserPanel\\Controllers\\OrderManagement\\PackingAndDO\\PackingAndDOController.cs",
+              "ToolTip": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\UserPanel\\Controllers\\OrderManagement\\PackingAndDO\\PackingAndDOController.cs",
+              "RelativeToolTip": "UserPanel\\Controllers\\OrderManagement\\PackingAndDO\\PackingAndDOController.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T05:11:38.898Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\UserPanel\\appsettings.json",
+              "RelativeDocumentMoniker": "UserPanel\\appsettings.json",
+              "ToolTip": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\UserPanel\\appsettings.json",
+              "RelativeToolTip": "UserPanel\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-04-03T04:35:09.043Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "QuotationItems.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Core\\OrderMng\\Quotation\\QuotationItems.cs",
+              "RelativeDocumentMoniker": "Core\\OrderMng\\Quotation\\QuotationItems.cs",
+              "ToolTip": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Core\\OrderMng\\Quotation\\QuotationItems.cs",
+              "RelativeToolTip": "Core\\OrderMng\\Quotation\\QuotationItems.cs",
+              "ViewState": "AgIAACsAAAAAAAAAAAA1wDoAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T04:33:29.464Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "QuotationRepository.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Infrastructure\\Repositories\\QuotationRepository.cs",
+              "RelativeDocumentMoniker": "Infrastructure\\Repositories\\QuotationRepository.cs",
+              "ToolTip": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Infrastructure\\Repositories\\QuotationRepository.cs",
+              "RelativeToolTip": "Infrastructure\\Repositories\\QuotationRepository.cs",
+              "ViewState": "AgIAAKUAAAAAAAAAAAAAwMAAAAC2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T04:32:32.573Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "InvoicesRepository..cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Infrastructure\\Repositories\\InvoicesRepository..cs",
+              "RelativeDocumentMoniker": "Infrastructure\\Repositories\\InvoicesRepository..cs",
+              "ToolTip": "C:\\Users\\Administrator\\Downloads\\UserPanel 4\\UserPanel\\Infrastructure\\Repositories\\InvoicesRepository..cs",
+              "RelativeToolTip": "Infrastructure\\Repositories\\InvoicesRepository..cs",
+              "ViewState": "AgIAANcAAAAAAAAAAAAuwMwAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T04:31:34.637Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.deps.json
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.dll
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.pdb
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfoInputs.cache
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfo.cs
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.csproj.CoreCompileInputs.cache
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.dll
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\refint\BackEnd.dll
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.pdb
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\BackEnd\obj\Debug\net9.0\ref\BackEnd.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.deps.json
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.pdb
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfoInputs.cache
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfo.cs
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.csproj.CoreCompileInputs.cache
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\refint\BackEnd.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.pdb
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\ref\BackEnd.dll
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.deps.json
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.dll
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.pdb
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfoInputs.cache
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfo.cs
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.csproj.CoreCompileInputs.cache
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.dll
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\refint\BackEnd.dll
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.pdb
+D:\BTG\Development\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\ref\BackEnd.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.deps.json
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.pdb
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfoInputs.cache
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfo.cs
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.csproj.CoreCompileInputs.cache
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\refint\BackEnd.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.pdb
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\ref\BackEnd.dll

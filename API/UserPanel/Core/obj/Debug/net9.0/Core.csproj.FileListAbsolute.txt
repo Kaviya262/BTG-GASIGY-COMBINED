@@ -1,0 +1,47 @@
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\bin\Debug\net9.0\Core.deps.json
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\bin\Debug\net9.0\Core.dll
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\bin\Debug\net9.0\Core.pdb
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfoInputs.cache
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfo.cs
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\Core.csproj.CoreCompileInputs.cache
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\Core.dll
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\refint\Core.dll
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\Core.pdb
+D:\BTG-API-Project\API\BTG API\UP\UserPanel\Core\obj\Debug\net9.0\ref\Core.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.deps.json
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.pdb
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.AssemblyReference.cache
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfoInputs.cache
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfo.cs
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.CoreCompileInputs.cache
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\refint\Core.dll
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.pdb
+D:\BTG Project\Working Code\Git\gasify\API\UserPanel\Core\obj\Debug\net9.0\ref\Core.dll
+D:\BTG\Development\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.deps.json
+D:\BTG\Development\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.dll
+D:\BTG\Development\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.pdb
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.AssemblyReference.cache
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfoInputs.cache
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfo.cs
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.CoreCompileInputs.cache
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.dll
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\refint\Core.dll
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.pdb
+D:\BTG\Development\gasify\API\UserPanel\Core\obj\Debug\net9.0\ref\Core.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.deps.json
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.pdb
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.AssemblyReference.cache
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfoInputs.cache
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfo.cs
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.CoreCompileInputs.cache
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\refint\Core.dll
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.pdb
+D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\ref\Core.dll
