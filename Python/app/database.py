@@ -12,7 +12,14 @@ db_user = urllib.parse.quote_plus(os.getenv('DB_USER'))
 db_password = urllib.parse.quote_plus(os.getenv('DB_PASSWORD'))
 db_host = os.getenv('DB_HOST')
 db_port = os.getenv('DB_PORT')
-db_name = os.getenv('DB_NAME')
+# Database Names
+DB_NAME_FINANCE = os.getenv('DB_NAME_FINANCE', 'btg_finance_uat')
+DB_NAME_USER = os.getenv('DB_NAME_USER', 'btg_userpanel_uat')
+DB_NAME_PURCHASE = os.getenv('DB_NAME_PURCHASE', 'btg_purchase_uat')
+DB_NAME_MASTER = os.getenv('DB_NAME_MASTER', 'btg_masterpanel_uat')
+
+# Default DB for main connection
+db_name = DB_NAME_FINANCE
 
 # 2. Build the Safe Connection String
 DATABASE_URL = (

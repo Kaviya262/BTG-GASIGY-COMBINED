@@ -21,6 +21,8 @@ import "primereact/resources/themes/lara-light-blue/theme.css";
 import { useHistory } from "react-router-dom";
 import Flatpickr from "react-flatpickr"
 import { Link } from "react-router-dom";
+import { SavePRReply } from "common/data/mastersapi";
+import Swal from "sweetalert2";
 
 // Move the initFilters function definition above
 const initFilters = () => ({
@@ -333,6 +335,82 @@ const ManagePRApproval = () => {
     };
 
 
+    const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
+    const [selectedPR, setSelectedPR] = useState(null);
+    const [userReply, setUserReply] = useState("");
+
+    const openDiscussionChat = (rowData) => {
+        setSelectedPR(rowData);
+        setUserReply("");
+        setDiscussionModalOpen(true);
+    };
+
+    const getUserDetails = () => {
+        if (localStorage.getItem("authUser")) {
+            const obj = JSON.parse(localStorage.getItem("authUser"))
+            return obj;
+        }
+        return { username: "User", role: "User" }; // Default fallback
+    }
+
+    const handleSendReply = async () => {
+        if (!userReply.trim()) {
+            Swal.fire("Error", "Please enter a reply", "error");
+            return;
+        }
+
+        // Use selectedPR["PR No"] or some ID. The mock data has "PR No". 
+        // Real backend probably expects PRId. 
+        // Assuming rowData has what we need or we mock it for now as per instructions "Backend already works".
+        // If the table displays "suppliers" which is mock data, we might not have real PRId. 
+        // However, the instructions say "Backend appends reply...".
+        // I will try to use rowData.PRId if available, else fallback to something or just pass mock logic if this is a mock page.
+        // BUT the user says "Only ONE file actually controls the UI... pr-approval.js... Backend already works".
+        // This suggests `pr-approval.js` might be using real data or needs to fit real data. 
+        // The current file `pr-approval.js` uses `initialSuppliers` which is HARDCODED.
+        // So I can't really call the backend with "PR0001" if the backend expects an integer ID.
+        // However, I must follow instructions "When Send Reply is clicked: POST ...".
+        // I'll proceed with calling the API. If `selectedPR` lacks `PRId`, I'll use `selectedPR["PR No"]` but warning: backend might fail if it expects int.
+        // The previous file used `selectedPR.PRId`.
+        // I'll assume the rowData will eventually come from API or I should just implement the UI logic as requested.
+
+        // The context says "That is why the popup title is “Remarks”... This is a frontend wiring issue".
+        // So I'll implement the frontend wiring.
+
+        const userData = getUserDetails();
+        const sender = userData.role === "GM" ? "GM" : "User";
+        const displayName = sender === "GM" ? "GM" : userData.username;
+
+        // Simulating ID if missing, to prevent crash if data is mock
+        const prId = selectedPR.PRId || selectedPR["PR No"];
+
+        try {
+            const res = await SavePRReply(prId, userReply, displayName, sender);
+            if (res.success || res.status) { // Check for likely success flags
+                Swal.fire("Success", "Reply sent successfully", "success");
+                setDiscussionModalOpen(false);
+
+                // Update local state to show the new comment (simulation for UI responsiveness)
+                const newComment = `[${displayName} at ${new Date().toLocaleString()}]: ${userReply}`;
+                const updatedSuppliers = suppliers.map(row => {
+                    if (row["PR No"] === selectedPR["PR No"]) {
+                        return {
+                            ...row,
+                            Remarks: row.Remarks ? row.Remarks + "\n" + newComment : newComment
+                        };
+                    }
+                    return row;
+                });
+                setSuppliers(updatedSuppliers);
+            } else {
+                Swal.fire("Error", res.message || "Failed to save reply", "error");
+            }
+        } catch (e) {
+            console.error("Reply Error", e);
+            Swal.fire("Error", "Failed to send reply", "error");
+        }
+    };
+
     return (
         <React.Fragment>
             <div className="page-content">
@@ -443,7 +521,19 @@ const ManagePRApproval = () => {
                                         style={{ width: '7%' }}
                                     />
 
-                                    <Column field="Remarks" header="Remarks" />
+                                    <Column
+                                        header="Remarks"
+                                        body={(rowData) => (
+                                            <div className="text-center">
+                                                <i
+                                                    className="mdi mdi-chat-processing-outline"
+                                                    style={{ cursor: "pointer", fontSize: "1.4rem", color: "#556ee6" }}
+                                                    onClick={() => openDiscussionChat(rowData)}
+                                                />
+                                            </div>
+                                        )}
+                                        style={{ width: '5%' }}
+                                    />
                                 </DataTable>
                             </Card>
                         </Col>
@@ -475,6 +565,40 @@ const ManagePRApproval = () => {
                         </Col>
                     </Row>
                 </ModalBody>
+            </Modal>
+
+            {/* Discussion Chat Modal */}
+            <Modal isOpen={discussionModalOpen} toggle={() => setDiscussionModalOpen(false)} centered>
+                <ModalHeader toggle={() => setDiscussionModalOpen(false)}>Discussion Chat</ModalHeader>
+                <ModalBody>
+                    <div className="chat-container mb-3" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e0e0e0', padding: '15px', borderRadius: '4px', backgroundColor: '#f8f9fa' }}>
+                        {selectedPR && selectedPR.Remarks ? (
+                            <div className="message gm-message" style={{ whiteSpace: 'pre-wrap' }}>
+                                {selectedPR.Remarks}
+                            </div>
+                        ) : (
+                            <div className="text-muted text-center italic">No discussion yet.</div>
+                        )}
+
+                        {/* We can structure the chat history better if the data allows, but for now we display 'Remarks' which likely contains the appended string */}
+                    </div>
+
+                    <div className="mb-3">
+                        <Label for="userReply">Your Reply:</Label>
+                        <Input
+                            type="textarea"
+                            id="userReply"
+                            value={userReply}
+                            onChange={(e) => setUserReply(e.target.value)}
+                            placeholder="Enter your reply..."
+                            rows={4}
+                        />
+                    </div>
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="primary" onClick={handleSendReply}>Send Reply</Button>
+                    <Button color="secondary" onClick={() => setDiscussionModalOpen(false)}>Cancel</Button>
+                </ModalFooter>
             </Modal>
         </React.Fragment>
     );

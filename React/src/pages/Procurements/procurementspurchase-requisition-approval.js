@@ -44,7 +44,8 @@ import {
   SavePRApprove,
   GetPurchaseMemoList,
   GetByIdPurchaseRequisition,
-  DownloadPurchaseRequisitionFileById
+  DownloadPurchaseRequisitionFileById,
+  SavePRReply
 } from "common/data/mastersapi";
 
 import Swal from 'sweetalert2';
@@ -154,7 +155,7 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
   };
 
 
-  const handleViewRemarks = async (id) => {
+  const handleViewRemarks = async (id, rowData) => {
     try {
       const res = await GetPurchaseRequisitionRemarks(id);
 
@@ -162,12 +163,18 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
       if (Array.isArray(res) && res.length > 0) {
         setRemarksData(res);
         setSelectedClaimId(id);
+        setSelectedClaim(rowData); // Set the selected row for user reply
         setRemarkModalOpen(true);
       } else {
-        Swal.fire("Info", "No remarks found for this purchase requisition.", "info");
+        // Init empty remarks for new discussion
+        setRemarksData([]);
+        setSelectedClaimId(id);
+        setSelectedClaim(rowData);
+        setRemarkModalOpen(true);
       }
     } catch (err) {
       console.error("Failed to load remarks:", err);
+      // Even on error, allow trying to reply (optional, but safer to just show error or empty)
       Swal.fire("Error", "Failed to fetch remarks.", "error");
     }
   };
@@ -958,10 +965,62 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
     }
   };
 
+  const [gmReply, setGmReply] = useState("");
+
+  const handleGMSendReply = async () => {
+    if (!gmReply.trim()) {
+      Swal.fire("Error", "Reply cannot be empty", "error");
+      return;
+    }
+
+    try {
+      const pr_id = selectedClaimId;
+      const reply = gmReply;
+      const name = UserData?.name || "GM";
+      const sender = "GM";
+
+      const res = await SavePRReply(pr_id, reply, name, sender);
+
+      if (res.success || res.status) {
+        Swal.fire("Success", "Reply sent", "success");
+
+        // 1. Fetch updated history immediately to get the FULL cumulative comment
+        const updatedRemarks = await GetPurchaseRequisitionRemarks(pr_id);
+
+        let newFullComment = reply; // Fallback
+        if (Array.isArray(updatedRemarks) && updatedRemarks.length > 0) {
+          // Sort to get latest
+          const sorted = [...updatedRemarks].sort((a, b) => new Date(a.logdate) - new Date(b.logdate));
+          setRemarksData(sorted);
+          newFullComment = sorted[sorted.length - 1].pr_comment;
+        }
+
+        // 2. Update local state with the CORRECT full comment (not just the partial reply)
+        // This ensures the "Valid Chain Check" prefix logic passes.
+        setclaims(prev => prev.map(item =>
+          item.id === pr_id ? { ...item, comment: newFullComment } : item
+        ));
+
+        // 3. Update selectedClaim so the open modal sees the new header
+        setSelectedClaim(prev => ({ ...prev, comment: newFullComment }));
+
+        setGmReply("");
+        // Toggle removed so modal stays open
+        // toggleRemarkModal(); 
+      } else {
+        Swal.fire("Error", res.message || "Failed to send reply", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Failed to send reply", "error");
+    }
+  };
+
   return (
     <React.Fragment>
       <div className="page-content">
         <Container fluid>
+
 
           <Breadcrumbs title="Procurement" breadcrumbItem="Approval" />
 
@@ -1249,34 +1308,119 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
 
 
       <Modal isOpen={remarkModalOpen} toggle={toggleRemarkModal} size="lg">
-        <ModalHeader toggle={toggleRemarkModal}>Discussion Point (DP) </ModalHeader>
+        <ModalHeader toggle={toggleRemarkModal}>Discussion Point (DP)</ModalHeader>
         <ModalBody>
-          {remarksData?.length > 0 ? (
-            <Table className="table table-bordered">
-              <thead>
-                <tr className="table-primary text-center">
-                  <th style={{ width: "5%" }}>#</th>
-                  <th style={{ width: "20%" }}>User</th>
-                  <th style={{ width: "50%", textAlign: "left" }}>Comment</th>
-                  <th style={{ width: "25%" }}>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {remarksData.map((item, index) => (
-                  <tr key={index}>
-                    <td className="text-center">{index + 1}</td>
-                    <td className="text-center">{item.username}</td>
-                    <td style={{ textAlign: "left" }}>{item.pr_comment}</td>
-                    <td className="text-center">{item.logdate}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          ) : (
-            <p>No remarks available.</p>
-          )}
+          {/* Chat UI for Discussion History */}
+          <Label className="fw-bold mb-2">Discussion History</Label>
+          <div
+            className="chat-history mb-3 p-3"
+            style={{
+              maxHeight: "300px",
+              overflowY: "auto",
+              backgroundColor: "#f7f7f7",
+              borderRadius: "8px",
+              border: "1px solid #ddd"
+            }}
+          >
+            {remarksData && remarksData.length > 0 ? (
+              // Ensure sorted by date (oldest first) so diff works
+              [...remarksData]
+                .sort((a, b) => new Date(a.logdate) - new Date(b.logdate))
+                .map((msg, index, sortedArr) => {
+                  let cleanMessage = msg.pr_comment || "";
+
+                  // If original message is effectively empty/null, skip immediately
+                  if (!cleanMessage.trim()) return null;
+
+                  // 🔹 Valid Chain Check: If the DB Header (selectedClaim.comment) was wiped, 
+                  // only show logs that are actual prefixes of the current valid header state.
+                  // If current state is "D" and log is "A" (from old history), "D" does not start with "A". Hide it.
+                  const currentHeader = selectedClaim?.comment || "";
+                  if (currentHeader && !currentHeader.startsWith(msg.pr_comment)) {
+                    return null;
+                  }
+
+                  // Diff Logic: Remove previous message content to show only new text
+                  if (index > 0) {
+                    const prevComment = sortedArr[index - 1].pr_comment || "";
+                    if (prevComment && cleanMessage.startsWith(prevComment)) {
+                      cleanMessage = cleanMessage.substring(prevComment.length).trim();
+                    }
+                  }
+
+                  let sender = msg.username;
+
+                  // Check if the message starts with [User at Date]: pattern
+                  // Regex breakdown: ^\[ matches start bracket, (.*?) matches username (group 1), \s+at\s+ matches " at ", .*? matches date, \]: matches end bracket and colon
+                  const match = cleanMessage.match(/^\[(.*?)\s+at\s+.*?\]:\s*/);
+                  if (match) {
+                    sender = match[1]; // Extract username from the bracket
+                    cleanMessage = cleanMessage.replace(match[0], ""); // Remove the prefix
+                  }
+
+                  const isGM = sender === "GM" || sender === (UserData?.name || "GM");
+
+                  // If message is empty after diff, skip
+                  if (!cleanMessage || !cleanMessage.trim()) return null;
+
+                  return (
+                    <div
+                      key={index}
+                      className="d-flex flex-column mb-2"
+                      style={{
+                        alignItems: isGM ? "flex-end" : "flex-start"
+                      }}
+                    >
+                      <div
+                        className="p-2 px-3"
+                        style={{
+                          backgroundColor: isGM ? "#e3f2fd" : "#ffffff",
+                          color: "#333",
+                          borderRadius: "12px",
+                          borderBottomRightRadius: isGM ? "0" : "12px",
+                          borderBottomLeftRadius: isGM ? "12px" : "0",
+                          maxWidth: "80%",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-baseline gap-2 mb-1">
+                          <strong style={{ fontSize: "0.85rem", color: isGM ? "#1565c0" : "#424242" }}>
+                            {sender}
+                          </strong>
+                          <small style={{ fontSize: "0.7rem", color: "#757575" }}>
+                            {msg.logdate}
+                          </small>
+                        </div>
+                        <div style={{ wordBreak: "break-word", fontSize: "0.9rem" }}>
+                          {cleanMessage}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+            ) : (
+              <div className="text-center text-muted fst-italic p-3">
+                No discussion history found.
+              </div>
+            )}
+          </div>
+
+          <hr />
+
+          {/* GM Reply */}
+          <Label className="fw-bold mt-2">Your Reply</Label>
+          <Input
+            type="textarea"
+            rows="3"
+            placeholder="Type your message here..."
+            value={gmReply}
+            onChange={(e) => setGmReply(e.target.value)}
+          />
         </ModalBody>
         <ModalFooter>
+          <Button color="primary" onClick={handleGMSendReply}>
+            <i className="bx bx-send me-1"></i> Send Reply
+          </Button>
           <Button color="secondary" onClick={toggleRemarkModal}>Close</Button>
         </ModalFooter>
       </Modal>
@@ -1681,8 +1825,8 @@ const ApprovalTable = ({
 
     <>
       <DataTable value={data} paginator rows={20} header={header}
-        filters={filters} globalFilterFields={['pr_number', 'createdbyname', 'prdate', 'prtype', 'SupplierName','CurrencyCode', 'NetAmount']}
-        dataKey="claimno" expandedRows={null} rowExpansionTemplate={detailTemplate}
+        filters={filters} globalFilterFields={['pr_number', 'createdbyname', 'prdate', 'prtype', 'SupplierName', 'CurrencyCode', 'NetAmount']}
+        dataKey="id" expandedRows={null} rowExpansionTemplate={detailTemplate}
         onRowToggle={(e) => { }} responsiveLayout="scroll"
         rowClassName={(rowData) =>
           rowData.discussedone === 1 || rowData.discussedtwo === 1 ? "Discussed-row" : ""
@@ -1712,7 +1856,7 @@ const ApprovalTable = ({
           style={{ textAlign: 'right' }}
         />
         <Column header="History" body={(rowData) => (
-          <span onClick={() => handleViewRemarks(rowData.id)} title="View Remarks" style={{ cursor: 'pointer' }}>
+          <span onClick={() => handleViewRemarks(rowData.id, rowData)} title="View Remarks" style={{ cursor: 'pointer' }}>
             <i className="mdi mdi-comment-text-outline" style={{ fontSize: '1.5rem', color: '#17a2b8' }}></i>
           </span>
 
@@ -1740,7 +1884,8 @@ const ApprovalTable = ({
                   className={`btn-circle p-button-rounded ${action1[rowData.id] === 'discuss' ? 'p-button-warning' : 'p-button-outlined'}`}
                   onClick={() => {
                     handleClick1('discuss', rowData.id);
-                    handleDiscuss(rowData);
+                    // handleDiscuss(rowData); // OLD modal
+                    handleViewRemarks(rowData.id, rowData); // NEW modal
                   }}
                   tooltip={rowData.comment}
                   tooltipOptions={{ position: 'top' }}
@@ -1754,7 +1899,7 @@ const ApprovalTable = ({
           }}
         />
 
-        {(ApproverTwo == true || ApproverFour ==true || ApproverFive ==true) && (
+        {(ApproverTwo == true || ApproverFour == true || ApproverFive == true) && (
           <Column
             style={{ textAlign: 'center' }}
             header="Director"
@@ -1779,7 +1924,8 @@ const ApprovalTable = ({
                         }`}
                       onClick={() => {
                         handleClick2('discuss', rowData.id);
-                        handleDiscuss(rowData);
+                        // handleDiscuss(rowData); // OLD modal
+                        handleViewRemarks(rowData.id, rowData); // NEW modal
                       }}
                       tooltip="Discuss"
                       tooltipOptions={{ position: 'top' }}
@@ -1816,19 +1962,19 @@ const ApprovalTable = ({
                   ["Sup. Email", selectedDetail.Header?.Email],
                 ].map(([label, val], i) => (
                   <Col md="4" key={i} className="form-group row">
-                  <Label className="col-sm-5 col-form-label bold">{label}</Label>
-                  <Col sm="7" className="mt-2" style={{ wordWrap: "break-word" }}>
-                    :{" "}
-                    {(label === "Supplier"  ) ? (
-                      <b>{val}</b>
-                    ) : (label === "Currency") ? (
-                      <b style={{color:"green"}}>{val}</b>
-                  ) 
-                  : (
-                      val
-                    )}
+                    <Label className="col-sm-5 col-form-label bold">{label}</Label>
+                    <Col sm="7" className="mt-2" style={{ wordWrap: "break-word" }}>
+                      :{" "}
+                      {(label === "Supplier") ? (
+                        <b>{val}</b>
+                      ) : (label === "Currency") ? (
+                        <b style={{ color: "green" }}>{val}</b>
+                      )
+                        : (
+                          val
+                        )}
+                    </Col>
                   </Col>
-                </Col>
                 ))}
               </Row>
 
@@ -1838,35 +1984,35 @@ const ApprovalTable = ({
 
 
               <DataTable value={selectedDetail.Details} footerColumnGroup={
-                  <ColumnGroup>
-                      <Row>
-                          <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                         
-                          
-                          <Column
-                              footer={<b>{selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                          />
-                           <Column     footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                           <Column     footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                 <Column
-                              footer={<b>{selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                          />
-                <Column     footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-              <Column
-                              footer={<b>{selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                          />
-              
-                          <Column footerStyle={{color:"#ff5a00"}} 
-                              footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                          />
-                      </Row>
-                  </ColumnGroup>
+                <ColumnGroup>
+                  <Row>
+                    <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+
+
+                    <Column
+                      footer={<b>{selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                    />
+                    <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                    <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                    <Column
+                      footer={<b>{selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                    />
+                    <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                    <Column
+                      footer={<b>{selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                    />
+
+                    <Column footerStyle={{ color: "#ff5a00" }}
+                      footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                    />
+                  </Row>
+                </ColumnGroup>
               }>
                 <Column header="#" body={(_, { rowIndex }) => rowIndex + 1} />
                 <Column field="memo_number" header="PM No." />
                 {/* <Column field="groupname" header="Item Group" /> */}
                 <Column field="ItemName" header="Item Name" />
-        
+
                 <Column field="Qty" header="Qty"
                   body={(rowData) =>
                     rowData.Qty?.toLocaleString('en-US', {
@@ -1875,7 +2021,7 @@ const ApprovalTable = ({
                     })
                   }
                 />
-                        <Column field="UOMName" header="UOM" />
+                <Column field="UOMName" header="UOM" />
                 <Column field="UnitPrice" header="Unit Price"
                   body={(rowData) =>
                     rowData.UnitPrice?.toLocaleString('en-US', {
@@ -1914,7 +2060,7 @@ const ApprovalTable = ({
                   }
                   footer={selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 />
-                <Column field="NetTotal" header="Total Amount" bodyStyle={{color:"#ff5a00"}}
+                <Column field="NetTotal" header="Total Amount" bodyStyle={{ color: "#ff5a00" }}
                   body={(rowData) =>
                     rowData.NetTotal?.toLocaleString('en-US', {
                       style: 'decimal',
@@ -1926,26 +2072,26 @@ const ApprovalTable = ({
               </DataTable>
 
               <Row className="mt-3">
-                      <Col>
-                          <Label>PM Remarks</Label>
-                          <Card className="p-2 bg-light border">
-                              <div style={{ whiteSpace: "pre-wrap" }}>
-                              {selectedDetail.Header?.Memoremarks || "No pm remarks"}
-                              </div>
-                          </Card>
-                      </Col>
-                  </Row>
+                <Col>
+                  <Label>PM Remarks</Label>
+                  <Card className="p-2 bg-light border">
+                    <div style={{ whiteSpace: "pre-wrap" }}>
+                      {selectedDetail.Header?.Memoremarks || "No pm remarks"}
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
 
-                  <Row className="mt-3">
-                      <Col>
-                          <Label>Remarks</Label>
-                          <Card className="p-2 bg-light border">
-                              <div style={{ whiteSpace: "pre-wrap" }}>
-                              {selectedDetail.Header?.Remarks || "No remarks"}
-                              </div>
-                          </Card>
-                      </Col>
-                  </Row>
+              <Row className="mt-3">
+                <Col>
+                  <Label>Remarks</Label>
+                  <Card className="p-2 bg-light border">
+                    <div style={{ whiteSpace: "pre-wrap" }}>
+                      {selectedDetail.Header?.Remarks || "No remarks"}
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
 
               <Row className="mt-3">
                 <DataTable tableStyle={{ width: "60%" }} value={selectedDetail.Attachment}>

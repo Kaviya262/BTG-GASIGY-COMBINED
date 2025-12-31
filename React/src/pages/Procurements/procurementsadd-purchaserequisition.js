@@ -29,7 +29,7 @@ import {
     DownloadMemoFileById,
     DownloadPurchaseRequisitionFileById,
     GetPurchaseRequisitionSupplierList,
-    GetSupplierTaxList, GetSupplierVATList, GetAllPO
+    GetSupplierTaxList, GetSupplierVATList, GetAllPO, GetPurchaseRequisitionRemarks
 } from "common/data/mastersapi";
 import Swal from 'sweetalert2';
 import { useLocation } from "react-router-dom";
@@ -107,6 +107,26 @@ const AddPurchaseRequisition = () => {
 
     const [poOptions, setPoOptions] = useState([]);
     const [loadingPOs, setLoadingPOs] = useState(false);
+    const [discussionHistory, setDiscussionHistory] = useState([]);
+
+    // Fetch Discussion History in Edit Mode
+    useEffect(() => {
+        if (isEditMode && purchase_req_id) {
+            const fetchRemarks = async () => {
+                try {
+                    const res = await GetPurchaseRequisitionRemarks(purchase_req_id);
+                    if (Array.isArray(res)) {
+                        setDiscussionHistory(res);
+                    }
+                } catch (error) {
+                    console.error("Failed to load discussion history", error);
+                }
+            };
+            fetchRemarks();
+        }
+    }, [isEditMode, purchase_req_id]);
+
+    const ipAddress = "192.168.1.1"; // Mock IP
 
     useEffect(() => {
         const userData = getUserDetails();
@@ -1448,7 +1468,10 @@ const AddPurchaseRequisition = () => {
                                                                     const validationErrors = await validateForm();
 
                                                                     if (Object.keys(validationErrors).length === 0) {
-                                                                        handleSubmit(values, 0); // Save
+                                                                        // If updating (Edit Mode), force Submit (1) to set Status to 'Posted'. 
+                                                                        // If creating new (Save), keep as Draft/Saved (0).
+                                                                        const submitValue = isEditMode ? 1 : 0;
+                                                                        handleSubmit(values, submitValue);
                                                                     }
                                                                 }}
                                                             >
@@ -2033,6 +2056,87 @@ const AddPurchaseRequisition = () => {
                                                         </Col>
                                                         <Col md={12}>
                                                             <FormGroup>
+                                                                {/* Only show discussion history if there are remarks */}
+                                                                {discussionHistory && discussionHistory.length > 0 && (
+                                                                    <div className="mb-3">
+                                                                        <Label className="fw-bold mb-2">Discussion History</Label>
+                                                                        <div
+                                                                            className="chat-history p-3"
+                                                                            style={{
+                                                                                maxHeight: "300px",
+                                                                                overflowY: "auto",
+                                                                                backgroundColor: "#f7f7f7",
+                                                                                borderRadius: "8px",
+                                                                                border: "1px solid #ddd"
+                                                                            }}
+                                                                        >
+                                                                            {discussionHistory
+                                                                                .sort((a, b) => new Date(a.logdate) - new Date(b.logdate))
+                                                                                .map((msg, index, sortedArr) => {
+
+                                                                                    let cleanMessage = msg.pr_comment;
+
+                                                                                    // Diff Logic
+                                                                                    if (index > 0) {
+                                                                                        const prevComment = sortedArr[index - 1].pr_comment;
+                                                                                        if (cleanMessage.startsWith(prevComment)) {
+                                                                                            cleanMessage = cleanMessage.substring(prevComment.length).trim();
+                                                                                        }
+                                                                                    }
+
+                                                                                    let sender = msg.username;
+                                                                                    // Extract sender from [User at Date]:
+                                                                                    const match = cleanMessage.match(/^\[(.*?)\s+at\s+.*?\]:\s*/);
+                                                                                    if (match) {
+                                                                                        sender = match[1];
+                                                                                        cleanMessage = cleanMessage.replace(match[0], "");
+                                                                                    }
+
+                                                                                    // Align: If I am the sender, align right (Blue).
+                                                                                    // UserData.name should allow matching "Mery1" if logged in as Mery1.
+                                                                                    const isCurrentUser = sender === UserData?.name;
+
+                                                                                    if (!cleanMessage) return null;
+
+                                                                                    return (
+                                                                                        <div
+                                                                                            key={index}
+                                                                                            className="d-flex flex-column mb-2"
+                                                                                            style={{
+                                                                                                alignItems: isCurrentUser ? "flex-end" : "flex-start"
+                                                                                            }}
+                                                                                        >
+                                                                                            <div
+                                                                                                className="p-2 px-3"
+                                                                                                style={{
+                                                                                                    backgroundColor: isCurrentUser ? "#e3f2fd" : "#ffffff",
+                                                                                                    color: "#333",
+                                                                                                    borderRadius: "12px",
+                                                                                                    borderBottomRightRadius: isCurrentUser ? "0" : "12px",
+                                                                                                    borderBottomLeftRadius: isCurrentUser ? "12px" : "0",
+                                                                                                    maxWidth: "80%",
+                                                                                                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                                                                                                }}
+                                                                                            >
+                                                                                                <div className="d-flex justify-content-between align-items-baseline gap-2 mb-1">
+                                                                                                    <strong style={{ fontSize: "0.85rem", color: isCurrentUser ? "#1565c0" : "#424242" }}>
+                                                                                                        {sender}
+                                                                                                    </strong>
+                                                                                                    <small style={{ fontSize: "0.7rem", color: "#757575" }}>
+                                                                                                        {msg.logdate}
+                                                                                                    </small>
+                                                                                                </div>
+                                                                                                <div style={{ wordBreak: "break-word", fontSize: "0.9rem" }}>
+                                                                                                    {cleanMessage}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
                                                                 <Label>Remarks</Label>
 
 

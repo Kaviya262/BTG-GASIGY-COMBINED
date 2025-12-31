@@ -33,7 +33,10 @@ import {
     DownloadPurchaseRequisitionFileById,
     GetPurchaseMemoList,
     GetPurchaseRequisitionPRType,
-    GetCommonProcurementProjectsDetails, GetSupplierSearchFilter, GetAllPO, GetByIdPurchaseOrder, GetPRNoBySupplierAndCurrency
+    GetCommonProcurementProjectsDetails, GetSupplierSearchFilter, GetAllPO, GetByIdPurchaseOrder, GetPRNoBySupplierAndCurrency,
+    GetPurchaseRequisitionRemarks,
+    PurchaseRequisitionDownloadFileById,
+    SavePRReply
 } from "common/data/mastersapi";
 import Swal from 'sweetalert2';
 import * as XLSX from "xlsx";
@@ -98,6 +101,9 @@ const ProcurementManagePurchaseRequistion = () => {
     const [switchStates, setSwitchStates] = useState({});
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState(null);
+    const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
+    const [selectedPR, setSelectedPR] = useState(null);
+    const [userReply, setUserReply] = useState("");
     const [txtStatus, setTxtStatus] = useState(null);
 
     const [purchaseRequisition, setPurchaseRequisition] = useState([]);
@@ -165,6 +171,8 @@ const ProcurementManagePurchaseRequistion = () => {
 
         fetchPrTypes();
     }, [0, orgId, branchId]);
+
+    const [discussionHistory, setDiscussionHistory] = useState([]);
 
     // ADD THIS: Load all POs once so we can map PONO → poid
     // useEffect(() => {
@@ -328,41 +336,22 @@ const ProcurementManagePurchaseRequistion = () => {
 
 
     const actionBodyTemplate = (rowData) => {
-        if (rowData.issubmitted == 0) {
-            return (
-                <div className="d-flex align-items-center justify-content-center gap-3">
-                    {rowData.IsActive === 1 ? (
-                        <span onClick={() => editRow(rowData)}
-                            title='Edit' style={{ cursor: 'pointer' }}>
-                            <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-                        </span>) : (
-                        <span title="">
-                            <i className="mdi mdi-square-edit-outline"
-                                style={{ fontSize: '1.5rem', color: 'gray', opacity: 0.5 }}>
-                            </i>
-                        </span>
-                    )}
+        return (
+            <div className="d-flex align-items-center justify-content-center gap-3">
+                {rowData.IsActive === 1 && rowData.Status === 'Saved' ? (
+                    <span onClick={() => editRow(rowData)}
+                        title='Edit' style={{ cursor: 'pointer' }}>
+                        <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
+                    </span>) : (
+                    <span title="">
+                        <i className="mdi mdi-square-edit-outline"
+                            style={{ fontSize: '1.5rem', color: 'gray', opacity: 0.5 }}>
+                        </i>
+                    </span>
+                )}
 
-                </div>
-            );
-        } else {
-            return (
-                <div className="d-flex align-items-center justify-content-center gap-3">
-                    {rowData.IsActive === 1 ? (
-                        <span
-                            title='Edit' >
-                            <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem', color: 'gray' }}></i>
-                        </span>) : (
-                        <span title="">
-                            <i className="mdi mdi-square-edit-outline"
-                                style={{ fontSize: '1.5rem', color: 'gray', opacity: 0.5 }}>
-                            </i>
-                        </span>
-                    )}
-
-                </div>
-            );
-        }
+            </div>
+        );
     };
 
 
@@ -389,6 +378,65 @@ const ProcurementManagePurchaseRequistion = () => {
         setTxtStatus(value);
         setSelectedRow(rowData);
         setIsModalOpen(true);
+    };
+
+    const openDiscussionModal = async (prData) => {
+        setSelectedPR(prData);
+        setUserReply("");
+
+        try {
+            const res = await GetPurchaseRequisitionRemarks(prData.PRId);
+            if (Array.isArray(res)) {
+                setDiscussionHistory(res);
+            } else {
+                setDiscussionHistory([]);
+            }
+        } catch (err) {
+            console.error("Failed to load remarks", err);
+            setDiscussionHistory([]);
+        }
+
+        setDiscussionModalOpen(true);
+    };
+
+    const handleSendReply = async () => {
+        if (!userReply.trim()) {
+            Swal.fire("Error", "Please enter a reply", "error");
+            return;
+        }
+        const userData = getUserDetails();
+        const sender = userData.role === "GM" ? "GM" : "User";
+        // Ensure accurate display name if needed, but sender handles logic
+        const displayName = sender === "GM" ? "GM" : userData.username;
+
+        const res = await SavePRReply(selectedPR.PRId, userReply, displayName, sender);
+
+        if (res.success) {
+            Swal.fire("Success", "Reply sent successfully", "success");
+            setUserReply("");
+
+            // 1. Fetch updated history
+            const updatedRemarks = await GetPurchaseRequisitionRemarks(selectedPR.PRId);
+
+            let newFullComment = userReply;
+            if (Array.isArray(updatedRemarks) && updatedRemarks.length > 0) {
+                const sorted = [...updatedRemarks].sort((a, b) => new Date(a.logdate) - new Date(b.logdate));
+                setDiscussionHistory(sorted);
+                newFullComment = sorted[sorted.length - 1].pr_comment;
+            } else {
+                setDiscussionHistory([]);
+            }
+
+            // 2. Update selectedPR to pass Valid Chain Check
+            setSelectedPR(prev => ({ ...prev, pr_comment: newFullComment }));
+
+            // Update main list in background if needed
+            fetchAllProcurementRequestion();
+            // Do NOT close modal
+            // setDiscussionModalOpen(false);
+        } else {
+            Swal.fire("Error", res.message || "Failed to save reply", "error");
+        }
     };
     const actionBodyTemplate2 = (rowData) => {
         return (
@@ -731,7 +779,8 @@ const ProcurementManagePurchaseRequistion = () => {
                         className={`badge-${PRId}`}
                         value={approved}
                         severity={severity}
-                        style={{ fontSize: '13px', margin: '0' }}
+                        style={{ fontSize: '13px', margin: '0', cursor: 'pointer' }}
+                        onClick={() => openDiscussionModal({ PRId, comment })}
                     />
                 </>
             );
@@ -1140,14 +1189,14 @@ const ProcurementManagePurchaseRequistion = () => {
                                                 </a>
                                             ) : (label === "Supplier") ? (
                                                 <b>{val}</b>
-                                            ) 
-                                            : (label === "Currency") ? (
-                                                <b style={{color:"green"}}>{val}</b>
-                                            ) 
-                                            
-                                            : (
-                                                val
-                                            )}
+                                            )
+                                                : (label === "Currency") ? (
+                                                    <b style={{ color: "green" }}>{val}</b>
+                                                )
+
+                                                    : (
+                                                        val
+                                                    )}
                                         </Col>
                                     </Col>
                                 ))}
@@ -1175,7 +1224,7 @@ const ProcurementManagePurchaseRequistion = () => {
                                         />
 
                                         <Column
-                                                                            footerStyle={{color:"#ff5a00"}}
+                                            footerStyle={{ color: "#ff5a00" }}
 
                                             footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
                                         />
@@ -1252,7 +1301,7 @@ const ProcurementManagePurchaseRequistion = () => {
                                             minimumFractionDigits: 2
                                         })
                                     }
-                                    bodyStyle={{color:"#ff5a00"}}
+                                    bodyStyle={{ color: "#ff5a00" }}
                                     footer={<b >{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
                                 />
                             </DataTable>
@@ -1350,6 +1399,119 @@ const ProcurementManagePurchaseRequistion = () => {
                     <button type="button" className="btn btn-danger" onClick={() => setPoDetailVisible(false)}>
                         Close
                     </button>
+                </ModalFooter>
+            </Modal>
+
+            {/* Discussion Reply Modal */}
+            <Modal isOpen={discussionModalOpen} toggle={() => setDiscussionModalOpen(false)} centered size="lg">
+                <ModalHeader toggle={() => setDiscussionModalOpen(false)}>Discussion Chat</ModalHeader>
+                <ModalBody>
+                    <div
+                        className="chat-container mb-3 p-3"
+                        style={{
+                            maxHeight: '300px',
+                            overflowY: 'auto',
+                            backgroundColor: '#f7f7f7',
+                            borderRadius: '8px',
+                            border: '1px solid #ddd'
+                        }}
+                    >
+                        {discussionHistory && discussionHistory.length > 0 ? (
+                            [...discussionHistory]
+                                .sort((a, b) => new Date(a.logdate) - new Date(b.logdate))
+                                .map((msg, index, sortedArr) => {
+
+                                    let cleanMessage = msg.pr_comment || "";
+
+                                    // If original message is effectively empty/null, skip immediately
+                                    if (!cleanMessage.trim()) return null;
+
+                                    // 🔹 Valid Chain Check
+                                    const currentHeader = selectedPR?.pr_comment || selectedPR?.comment || "";
+                                    if (currentHeader && msg.pr_comment && !currentHeader.startsWith(msg.pr_comment)) {
+                                        return null;
+                                    }
+
+                                    // Diff Logic
+                                    if (index > 0) {
+                                        const prevComment = sortedArr[index - 1].pr_comment || "";
+                                        if (prevComment && cleanMessage.startsWith(prevComment)) {
+                                            cleanMessage = cleanMessage.substring(prevComment.length).trim();
+                                        }
+                                    }
+
+                                    let sender = msg.username;
+                                    // Extract sender from "[User at Date]:" pattern
+                                    const match = cleanMessage.match(/^\[(.*?)\s+at\s+.*?\]:\s*/);
+                                    if (match) {
+                                        sender = match[1];
+                                        cleanMessage = cleanMessage.replace(match[0], "");
+                                    }
+
+                                    // Align logic
+                                    const currentUser = getUserDetails();
+                                    const isCurrentUser = sender === currentUser?.username;
+
+                                    if (!cleanMessage.trim()) return null;
+
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="d-flex flex-column mb-2"
+                                            style={{
+                                                alignItems: isCurrentUser ? "flex-end" : "flex-start"
+                                            }}
+                                        >
+                                            <div
+                                                className="p-2 px-3"
+                                                style={{
+                                                    backgroundColor: isCurrentUser ? "#e3f2fd" : "#ffffff",
+                                                    color: "#333",
+                                                    borderRadius: "12px",
+                                                    borderBottomRightRadius: isCurrentUser ? "0" : "12px",
+                                                    borderBottomLeftRadius: isCurrentUser ? "12px" : "0",
+                                                    maxWidth: "80%",
+                                                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                                                }}
+                                            >
+                                                <div className="d-flex justify-content-between align-items-baseline gap-2 mb-1">
+                                                    <strong style={{ fontSize: "0.85rem", color: isCurrentUser ? "#1565c0" : "#424242" }}>
+                                                        {sender}
+                                                    </strong>
+                                                    <small style={{ fontSize: "0.7rem", color: "#757575" }}>
+                                                        {msg.logdate}
+                                                    </small>
+                                                </div>
+                                                <div style={{ wordBreak: "break-word", fontSize: "0.9rem" }}>
+                                                    {cleanMessage}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                        ) : (
+                            <div className="text-center text-muted fst-italic p-3">
+                                No discussion history found.
+                            </div>
+                        )}
+                    </div>
+                    <div className="mb-3">
+                        <Label for="userReply">Your Reply:</Label>
+                        <Input
+                            type="textarea"
+                            id="userReply"
+                            value={userReply}
+                            onChange={(e) => setUserReply(e.target.value)}
+                            placeholder="Type your message here..."
+                            rows={3}
+                        />
+                    </div>
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="primary" onClick={handleSendReply}>
+                        <i className="bx bx-send me-1"></i> Send Reply
+                    </Button>
+                    <Button color="secondary" onClick={() => setDiscussionModalOpen(false)}>Cancel</Button>
                 </ModalFooter>
             </Modal>
         </React.Fragment>

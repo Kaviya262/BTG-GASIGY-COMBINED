@@ -132,11 +132,6 @@ const ManagePRApproval = () => {
         setSwitchStates(initialSwitchStates);
     }, []);
 
-    const [isModalOpen2, setIsModalOpen2] = useState(false);
-    const toggleModal2 = () => {
-        setIsModalOpen2(!isModalOpen2);
-    };
-
     const getCustomers = () => {
         return [
             { Code: "SUP000491", Name: "PT HALO HALO BANDUNG", Country: "Indonesia", Contactperson: "Muthu" },
@@ -337,7 +332,7 @@ const ManagePRApproval = () => {
         <React.Fragment>
             <div className="page-content">
                 <Container fluid>
-                    <Breadcrumbs title="Master" breadcrumbItem="PO Approval" />
+                    <Breadcrumbs title="Master" breadcrumbItem="PR Approval" />
                     <Row>
                         <Card className="search-top">
                             <div className="row align-items-end g-3 quotation-mid p-3">

@@ -2,6 +2,7 @@ import { get, post, put } from "../../helpers/api_helper";
 import axios from "axios";
 import { saveAs } from "file-saver";
 import Swal from 'sweetalert2';
+import { PYTHON_API_URL } from "../pyapiconfig";
 
 const transformData = (data, valueParam, labelParam) => {
 
@@ -5112,6 +5113,31 @@ export const GetAllGlCodeMaster = async (orgId, branchId) => {
         return res;
     } catch (error) {
         console.error("Failed to fetch glcodemaster list", error);
+        return { status: false, message: error.message };
+    }
+};
+
+export const SavePRReply = async (pr_id, reply, name, sender) => {
+    console.log("SAVE PR REPLY PAYLOAD", {
+        pr_id,
+        reply,
+        name,
+        sender
+    });
+    try {
+        const res = await axios.post(`${PYTHON_API_URL}/procurement/save_pr_reply`, {
+            pr_id,
+            reply,
+            name,
+            sender
+        }, {
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+        return res.data;
+    } catch (error) {
+        console.error("Failed to save PR reply", error);
         return { status: false, message: error.message };
     }
 };

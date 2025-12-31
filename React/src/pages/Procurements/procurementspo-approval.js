@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardBody, Col, Container, Row, Modal, ModalHeader, ModalBody, Label, FormGroup, Input, InputGroup } from "reactstrap";
+import { Card, CardBody, Col, Container, Row, Modal, ModalHeader, ModalBody, Label, FormGroup, Input, InputGroup, Button, ModalFooter } from "reactstrap";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import { classNames } from 'primereact/utils';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
@@ -10,7 +10,7 @@ import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
-import { Button } from 'primereact/button';
+import { Button as PrimeButton } from 'primereact/button';
 import { ProgressBar } from 'primereact/progressbar';
 import { Calendar } from 'primereact/calendar';
 import { MultiSelect } from 'primereact/multiselect';
@@ -21,6 +21,8 @@ import "primereact/resources/themes/lara-light-blue/theme.css";
 import { useHistory } from "react-router-dom";
 import Flatpickr from "react-flatpickr"
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
+import { SavePRReply } from "../../common/data/mastersapi";
 
 // Move the initFilters function definition above
 const initFilters = () => ({
@@ -106,9 +108,10 @@ const ManagePOApproval = () => {
     const [rejectSelections, setRejectSelections] = useState({});
     const [discussSelections, setDiscussSelections] = useState({});
 
-    const [selectAllApproval, setSelectAllApproval] = useState(false);
-    const [selectAllReject, setSelectAllReject] = useState(false);
-    const [selectAllDiscuss, setSelectAllDiscuss] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [chatPR, setChatPR] = useState(null);
+    const [chatHistory, setChatHistory] = useState("");
+    const [replyText, setReplyText] = useState("");
 
 
     const handleApprove = (rowData) => {
@@ -131,11 +134,6 @@ const ManagePOApproval = () => {
         });
         setSwitchStates(initialSwitchStates);
     }, []);
-
-    const [isModalOpen2, setIsModalOpen2] = useState(false);
-    const toggleModal2 = () => {
-        setIsModalOpen2(!isModalOpen2);
-    };
 
     const getCustomers = () => {
         return [
@@ -215,8 +213,11 @@ const ManagePOApproval = () => {
         history.push("/add-purchaserequisition");
     };
 
-    const editRow = (rowData) => {
-        console.log('Edit row:', rowData);
+    const openDiscussionChat = (rowData) => {
+        setChatPR(rowData);
+        setChatHistory(rowData.pr_comment || rowData.Remarks || "");
+        setReplyText("");
+        setIsChatOpen(true);
     };
     const toggleAllCheckboxes = (type, isChecked) => {
         const newSelections = {};
@@ -337,7 +338,7 @@ const ManagePOApproval = () => {
         <React.Fragment>
             <div className="page-content">
                 <Container fluid>
-                    <Breadcrumbs title="Master" breadcrumbItem="PR Approval" />
+                    <Breadcrumbs title="Master" breadcrumbItem="PO Approval" />
                     <Row>
                         <Card className="search-top">
                             <div className="row align-items-end g-3 quotation-mid p-3">
@@ -442,7 +443,16 @@ const ManagePOApproval = () => {
                                         style={{ width: '7%' }}
                                     />
 
-                                    <Column field="Remarks" header="Remarks" />
+                                    <Column
+                                        header="Remarks"
+                                        body={(rowData) => (
+                                            <i
+                                                className="mdi mdi-chat-processing-outline"
+                                                style={{ fontSize: "1.4rem", cursor: "pointer", color: "#556ee6" }}
+                                                onClick={() => openDiscussionChat(rowData)}
+                                            />
+                                        )}
+                                    />
                                 </DataTable>
                             </Card>
                         </Col>
@@ -475,8 +485,56 @@ const ManagePOApproval = () => {
                     </Row>
                 </ModalBody>
             </Modal>
+            {/* Discussion Chat Modal */}
+            <Modal isOpen={isChatOpen} toggle={() => setIsChatOpen(false)} centered size="lg">
+                <ModalHeader toggle={() => setIsChatOpen(false)}>
+                    Discussion Chat
+                </ModalHeader>
+                <ModalBody>
+                    {/* Chat History (READ ONLY) */}
+                    <div
+                        style={{
+                            background: "#f8f9fa",
+                            padding: "12px",
+                            borderRadius: "6px",
+                            maxHeight: "250px",
+                            overflowY: "auto",
+                            whiteSpace: "pre-wrap"
+                        }}
+                    >
+                        {chatHistory || "No discussion yet."}
+                    </div>
+                    {/* GM Reply */}
+                    <FormGroup className="mt-3">
+                        <Label>Your Reply</Label>
+                        <Input
+                            type="textarea"
+                            rows="4"
+                            value={replyText}
+                            placeholder="Enter your reply..."
+                            onChange={(e) => setReplyText(e.target.value)}
+                        />
+                    </FormGroup>
+                </ModalBody>
+                <ModalFooter>
+                    <Button
+                        color="primary"
+                        onClick={async () => {
+                            if (!replyText.trim()) {
+                                Swal.fire("Error", "Reply cannot be empty", "error");
+                                return;
+                            }
+                            await SavePRReply(chatPR["PR No"], replyText, "GM", "GM");
+                            setIsChatOpen(false);
+                        }}
+                    >
+                        Send Reply
+                    </Button>
+                    <Button color="secondary" onClick={() => setIsChatOpen(false)}>
+                        Cancel
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </React.Fragment>
-    );
-};
 
 export default ManagePOApproval;
