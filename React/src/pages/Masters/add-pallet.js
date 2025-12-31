@@ -9,7 +9,6 @@ import { GetGasCodePalletList, GetPalletById, GetPalletType, SaveMasterPallet, f
 import { useHistory, useNavigate, Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Swal from 'sweetalert2';
-import useAccess from "../../common/access/useAccess";
 
 const validationSchema = Yup.object().shape({
     palletname: Yup.string().required("Pallet Name is required"),
@@ -48,7 +47,6 @@ const containerTypeOptions = [
 ];
 
 const AddPallet = () => {
-    const { access, applyAccessUI } = useAccess("Masters", "Pallet");
     const { id: pallet_id } = useParams();
     const isEditMode = !!pallet_id;
     const [isClearable, setIsClearable] = useState(true);
@@ -84,11 +82,6 @@ const AddPallet = () => {
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
     };
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         const fetchPalletDetails = async () => {
@@ -369,23 +362,21 @@ const AddPallet = () => {
                                                             <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel
                                                         </button>
                                                         {/* {selectedRows.length > 0 && (                                                                 */}
-                                                        {access?.canDelete && (
-                                                            <Button
-                                                                type="button"
-                                                                className="btn btn-danger fa-pull-right"
-                                                                onClick={() => {
-                                                                    if (cylinderTableData.length === 0) return;
-                                                                    // selectedRows.forEach(id => removeSingleRow(id));
-                                                                    removeSelectedRows()
-                                                                }}
-                                                                disabled={cylinderTableData.length === 0}
-                                                            >
-                                                                <i className="bx bx-trash label-icon font-size-14 align-middle me-2"></i>
-                                                                Remove All
-                                                            </Button>
-                                                        )}
+                                                        <Button
+                                                            type="button"
+                                                            className="btn btn-danger fa-pull-right"
+                                                            onClick={() => {
+                                                                if (cylinderTableData.length === 0) return;
+                                                                // selectedRows.forEach(id => removeSingleRow(id));
+                                                                removeSelectedRows()
+                                                            }}
+                                                            disabled={cylinderTableData.length === 0}
+                                                        >
+                                                            <i className="bx bx-trash label-icon font-size-14 align-middle me-2"></i>
+                                                            Remove All
+                                                        </Button>
                                                         {/* )} */}
-                                                        <button type="submit" className="btn btn-info fa-pull-right" data-access="save">
+                                                        <button type="submit" className="btn btn-info fa-pull-right">
                                                             <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>{isEditMode ? "Update" : "Save"}
                                                         </button>
                                                     </div>

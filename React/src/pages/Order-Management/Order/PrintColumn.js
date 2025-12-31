@@ -1,20 +1,11 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import SalesOrderPrint from './salesorderprint'; // ✅ Adjust path
 import { OrderGetbyid } from "../../../common/data/mastersapi";
-import useAccess from "../../../common/access/useAccess";
 
 const PrintColumn = ({ soId }) => {
     const printRef = useRef();
     const [printData, setPrintData] = useState(null);
     const [loading, setLoading] = useState(false);
-
-    // const { access, applyAccessUI } = useAccess("Sales", "Orders");
-
-    // useEffect(() => {
-    //     if (!access.loading) {
-    //         applyAccessUI();
-    //     }
-    // }, [access, applyAccessUI]);
 
     const handlePrint = async () => {
         setLoading(true);
@@ -87,7 +78,7 @@ const PrintColumn = ({ soId }) => {
 
     return (
         <>
-            <button className="btn btn-success" onClick={handlePrint} disabled={loading} data-access="print">
+            <button className="btn btn-success" onClick={handlePrint} disabled={loading}>
                 <i className="bx bx-printer"></i> {loading ? "Loading..." : ""}
             </button>
 

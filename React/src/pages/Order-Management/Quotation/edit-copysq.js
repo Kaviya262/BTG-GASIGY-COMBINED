@@ -33,11 +33,9 @@ import {
 import { getCustomers } from "store/actions";
 import makeAnimated from "react-select/animated";
 import { getHighlightDigit } from "echarts/lib/util/graphic";
-import useAccess from "../../../common/access/useAccess";
 
 const animatedComponents = makeAnimated();
 const CopySq = () => {
-    const { access, applyAccessUI } = useAccess("Sales", "Quotations");
     const { id } = useParams();
     const history = useHistory();
     const [isClearable, setIsClearable] = useState(true);
@@ -247,12 +245,6 @@ const CopySq = () => {
         }
     }, [id]);
 
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
 
     const loadCustomerLoad = (ev) => {
 
@@ -385,157 +377,157 @@ const CopySq = () => {
     const [errorMsg, setErrorMsg] = useState([]);
 
     const validationfn = (name, value, tempErrors, formValues) => {
-        debugger
-        let newErrorClass = "";
-        let newErrorMsg = "";
-        let newValue = typeof value === "string" ? value.trim() : value;
-        if (name === "TBA" || name === "Qtn_Month" || name === "Qtn_Day") {
-            const isTBAfilled = !!sqbasicinfo.TBA;
-            const isQtnMonthFilled = !!sqbasicinfo.Qtn_Month;
-            const isQtnDayFilled = !!sqbasicinfo.Qtn_Day;
+    debugger
+    let newErrorClass = "";
+    let newErrorMsg = "";
+    let newValue = typeof value === "string" ? value.trim() : value;
+    if (name === "TBA" || name === "Qtn_Month" || name === "Qtn_Day") {
+      const isTBAfilled = !!sqbasicinfo.TBA;
+      const isQtnMonthFilled = !!sqbasicinfo.Qtn_Month;
+      const isQtnDayFilled = !!sqbasicinfo.Qtn_Day;
 
 
-            if (isTBAfilled) {
-                if (name === "TBA" && !newValue) {
-                    newErrorClass = "form-control is-invalid";
-                    newErrorMsg = "Please enter the TBA.";
-                }
-                if (name === "Qtn_Month" || name === "Qtn_Day") {
-                    newErrorClass = "";
-                }
-            } else if (isQtnMonthFilled && isQtnDayFilled) {
-                if (name === "TBA") {
-                    newErrorClass = "";
-                }
-                if ((name === "Qtn_Month" || name === "Qtn_Day") && !newValue) {
-                    newErrorClass = "form-control is-invalid";
-                    newErrorMsg = `Please select a quotation validity ${name === "Qtn_Month" ? "month" : "day"}.`;
-                }
-            } else {
-                newErrorClass = "form-control is-invalid";
-                newErrorMsg = "Please Enter Quotation Validity (TBA or Qtn Month & Day).";
-            }
-        } else {
-
-            switch (name) {
-                case "Sys_SQ_Nbr":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Manual SQ No. is required.";
-                    }
-                    break;
-                case "SQ_Type":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "SQ Type is required.";
-                    }
-                    break;
-                // case "Validity":
-                //   if (!newValue || Number(newValue) > 60) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Quote Validity cannot exceed 60 days.";
-                //   }
-                //   break;
-                case "Subject":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Quote Subject cannot be empty.";
-                    }
-                    break;
-                case "CustomerId":
-                    if (!newValue) {
-                        newErrorClass = "select-invalid";
-                        newErrorMsg = "Please select a customer.";
-                    }
-                    break;
-                case "CustomerContactId":
-                    if (!newValue) {
-                        if (sqbasicinfo.IsWithCustomer == true) {
-                            newErrorClass = "form-control is-invalid";
-                            newErrorMsg = "Please select a contact person.";
-                        }
-                    }
-                    break;
-                case "customercontactoperation":
-                    if (!newValue) {
-                        if (sqbasicinfo.IsWithCustomer == true) {
-                            newErrorClass = "form-control is-invalid";
-                            newErrorMsg = "Please select customer operation contact.";
-                        }
-                    }
-                    break;
-                /* case "DeliveryAddressId":
-                   if (!newValue) {
-                     newErrorClass = "form-control is-invalid";
-                     newErrorMsg = "Please select a delivery address.";
-                   }
-                   break;*/
-
-                case "EffectiveFromDate":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Please select a Effective From Date.";
-                    }
-                    break;
-
-
-                // case "Qtn_Month":
-                //   if (!newValue) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Please select a quotation validity month.";
-                //   }
-                //   break;
-
-                // case "Qtn_Day":
-                //   if (!newValue) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Please select a quotation validity day.";
-                //   }
-                //   break;
-
-                // case "TBA":
-                //   if (!newValue) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Please enter the TBA.";
-                //   }
-                //   break;
-                case "DeliveryTerms":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Delivery Term is required.";
-                    }
-                    break;
-                case "PaymentTerms":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Payment Terms is required.";
-                    }
-                    break;
-                case "PaymentMethod":
-                    if (!newValue) {
-                        console.log("error patment method");
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Payment Method is required.";
-                    }
-                    break;
-                case "SalesPerson":
-                    if (!newValue) {
-                        newErrorClass = "select-invalid";
-                        newErrorMsg = "Please select a Sales Person.";
-                    }
-                    break;
-                default:
-                    break;
-            }
+      if (isTBAfilled) {
+        if (name === "TBA" && !newValue) {
+          newErrorClass = "form-control is-invalid";
+          newErrorMsg = "Please enter the TBA.";
         }
-
-        setErrorClass(prev => ({ ...prev, [name]: newErrorClass }));
-
-        if (newErrorMsg) {
-            tempErrors.push(newErrorMsg);
-            console.log("errormsg =>", tempErrors);
+        if (name === "Qtn_Month" || name === "Qtn_Day") {
+          newErrorClass = "";
         }
-    };
+      } else if (isQtnMonthFilled && isQtnDayFilled) {
+        if (name === "TBA") {
+          newErrorClass = "";
+        }
+        if ((name === "Qtn_Month" || name === "Qtn_Day") && !newValue) {
+          newErrorClass = "form-control is-invalid";
+          newErrorMsg = `Please select a quotation validity ${name === "Qtn_Month" ? "month" : "day"}.`;
+        }
+      } else {
+        newErrorClass = "form-control is-invalid";
+        newErrorMsg = "Please Enter Quotation Validity (TBA or Qtn Month & Day).";
+      }
+    } else {
+
+      switch (name) {
+        case "Sys_SQ_Nbr":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Manual SQ No. is required.";
+          }
+          break;
+        case "SQ_Type":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "SQ Type is required.";
+          }
+          break;
+        // case "Validity":
+        //   if (!newValue || Number(newValue) > 60) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Quote Validity cannot exceed 60 days.";
+        //   }
+        //   break;
+        case "Subject":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Quote Subject cannot be empty.";
+          }
+          break;
+        case "CustomerId":
+          if (!newValue) {
+            newErrorClass = "select-invalid";
+            newErrorMsg = "Please select a customer.";
+          }
+          break;
+        case "CustomerContactId":
+          if (!newValue) {
+            if (sqbasicinfo.IsWithCustomer == true) {
+              newErrorClass = "form-control is-invalid";
+              newErrorMsg = "Please select a contact person.";
+            }
+          }
+          break;
+        case "customercontactoperation":
+          if (!newValue) {
+            if (sqbasicinfo.IsWithCustomer == true) {
+              newErrorClass = "form-control is-invalid";
+              newErrorMsg = "Please select customer operation contact.";
+            }
+          }
+          break;
+        /* case "DeliveryAddressId":
+           if (!newValue) {
+             newErrorClass = "form-control is-invalid";
+             newErrorMsg = "Please select a delivery address.";
+           }
+           break;*/
+
+        case "EffectiveFromDate":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Please select a Effective From Date.";
+          }
+          break;
+
+
+        // case "Qtn_Month":
+        //   if (!newValue) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Please select a quotation validity month.";
+        //   }
+        //   break;
+
+        // case "Qtn_Day":
+        //   if (!newValue) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Please select a quotation validity day.";
+        //   }
+        //   break;
+
+        // case "TBA":
+        //   if (!newValue) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Please enter the TBA.";
+        //   }
+        //   break;
+        case "DeliveryTerms":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Delivery Term is required.";
+          }
+          break;
+        case "PaymentTerms":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Payment Terms is required.";
+          }
+          break;
+        case "PaymentMethod":
+          if (!newValue) {
+            console.log("error patment method");
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Payment Method is required.";
+          }
+          break;
+        case "SalesPerson":
+          if (!newValue) {
+            newErrorClass = "select-invalid";
+            newErrorMsg = "Please select a Sales Person.";
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
+    setErrorClass(prev => ({ ...prev, [name]: newErrorClass }));
+
+    if (newErrorMsg) {
+      tempErrors.push(newErrorMsg);
+      console.log("errormsg =>", tempErrors);
+    }
+  };
 
     const createcustomer = async () => {
         try {
@@ -1151,7 +1143,7 @@ const CopySq = () => {
                                                 <button type="button" className="btn btn-info fa-pull-right" onClick={(e) => handleSubmit(e, "save")}>
                                                     <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Save
                                                 </button> */}
-                                                <button type="button" className="btn btn-success fa-pull-right" data-access="post" onClick={(e) => openModal2(e, "post")} disabled="true">
+                                                <button type="button" className="btn btn-success fa-pull-right" onClick={(e) => openModal2(e, "post")} disabled="true">
                                                     <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
                                                 </button>
                                                 <button
@@ -1159,12 +1151,11 @@ const CopySq = () => {
                                                     className="btn btn-info fa-pull-right"
                                                     onClick={e => openModal2(e, "Ready To Post")}
                                                     disabled={isSubmitting}
-                                                    data-access="save"
                                                 >
                                                     <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>
                                                     Ready To Post
                                                 </button>
-                                                <button type="button" className="btn btn-info fa-pull-right" data-access="save" onClick={(e) => openModal2(e, "save")} disabled={isSubmitting}>
+                                                <button type="button" className="btn btn-info fa-pull-right" onClick={(e) => openModal2(e, "save")} disabled={isSubmitting}>
                                                     <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Save
                                                 </button>
                                             </div>
@@ -1261,16 +1252,15 @@ const CopySq = () => {
                                                                                     className={`my-autocomplete ${errorClass.CustomerId}`}
                                                                                     style={{ width: "100%" }}
                                                                                     onSelect={(e) => handleCustomerChange(e)} />
-                                                                                {access.canSave && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="btn btn-info fa-pull-right"
-                                                                                        onClick={e => setIsModalOpen3(true)}
-                                                                                        disabled={sqbasicinfo.IsWithCustomer}
-                                                                                    >
-                                                                                        <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
-                                                                                    </button>
-                                                                                )}
+
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="btn btn-info fa-pull-right"
+                                                                                    onClick={e => setIsModalOpen3(true)}
+                                                                                    disabled={sqbasicinfo.IsWithCustomer}
+                                                                                >
+                                                                                    <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
+                                                                                </button>
 
                                                                             </div>
                                                                         </FormGroup>
@@ -1610,27 +1600,18 @@ const CopySq = () => {
                                                                     <thead style={{ backgroundColor: "#3e90e2" }}>
                                                                         <tr>
                                                                             <th className="text-center" style={{ width: "2%" }}>
-                                                                                {access.canNew && (
-                                                                                    <span style={{ cursor: "pointer", alignItems: "center" }} onClick={handleAddItem}>
-                                                                                        <i className="mdi mdi-plus" />
-                                                                                    </span>
-                                                                                )}
-                                                                            </th>
+                                                                                <span style={{ cursor: "pointer", alignItems: "center" }} onClick={handleAddItem}>
+                                                                                    <i className="mdi mdi-plus" />
+                                                                                </span></th>
                                                                             <th className="text-center" style={{ width: "2%" }}>#</th>
                                                                             <th className="text-center required-label" style={{ width: "12%" }}>Gas Code</th>
                                                                             <th className="text-center" style={{ width: "10%" }}>Gas Details</th>
                                                                             <th className="text-center required-label" style={{ width: "8%" }}>Qty</th>
                                                                             <th className="text-center required-label" style={{ width: "16%" }}>UOM</th>
                                                                             <th className="text-center required-label" style={{ width: "10%" }}>Currency</th>
-                                                                            {access.canViewRate && (
-                                                                                <th className="text-center required-label" style={{ width: "10%" }}>Unit Price</th>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <th className="text-center" style={{ width: "10%" }}>Total Price </th>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <th className="text-center" style={{ width: "10%" }}>Price (IDR)</th>
-                                                                            )}
+                                                                            <th className="text-center required-label" style={{ width: "10%" }}>Unit Price</th>
+                                                                            <th className="text-center" style={{ width: "10%" }}>Total Price </th>
+                                                                            <th className="text-center" style={{ width: "10%" }}>Price (IDR)</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -1640,11 +1621,9 @@ const CopySq = () => {
                                                                             return (
                                                                                 <tr key={item.GasCodeId || index}>
                                                                                     <td>
-                                                                                        {access.canDelete && (
-                                                                                            <span color="danger" className="btn-sm" data-access="delete" onClick={() => openModal(index)} title="Delete">
-                                                                                                <i className="mdi mdi-trash-can-outline label-icon align-middle" title="Delete" />
-                                                                                            </span>
-                                                                                        )}
+                                                                                        <span color="danger" className="btn-sm" onClick={() => openModal(index)} title="Delete">
+                                                                                            <i className="mdi mdi-trash-can-outline label-icon align-middle" title="Delete" />
+                                                                                        </span>
                                                                                     </td>
                                                                                     <td style={{ verticalAlign: "middle" }}> {index + 1} </td>
                                                                                     <td>
@@ -1709,46 +1688,41 @@ const CopySq = () => {
                                                                                             ))}
                                                                                         </Input>
                                                                                     </td>
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            <Input type="number" className="text-end" onChange={(e) => handleUnitPriceChange(index, e.target.value)} name="UnitPrice" id={`UnitPrice-${index}`} value={quotationDetails[index].UnitPrice} />
-                                                                                        </td>
-                                                                                    )}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            {/* <Input type="text" disabled name="TotalPrice" value={quotationDetails[index].TotalPrice} id={`TotalPrice-${index}`}/> */}
-                                                                                            <Input
-                                                                                                type="text"
-                                                                                                disabled
-                                                                                                name="TotalPrice"
-                                                                                                value={new Intl.NumberFormat('en-US', {
-                                                                                                    style: 'decimal',
-                                                                                                    minimumFractionDigits: 2,
-                                                                                                    maximumFractionDigits: 2
-                                                                                                }).format(quotationDetails[index]?.TotalPrice || 0)}
-                                                                                                id={`TotalPrice-${index}`}
-                                                                                                className="text-end"
-                                                                                            />
-                                                                                        </td>
-                                                                                    )}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            {/* <Input type="text" disabled name="ConvertedPrice" value={quotationDetails[index].ConvertedPrice} id={`ConvertedPrice-${index}`}/> */}
-                                                                                            <Input
-                                                                                                type="text"
-                                                                                                disabled
-                                                                                                name="ConvertedPrice"
-                                                                                                value={new Intl.NumberFormat('en-US', {
-                                                                                                    style: 'decimal',
-                                                                                                    minimumFractionDigits: 2,
-                                                                                                    maximumFractionDigits: 2
-                                                                                                }).format(quotationDetails[index]?.ConvertedPrice || 0)} // Ensure value is defined
-                                                                                                id={`ConvertedPrice-${index}`}
-                                                                                                className="text-end"
-                                                                                            />
 
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td>
+                                                                                        <Input type="number" className="text-end" onChange={(e) => handleUnitPriceChange(index, e.target.value)} name="UnitPrice" id={`UnitPrice-${index}`} value={quotationDetails[index].UnitPrice} />
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {/* <Input type="text" disabled name="TotalPrice" value={quotationDetails[index].TotalPrice} id={`TotalPrice-${index}`}/> */}
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            disabled
+                                                                                            name="TotalPrice"
+                                                                                            value={new Intl.NumberFormat('en-US', {
+                                                                                                style: 'decimal',
+                                                                                                minimumFractionDigits: 2,
+                                                                                                maximumFractionDigits: 2
+                                                                                            }).format(quotationDetails[index]?.TotalPrice || 0)}
+                                                                                            id={`TotalPrice-${index}`}
+                                                                                            className="text-end"
+                                                                                        />
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {/* <Input type="text" disabled name="ConvertedPrice" value={quotationDetails[index].ConvertedPrice} id={`ConvertedPrice-${index}`}/> */}
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            disabled
+                                                                                            name="ConvertedPrice"
+                                                                                            value={new Intl.NumberFormat('en-US', {
+                                                                                                style: 'decimal',
+                                                                                                minimumFractionDigits: 2,
+                                                                                                maximumFractionDigits: 2
+                                                                                            }).format(quotationDetails[index]?.ConvertedPrice || 0)} // Ensure value is defined
+                                                                                            id={`ConvertedPrice-${index}`}
+                                                                                            className="text-end"
+                                                                                        />
+
+                                                                                    </td>
                                                                                 </tr>
                                                                             )
                                                                         })}

@@ -4,24 +4,16 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import Flatpickr from "react-flatpickr";
 
-import { GetPaymentHistory } from "../../../common/data/mastersapi";
-import useAccess from "../../../common/access/useAccess";
-
+import {GetPaymentHistory} from "../../../common/data/mastersapi";
+ 
 
 const PaymentHistory = ({ irnId }) => {
-  const { access, applyAccessUI } = useAccess("Procurement", "IRN");
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
 
   const [data, setData] = useState([]);
   const [fromDate, setFromDate] = useState(firstDay);
   const [toDate, setToDate] = useState(today);
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   useEffect(() => {
     if (irnId) {
@@ -41,18 +33,18 @@ const PaymentHistory = ({ irnId }) => {
     console.log('toDate > ', toDate)
     try {
 
-
-      const res = await GetPaymentHistory(
-        1,
-        1,
-        irnId,
-        formatDate(fromDate),
-        formatDate(today)
-      );
-      if (res.status) {
-        setData(res.data);
-
-      }
+ 
+            const res = await GetPaymentHistory(
+            1,
+            1,
+            irnId,
+            formatDate(fromDate),
+            formatDate(today)
+          );
+            if (res.status) {
+              setData(res.data);
+    
+            } 
 
       // Replace with API call
       // const response = await fetch(`/api/payment-history/${irnId}`);
@@ -60,8 +52,8 @@ const PaymentHistory = ({ irnId }) => {
       // setData(result);
 
       // Mock data
-
-
+    
+   
     } catch (err) {
       console.error("Error fetching payment history:", err);
     }
@@ -130,9 +122,7 @@ const PaymentHistory = ({ irnId }) => {
           header="Payment Date"
           body={(row) => row.createddate?.split("T")[0]}
         />
-        {access.canViewRate && (
-          <Column field="balance_payment" header="Payment" body={(row) => parseFloat(row.balance_payment || 0).toLocaleString("en-US")} />
-        )}
+        <Column field="balance_payment" header="Payment" body={(row) => parseFloat(row.balance_payment || 0).toLocaleString("en-US")} />
       </DataTable>
     </div>
   );

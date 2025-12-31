@@ -26,7 +26,6 @@ import { DeleteMemo, DownloadMemoFileById, GetAllProcurementMemos, GetCommonProc
 import Swal from 'sweetalert2';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import useAccess from "../../../common/access/useAccess";
 
 // Move the initFilters function definition above
 const initFilters = () => ({
@@ -54,7 +53,6 @@ const getUserDetails = () => {
 }
 
 const ManagePurchaseMemo = () => {
-    const { access, applyAccessUI } = useAccess("Procurement", "Purchase Memo");
     const history = useHistory();
 
     const [purchasememo, setpurchasememo] = useState([]);
@@ -112,10 +110,10 @@ const ManagePurchaseMemo = () => {
                 return "warning";
             case "Director Discussed":
                 return "warning";
-            case 'Yes':
-                return 'success';
-            case 'No':
-                return 'danger';
+                case 'Yes':
+                    return 'success';
+                case 'No':
+                    return 'danger';
             default:
                 return "secondary";
         }
@@ -134,12 +132,6 @@ const ManagePurchaseMemo = () => {
             });
         }
     };
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
 
@@ -323,39 +315,37 @@ const ManagePurchaseMemo = () => {
     const actionBodyTemplate = (rowData) => {
         return (
             <div className="d-flex align-items-center justify-content-center gap-2">
-                {access.canEdit && (
-                    rowData.Status === 'Saved' ? (
-                        <span onClick={() => editRow(rowData)}
-                            title="Edit" style={{ cursor: 'pointer' }}>
-                            <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-                        </span>) : (
-                        <span title="">
-                            <i className="mdi mdi-square-edit-outline"
-                                style={{ fontSize: '1.5rem', color: 'gray', opacity: 0.5 }}
-                            ></i>
-                        </span>
-                    )
+
+                {rowData.Status === 'Saved' ? (
+                    <span onClick={() => editRow(rowData)}
+                        title="Edit" style={{ cursor: 'pointer' }}>
+                        <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
+                    </span>) : (
+                    <span title="">
+                        <i className="mdi mdi-square-edit-outline"
+                            style={{ fontSize: '1.5rem', color: 'gray', opacity: 0.5 }}
+                        ></i>
+                    </span>
                 )}
 
 
-                {access.canDelete && (
-                    rowData.isSubmitted == 0 ? (
 
-                        <span onClick={() => handleDeleteConfirm(rowData)}
-                            style={{ display: 'flex', alignItems: 'center' }}
-                            title="Cancel"
-                        >
-                            <i className="mdi mdi-trash-can-outline" style={{ fontSize: '1.5rem' }}  ></i>
-                        </span>
+                {rowData.isSubmitted == 0 ? (
 
-                    ) : (
-                        <span
-                            style={{ color: "gray", display: 'flex', alignItems: 'center' }}
-                            title="Cancel"
-                        >
-                            <i className="mdi mdi-trash-can-outline" style={{ fontSize: '1.5rem' }}  ></i>
-                        </span>
-                    )
+                    <span onClick={() => handleDeleteConfirm(rowData)}
+                        style={{ display: 'flex', alignItems: 'center' }}
+                        title="Cancel"
+                    >
+                        <i className="mdi mdi-trash-can-outline" style={{ fontSize: '1.5rem' }}  ></i>
+                    </span>
+
+                ) : (
+                    <span
+                        style={{ color: "gray", display: 'flex', alignItems: 'center' }}
+                        title="Cancel"
+                    >
+                        <i className="mdi mdi-trash-can-outline" style={{ fontSize: '1.5rem' }}  ></i>
+                    </span>
                 )}
 
 
@@ -488,31 +478,13 @@ const ManagePurchaseMemo = () => {
     };
 
 
-    // const actionclaimBodyTemplate = (rowData) => {
-    //     return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
-    //         onClick={() => handleShowDetails(rowData)}>{rowData.PM_Number}</span>;
-    // };
     const actionclaimBodyTemplate = (rowData) => {
+        return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+            onClick={() => handleShowDetails(rowData)}>{rowData.PM_Number}</span>;
 
-        if (!access.canViewDetails) {
-            return (
-                <span style={{ color: "black", cursor: "default" }}>
-                    {rowData.PM_Number}
-                </span>
-            );
-        }
-        return (
-            <span
-                style={{ cursor: "pointer", color: "blue" }}
-                className="btn-rounded btn btn-link"
-                onClick={() => handleShowDetails(rowData)}
-                data-access="viewdetails"
-            >
-                {rowData.PM_Number}
-            </span>
-        );
+
+
     };
-
     // Handle input change
     const handleInputChange = (e) => {
         debugger;
@@ -522,15 +494,6 @@ const ManagePurchaseMemo = () => {
             ["pmnumber"]: value, // Update the specific field in state
         }));
     };
-
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -614,7 +577,7 @@ const ManagePurchaseMemo = () => {
                                             <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i>{" "}
                                             Export
                                         </button>
-                                        <button type="button" className="btn btn-success" onClick={linkAddPurchaseMemo} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                        <button type="button" className="btn btn-success" onClick={linkAddPurchaseMemo}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                     </div>
                                 </div>
                             </div>
@@ -627,11 +590,11 @@ const ManagePurchaseMemo = () => {
                                     value={purchasememo}
                                     paginator
                                     showGridlines
-                                    rows={access.records || 10}
+                                    rows={20}
                                     loading={loading}
                                     dataKey="Memo_ID"
                                     filters={filters}
-                                    globalFilterFields={['PM_Number', 'PM_Date', 'hod', 'CreatedDate', 'CreatedByName', 'ApproveStatus', 'RequestorName', 'Status']}
+                                    globalFilterFields={['PM_Number', 'PM_Date', 'hod','CreatedDate', 'CreatedByName', 'ApproveStatus', 'RequestorName', 'Status']}
                                     emptyMessage="No memos found."
                                     header={header}
 
@@ -699,7 +662,7 @@ const ManagePurchaseMemo = () => {
                                         filterPlaceholder="Search by created by"
                                         className="text-left"
                                     />
-                                    <Column field="ApproveStatus" header="PR Generated" sortable filterMenuStyle={{ width: '14rem' }} body={statusBodyTemplate1} filter className="text-center" style={{ width: "15%" }} />
+                                    <Column field="ApproveStatus" header="PR Generated" sortable filterMenuStyle={{ width: '14rem' }} body={statusBodyTemplate1} filter  className="text-center" style={{ width: "15%" }} />
 
                                     <Column field="Status" sortable header="Status" filterMenuStyle={{ width: '14rem' }} body={statusBodyTemplate} filter filterElement={statusFilterTemplate} className="text-center" style={{ width: "10%" }} />
                                     <Column header="Action" showFilterMatchModes={false} body={actionBodyTemplate} className="text-center" style={{ width: "10%" }} />
@@ -787,15 +750,15 @@ const ManagePurchaseMemo = () => {
                             </Row> */}
 
                             <Row className="mt-3">
-                                <Col>
-                                    <Label>Remarks</Label>
-                                    <Card className="p-2 bg-light border">
-                                        <div style={{ whiteSpace: "pre-wrap" }}>
-                                            {selectedDetail.header?.Remarks || "No remarks"}
-                                        </div>
-                                    </Card>
-                                </Col>
-                            </Row>
+                                                        <Col>
+                                                            <Label>Remarks</Label>
+                                                            <Card className="p-2 bg-light border">
+                                                                <div style={{ whiteSpace: "pre-wrap" }}>
+                                                                    {selectedDetail.header?.Remarks || "No remarks"}
+                                                                </div>
+                                                            </Card>
+                                                        </Col>
+                                                    </Row>
                             <br />
 
                             <DataTable tableStyle={{ width: "30%" }} value={selectedDetail.attachment}>

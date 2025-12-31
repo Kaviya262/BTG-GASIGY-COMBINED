@@ -3,16 +3,11 @@ using BackEnd.Procurement.PurchaseMemo;
 using BackEnd.Shared;
 using Core.Abstractions;
 using Core.Finance.ClaimAndPayment;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.OrderMng.Invoices;
 using Core.Procurement.PurchaseMemo;
 using Dapper;
-using DocumentFormat.OpenXml.Spreadsheet;
-using MediatR;
 using MySqlX.XDevAPI.Common;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -28,18 +23,16 @@ namespace Infrastructure.Repositories
     {
         private readonly IDbConnection _connection;        
         string IPAddress = "";
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
-        public PurchaseMemoRepository(IUnitOfWorkDB2 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public PurchaseMemoRepository(IUnitOfWorkDB2 unitOfWork)
         {
-            _connection = unitOfWork.Connection;  
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
+            _connection = unitOfWork.Connection;            
         }
         public async Task<object> AddAsync(PurchaseMemo Obj)
         {
             try
             {
+
+
                 int IsValidated = 0;
                 string Message = "";
                 Int32 Result = 0;
@@ -62,19 +55,6 @@ namespace Infrastructure.Repositories
                 SELECT LAST_INSERT_ID(); ";
                 
                 var insertedHeaderId = await _connection.QuerySingleAsync<int>(headerSql, Obj.Header);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: insertedHeaderId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added new Purchase Memo",
-                    oldValue: null,
-                    newValue: Obj.Header,
-                    tableName: "tbl_purchasememo_header",
-                    userId: Obj.Header.UserId
-                );
 
                 const string detailSql = @"
                                           INSERT INTO `tbl_purchasememo_detail`
@@ -104,20 +84,6 @@ namespace Infrastructure.Repositories
                     };
 
                     await _connection.ExecuteAsync(detailSql, parameters);
-
-                    int insertDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertDetailsId,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Insert",
-                        actionDescription: "Added new Purchase Memo Details",
-                        oldValue: null,
-                        newValue: Obj.Header,
-                        tableName: "tbl_purchasememo_detail",
-                        userId: Obj.Header.UserId
-                    );
                 }
 
 
@@ -160,17 +126,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = Obj.Header.UserId,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -186,22 +142,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_purchasememo_header where Memo_ID = @Memo_ID", new { Memo_ID = Obj.Header.Memo_ID });
-                var oldDetails = new List<object>();
-
-                foreach (var d in Obj.Details)
-                {
-                    if (d.Memo_dtl_ID > 0)
-                    {
-                        var oldDetailvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_purchasememo_detail where Memo_dtl_ID = @Memo_dtl_ID", new { Memo_dtl_ID = d.Memo_dtl_ID });
-                        oldDetails.Add(oldDetailvalue);
-                    }
-                    else
-                    {
-                        oldDetails.Add(null);
-                    }
-                }
-                
                 int Result = 0;
                 const string headerSql = @"
             UPDATE tbl_purchasememo_header
@@ -223,33 +163,9 @@ namespace Infrastructure.Repositories
 
                 await _connection.ExecuteAsync(headerSql, Obj.Header);
 
-                await LogTransactionAsync(
-                    id: Obj.Header.Memo_ID,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Update",
-                    actionDescription: "Updated Purchase Memo",
-                    oldValue: oldvalue,
-                    newValue: Obj.Header,
-                    tableName: "tbl_purchasememo_header",
-                    userId: Obj.Header.UserId
-                );
-
                 int HeaderId = Obj.Header.Memo_ID;
                 const string deleteDetailsSql = @"UPDATE tbl_purchasememo_detail SET IsActive = 0 WHERE Memo_ID = @Memo_ID;";
                 await _connection.ExecuteAsync(deleteDetailsSql, new { Memo_ID = HeaderId });
-
-                await LogTransactionAsync(
-                   id: Obj.Header.Memo_ID,
-                   branchId: Obj.Header.BranchId,
-                   orgId: Obj.Header.OrgId,
-                   actionType: "Update",
-                   actionDescription: "Updated Purchase Memo Details",
-                   oldValue: oldDetails,
-                   newValue: Obj.Details,
-                   tableName: "tbl_purchasememo_detail",
-                   userId: Obj.Header.UserId
-               );
 
                 string updatesql = "";
                 foreach (var row in Obj.Details)
@@ -265,19 +181,7 @@ namespace Infrastructure.Repositories
                     else
                     {
                         updatesql += @" update tbl_purchasememo_detail set ItemId="+row.ItemId+ ",DepartmentId="+row.DepartmentId+ ",UOMId="+row.UOMId+ ",DeliveryDate='"+row.DeliveryDate+ "',itemGroupId="+row.itemGroupId+ ",Qty="+row.Qty+", isactive=1 where Memo_dtl_ID=" + row.Memo_dtl_ID + ";";
-
-                        await LogTransactionAsync(
-                            id: row.Memo_dtl_ID,
-                            branchId: Obj.Header.BranchId,
-                            orgId: Obj.Header.OrgId,
-                            actionType: "Update",
-                            actionDescription: "Updated Purchase Memo Details",
-                            oldValue: oldDetails,
-                            newValue: Obj.Details,
-                            tableName: "tbl_purchasememo_detail",
-                            userId: Obj.Header.UserId
-                        );
-
+                        
                     }
                 }
 
@@ -309,17 +213,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = Obj.Header.UserId,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -399,20 +292,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(GetByIdAsync),
-                    UserId = 0,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        pmid, OrgId
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -448,20 +328,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(GetAllAsync),
-                    UserId = userid,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        requesterid, BranchId, OrgId, pmnumber, userid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -494,20 +361,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(GetBySeqNoAsync),
-                    UserId = 0,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        unit, OrgId
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -534,21 +388,6 @@ namespace Infrastructure.Repositories
                 var data = list.Where(x => x.Id == 0);
                 await _connection.ExecuteAsync(insertDetailSql, data);
 
-                int attachmentDetailsLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: attachmentDetailsLastId,
-                    branchId: list.First().BranchId, 
-                    orgId: list.First().OrgId,       
-                    actionType: "Insert",
-                    actionDescription: "Added new Purchase Memo Attachment",
-                    oldValue: null,
-                    newValue: data,                   
-                    tableName: "tbl_purchasememo_Attachment",
-                    userId: list.First().UserId       
-                );
-
                 return new SharedModelWithResponse()
                 {
                     Data = null,
@@ -559,17 +398,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(UploadDocument),
-                    UserId = 0,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(list)
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -609,20 +438,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(GetBySeqNoAsync),
-                    UserId = 0,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        id, text, type, unit, orgid
-                    })
-                });
+
                 return new SharedModelWithResponse()
                 {
                     Data = null,
@@ -638,24 +454,12 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_purchasememo_header where Memo_ID = @Memo_ID", new { obj.memoId });
-
                 string updateHeaderSql = @"
             UPDATE tbl_purchasememo_header SET isactive=0   WHERE Memo_ID = " + obj.memoId + ";";
 
                 await _connection.ExecuteAsync(updateHeaderSql);
 
-                await LogTransactionAsync(
-                    id: obj.memoId,
-                    branchId: 1,
-                    orgId: 1,
-                    actionType: "Update",
-                    actionDescription: "Updated Purchase Memo Header",
-                    oldValue: oldvalue,
-                    newValue: obj,
-                    tableName: "tbl_purchasememo_header",
-                    userId: 1
-                );
+
 
                 return new ResponseModel
                 {
@@ -666,17 +470,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMemoRepository),
-                    Method_Function = nameof(DeleteMemo),
-                    UserId = 0,
-                    ScreenName = "Purchase Memo",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = 0,
@@ -686,28 +479,5 @@ namespace Infrastructure.Repositories
             }
         }
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Procurement",
-                ScreenName = "Purchase Memo",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 3
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 }

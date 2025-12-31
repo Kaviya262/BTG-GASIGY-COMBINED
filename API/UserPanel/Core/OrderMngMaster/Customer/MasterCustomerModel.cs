@@ -46,9 +46,6 @@ namespace Core.OrderMngMaster.Customer
         public int? AddressId { get; set; }
         public bool IsCustomer { get; set; }
         public bool PoNumber { get; set; }
-
-        public string CustomerReviewFormPath { get; set; }
-
         public string? LegalDocumentPath { get; set; }
         public int? CreditLimitinIDR { get; set; }
 
@@ -114,9 +111,5 @@ namespace Core.OrderMngMaster.Customer
 
         public string Contactname { get; set; } = null!;
     }
-
-  
-
-
 
 }

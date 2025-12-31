@@ -1,16 +1,12 @@
-﻿using BackEnd.AccessRights;
+﻿using System.Data;
+using System.Text.Json;
+using BackEnd.AccessRights;
 using BackEnd.Finance.ClaimAndPayment;
 using Core.Abstractions;
 using Core.AccessRights;
 using Core.Finance.PeriodicPaymentPlan;
-using Core.FinanceModule.PettyCash;
-using Core.Master.ErrorLog;
 using Core.Models;
 using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using System.Data;
-using System.Text.Json;
 
 namespace Infrastructure.Repositories
 {
@@ -18,12 +14,10 @@ namespace Infrastructure.Repositories
     {
 
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
 
-        public PeriodicPayemntPlanRepository(IUnitOfWorkDB3 financedb, IErrorLogMasterRepository errorLogMasterRepository)
+        public PeriodicPayemntPlanRepository(IUnitOfWorkDB3 financedb)
         {
             _connection = financedb.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
 
         //public async Task<object> ApproveAsync(ClaimApprovalHdr obj)
@@ -145,22 +139,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PeriodicPayemntPlanRepository),
-                    Method_Function = nameof(GetAllPeriodicPaymentPlanAsync),
-                    UserId = 0,
-                    ScreenName = "PaymentPlan",
-                    RequestData_Payload = Newtonsoft.Json.JsonConvert.SerializeObject(new
-                    {
-                        Id, branchId, orgid, userid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -208,17 +188,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PeriodicPayemntPlanRepository),
-                    Method_Function = nameof(SavePeriodicPaymentPlanAsync),
-                    UserId = obj.UserId,
-                    ScreenName = "PaymentPlan",
-                    RequestData_Payload = Newtonsoft.Json.JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -265,20 +234,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PeriodicPayemntPlanRepository),
-                    Method_Function = nameof(GetVoucher),
-                    UserId = 0,
-                    ScreenName = "PaymentPlan",
-                    RequestData_Payload = Newtonsoft.Json.JsonConvert.SerializeObject(new
-                    {
-                        voucherid, branchId, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,

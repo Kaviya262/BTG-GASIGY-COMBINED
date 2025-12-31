@@ -1,10 +1,8 @@
 ﻿using BackEnd.FinanceModule.PettyCash;
 using Core.Abstractions;
 using Core.FinanceModule.PettyCash;
-using Core.Master.ErrorLog;
 using Core.Models;
 using Dapper;
-using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using Newtonsoft.Json;
 using System.Data;
 
@@ -13,18 +11,17 @@ namespace Infrastructure.Repositories
     public class PettyCashRepository : IPettyCashRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
 
-        public PettyCashRepository(IUnitOfWorkDB3 financeDb, IErrorLogMasterRepository errorLogMasterRepository)
+        public PettyCashRepository(IUnitOfWorkDB3 financeDb)
         {
             _connection = financeDb.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
 
         public async Task<object> AddAsync(PettyCash obj)
         {
             try
             {
+
                 var param = new DynamicParameters();
                 param.Add("@opt", 1); // Add
                 param.Add("@pettycash_id", 0);
@@ -68,17 +65,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PettyCashRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = obj.Header.userid,
-                    ScreenName = "pettyCash",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -116,17 +102,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PettyCashRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = obj.Header.userid,
-                    ScreenName = "pettyCash",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -166,20 +141,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PettyCashRepository),
-                    Method_Function = nameof(GetByIdPettyCashAsync),
-                    UserId = 0,
-                    ScreenName = "PettyCash",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        pettycashid, branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -217,20 +178,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PettyCashRepository),
-                    Method_Function = nameof(GetListPettyCashAsync),
-                    UserId = 0,
-                    ScreenName = "PettyCash",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        pettycashid, exptype, voucherno, branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -268,20 +215,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PettyCashRepository),
-                    Method_Function = nameof(GetExpenseListAsync),
-                    UserId = 0,
-                    ScreenName = "PettyCash",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -321,20 +254,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PettyCashRepository),
-                    Method_Function = nameof(GetSequencesNo),
-                    UserId = userid,
-                    ScreenName = "PettyCash",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchId, orgid, userid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -343,5 +262,7 @@ namespace Infrastructure.Repositories
                 };
             }
         }
+
     }
+
 }

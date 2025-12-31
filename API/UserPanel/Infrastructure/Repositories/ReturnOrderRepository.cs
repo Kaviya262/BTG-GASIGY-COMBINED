@@ -1,15 +1,9 @@
 ﻿using BackEnd.Invoices;
 using BackEnd.ReturnOrder;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Supplier;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.ReturnOrder;
 using Dapper;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -25,13 +19,9 @@ namespace Infrastructure.Repositories
     {
         private readonly IDbConnection _connection;
         string IPAddress = "";
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
-        public ReturnOrderRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public ReturnOrderRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
         public async Task<object> AddAsync(ReturnOrderItem Obj)
         {
@@ -67,18 +57,6 @@ namespace Infrastructure.Repositories
                 const string getLastInsertedIdSql = "SELECT LAST_INSERT_ID();";
                 var insertedHeaderId = await _connection.QuerySingleAsync<int>(getLastInsertedIdSql);
 
-                // Log transaction
-                await LogTransactionAsync(
-                    id: insertedHeaderId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added new Return Order",
-                    oldValue: null,
-                    newValue: Obj.Header,
-                    tableName: "tbl_returnorder_header",
-                    userId: Obj.Header.UserId
-                );
 
                 var DOdata=Obj.Details.DistinctBy(u => u.DOID).ToList();
                 var Gasdata = Obj.Details.DistinctBy(u => u.GasCodeId).ToList();
@@ -149,31 +127,6 @@ namespace Infrastructure.Repositories
 
 
             Result = await _connection.ExecuteAsync(ReturnorderSql);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: insertedHeaderId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert", 
-                    actionDescription: "Inserted Gas/DO record",
-                    oldValue: null,
-                    newValue: Gasdata, 
-                    tableName: "tbl_returnorder_gas",
-                    userId: Obj.Header.UserId
-                    );
-
-                await LogTransactionAsync(
-                    id: insertedHeaderId, 
-                    branchId: Obj.Header.BranchId, 
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert", 
-                    actionDescription: "Inserted DO record",
-                    oldValue: null, 
-                    newValue: DOdata, 
-                    tableName: "tbl_returnorder_dono", 
-                    userId: Obj.Header.UserId
-                    );
                 string detailSql = "";
                 foreach (var row in Obj.Details)
                 {
@@ -188,35 +141,9 @@ namespace Infrastructure.Repositories
                 }
 
                 Result = await _connection.ExecuteAsync(detailSql);
-                int returnOrderDetailsLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
 
-                await LogTransactionAsync(
-            id: returnOrderDetailsLastId,
-            branchId: Obj.Header.BranchId,
-            orgId: Obj.Header.OrgId,
-            actionType: "Insert",
-            actionDescription: "Inserted return order detail rows",
-            oldValue: null,
-            newValue: Obj.Details,
-            tableName: "tbl_returnorder_details",
-            userId: Obj.Header.UserId
-        );
-
-                var oldHeader = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_returnorder_details WHERE Rtn_ID = @Id", new { Id = insertedHeaderId });
                 var updateRtn = "UPDATE tbl_returnorder_details rtn left JOIN tbl_returnorder_dono AS don ON don.Rtn_ID = rtn.Rtn_ID and  don.DOID = rtn.DOID left JOIN tbl_returnorder_gas AS gas  ON rtn.Rtn_ID = gas.Rtn_ID and  gas.GasCodeId = rtn.GasCodeId set   rtn.Rtn_Gas_ID = gas.Rtn_Gas_ID,    rtn.Rtn_DO_ID = don.Rtn_DO_ID where rtn.Rtn_ID  = "+insertedHeaderId+";";
                 Result = await _connection.ExecuteAsync(updateRtn );
-
-                await LogTransactionAsync(
-                    id: insertedHeaderId,
-                    branchId: 1,
-                    orgId: 1,
-                    actionType: "Update",
-                    actionDescription: "Updated Rturn Order Details",
-                    oldValue: oldHeader,
-                    newValue: Obj.Details,
-                    tableName: "tbl_packing_deliverydetail",
-                    userId: Obj.Header.UserId
-                );
 
                 foreach (var doRow in Obj.DODetail)
                 {
@@ -238,18 +165,6 @@ namespace Infrastructure.Repositories
                     {
                         var updateFlag = "UPDATE tbl_packing_customerdetail SET isDoRaised = 1 WHERE id = @CustomerDtlId;";
                         await _connection.ExecuteAsync(updateFlag, new { CustomerDtlId = doRow.DOID });
-
-                        await LogTransactionAsync(
-                    id: doRow.DOID, 
-                    branchId: Obj.Header.BranchId, 
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Update", 
-                    actionDescription: "Updated DO Raised flag",
-                    oldValue: new { isDoRaised = 0 },
-                    newValue: new { isDoRaised = 1 },
-                    tableName: "tbl_packing_customerdetail",
-                    userId: Obj.Header.UserId
-                );
                     }
                 }
 
@@ -297,17 +212,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(ReturnOrderRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = Obj.Header.UserId,
-                    ScreenName = "Return Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -315,6 +220,9 @@ namespace Infrastructure.Repositories
                     Status = false
                 };
             }
+
+
+
         }
         public async Task<object> UpdateAsync(ReturnOrderItem Obj)
         {
@@ -322,30 +230,7 @@ namespace Infrastructure.Repositories
             {
                 int Result = 0;
 
-                var oldHeader = await _connection.QueryFirstOrDefaultAsync<object>(
-            "SELECT * FROM tbl_returnorder_header WHERE Rtn_ID = @Id",
-            new { Id = Obj.Header.id }
-        );
-
-                // OLD DETAILS BEFORE UPDATE
-                var oldDetails = await _connection.QueryAsync<object>(
-                    "SELECT * FROM tbl_returnorder_details WHERE Rtn_ID = @Id AND isactive = 1",
-                    new { Id = Obj.Header.id }
-                );
-
-                // OLD GAS BEFORE UPDATE
-                var oldGas = await _connection.QueryAsync<object>(
-                    "SELECT * FROM tbl_returnorder_gas WHERE Rtn_ID = @Id AND isactive = 1",
-                    new { Id = Obj.Header.id }
-                );
-
-                // OLD DO BEFORE UPDATE
-                var oldDO = await _connection.QueryAsync<object>(
-                    "SELECT * FROM tbl_returnorder_dono WHERE Rtn_ID = @Id AND isactive = 1",
-                    new { Id = Obj.Header.id }
-                );
-
-                string headerSql = @"
+                  string headerSql = @"
             update tbl_returnorder_header set   CustomerId=@customerid, CategoryId=@categoryid,IsSubmitted=@issubmitted,LastModifiedDate=now(),LastModifiedIP='',LastModifiedBY=@UserId
              where Rtn_ID=@id;";
                 headerSql += "update tbl_returnorder_gas set isactive=0 where Rtn_ID="+ Obj.Header.id + "; ";
@@ -486,18 +371,6 @@ namespace Infrastructure.Repositories
                     }
                 }
 
-                await LogTransactionAsync(
-            id: insertedHeaderId,
-            branchId: 1,
-            orgId: 1,
-            actionType: "Update",
-            actionDescription: "Updated Return Order",
-            oldValue: new { Header = oldHeader, Details = oldDetails, Gas = oldGas, DO = oldDO },
-            newValue: Obj,  
-            tableName: "tbl_returnorder_header",
-            userId: Obj.Header.UserId
-        );
-
                 if (Obj.Header.issubmitted == 1)
                 {
                     var ReturnOrder = "UPDATE master_cylinder c join tbl_returnorder_details rtn on c.cylinderid = rtn.cylinderid and rtn.isactive = 1 set c.statusid = 3,c.location='BTG',  c.isdelivered=0  where rtn.Rtn_ID = " + insertedHeaderId + ";";
@@ -537,17 +410,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(ReturnOrderRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = Obj.Header.UserId,
-                    ScreenName = "Return Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -572,6 +434,12 @@ namespace Infrastructure.Repositories
                 param.Add("@gascodeid", gascodeid);
 
 
+
+
+
+
+
+
                 var List = await _connection.QueryAsync(ReturnOrder.ReturnOrderProcedure, param: param, commandType: CommandType.StoredProcedure);
                 var Modellist = List.ToList();
 
@@ -587,20 +455,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(ReturnOrderRepository),
-                    Method_Function = nameof(GetAllAsync),
-                    UserId = 0,
-                    ScreenName = "Return Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        customerid, from_date, to_date, BranchId, gascodeid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -685,20 +540,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(ReturnOrderRepository),
-                    Method_Function = nameof(GetByIdAsync),
-                    UserId = 0,
-                    ScreenName = "Return Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                       ReturnOrderid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -737,20 +579,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(ReturnOrderRepository),
-                    Method_Function = nameof(GetProductionOrderSqNoQuery),
-                    UserId = 0,
-                    ScreenName = "Return Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        unit
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -758,30 +587,8 @@ namespace Infrastructure.Repositories
                     Status = false
                 };
             }
-        }
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Sales",
-                ScreenName = "Return Order",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 2
-            };
 
-            await _transactionLogRepo.LogTransactionAsync(log);
         }
     }
 }

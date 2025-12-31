@@ -10,7 +10,6 @@ import Flatpickr from "react-flatpickr"
 import Select from "react-select";
 import Swal from 'sweetalert2';
 import 'primeicons/primeicons.css';
-import useAccess from "../../common/access/useAccess";
 import {  GetAllItems, GetClaimCategoryAutoComplete, GetClaimPaymentDescriptionById, GetClaimTypeAutoComplete, GetItemCategoryAutoComplete, GetItemGroupAutoComplete, GetItemUomList, GetSupplierById, GetSupplierCategoryAutoComplete, GetSupplierCountries, GetSupplierCurrencies, GetSupplierTaxList, SaveClaimPaymentDescription, SaveItemMaster, SaveSupplierMaster } from "common/data/mastersapi";
 
 // // Claim Category Options
@@ -30,14 +29,6 @@ import {  GetAllItems, GetClaimCategoryAutoComplete, GetClaimPaymentDescriptionB
 const AddClaimPaymentDesc = () => {
     const history = useHistory();
     const { id } = useParams();
-    const { access, applyAccessUI } = useAccess("Masters", "Claim & Payment Description");
-                          const canViewDetails = !access.loading && access.canViewDetails;
-                          
-                               useEffect(() => {
-                                  if (!access.loading) {
-                                      applyAccessUI();
-                                  }
-                              }, [access, applyAccessUI]);
     const payment_id = Number(id ?? 0);
     const isEditMode = !!id;
     const [activeTab, setActiveTab] = useState(1);
@@ -230,7 +221,6 @@ const AddClaimPaymentDesc = () => {
 
                                             <button
                                                 type="submit"
-                                                data-access="save"
                                                 className="btn btn-info"                                                
                                             >
                                                 <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}

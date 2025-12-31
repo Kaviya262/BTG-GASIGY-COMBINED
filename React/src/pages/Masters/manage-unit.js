@@ -13,7 +13,6 @@ import "primereact/resources/themes/lara-light-blue/theme.css";
 import { useHistory } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import useAccess from "../../common/access/useAccess";
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -22,7 +21,6 @@ const initFilters = () => ({
 });
 
 const ManageUnits = () => {
-    const { access, applyAccessUI } = useAccess("Masters", "UOM");
     const history = useHistory();
 
     const [units, setUnits] = useState([]);
@@ -46,12 +44,6 @@ const ManageUnits = () => {
     const toggleModal2 = () => {
         setIsModalOpen2(!isModalOpen2);
     };
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         debugger
@@ -95,8 +87,8 @@ const ManageUnits = () => {
                 });
                 setSwitchStates(initialSwitch);
             }
-            else {
-                setFilteredUnits([]);
+            else{
+              setFilteredUnits([]);  
             }
         }
         catch (error) {
@@ -172,9 +164,6 @@ const ManageUnits = () => {
 
     const actionBodyTemplate = (rowData) => {
         console.log(selectedRow, "rowData :", rowData);
-        if (!access?.canEdit) {
-            return null;
-        }
         if (rowData.IsActive == 1) {
             return (
                 <div className="actions">
@@ -182,7 +171,7 @@ const ManageUnits = () => {
                         editRow(rowData);
                         console.log("onClick :", rowData);
                     }}
-
+ 
                         title={"Edit"}>
                         <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                     </span>
@@ -192,7 +181,7 @@ const ManageUnits = () => {
         else {
             return (
                 <div className="actions">
-
+ 
                     <span
                         style={{
                             cursor: 'not-allowed',
@@ -207,7 +196,7 @@ const ManageUnits = () => {
                 </div>
             )
         }
-
+ 
     };
 
     const onSwitchChange = async () => {
@@ -287,8 +276,8 @@ const ManageUnits = () => {
                 return !existCode;
             }),
         uomDescription: Yup.string().trim()
-            .required("UOM description is required")
-            .max(50, "UOM Descriptions Should be atmost 50 characters"),
+        .required("UOM description is required")
+        .max(50, "UOM Descriptions Should be atmost 50 characters"),
     });
 
     const handleSubmit = async (values, { resetForm }) => {
@@ -325,14 +314,6 @@ const ManageUnits = () => {
         }
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -357,7 +338,7 @@ const ManageUnits = () => {
                                     <button type="button" className="btn btn-info" onClick={handleSearch}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={handleSearchCancel}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
 
-                                    <button type="button" className="btn btn-success" onClick={handleNew} data-access="new">
+                                    <button type="button" className="btn btn-success" onClick={handleNew}>
                                         <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New
                                     </button>
                                 </div>
@@ -367,7 +348,7 @@ const ManageUnits = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable value={filteredUnits} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="UOMCode" filters={filters} globalFilterFields={["UOMCode", "UOMDescription"]} header={header} emptyMessage="No unit's found." onFilter={(e) => setFilters(e.filters)} >
+                                <DataTable value={filteredUnits} paginator showGridlines rows={10} loading={loading} dataKey="UOMCode" filters={filters} globalFilterFields={["UOMCode", "UOMDescription"]} header={header} emptyMessage="No unit's found." onFilter={(e) => setFilters(e.filters)} >
                                     <Column field="UOMCode" header="UOM Code" filter filterPlaceholder="Search by UOM Code" />
                                     <Column field="UOMDescription" header="UOM Description" filter filterPlaceholder="Search by UOM Description" />
                                     <Column field="IsActive" header="Active" showFilterMatchModes={false} body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }} />
@@ -442,7 +423,7 @@ const ManageUnits = () => {
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 button-items">
                                                             <button type="button" className="btn btn-danger fa-pull-right" onClick={toggleModal2}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-                                                            <button type="submit" data-access="save" className="btn btn-info fa-pull-right"><i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>
+                                                            <button type="submit" className="btn btn-info fa-pull-right"><i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>
                                                                 {selectedRow?.UOMId && selectedRow.UOMId > 0 ? "Update" : "Save"}</button>
                                                         </div>
                                                     </div>

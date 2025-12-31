@@ -28,13 +28,9 @@ import QuotationSalesFormEdit from "./QuotationSalesFormEdit";
 import EditEditDirectSalesForm from "./EditDirectSalesForm";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
-import useAccess from "../../../common/access/useAccess";
-
 const animatedComponents = makeAnimated();
 
 const EditOrders = () => {
-    const { access, applyAccessUI } = useAccess("Sales", "Orders");
-
     const directSalesRef = useRef();
     const { id } = useParams();
     const history = useHistory();
@@ -83,12 +79,6 @@ const EditOrders = () => {
     const [gasCodeSaveList, setGasCodeSaveList] = useState([]);
     const [SQDetails, setSQDetails] = useState([]);
     const [selectedGasCodes, setSelectedGasCodes] = useState([]);
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         debugger
@@ -735,9 +725,9 @@ const EditOrders = () => {
                                         </div>
                                         <div className="col-12 col-lg-4 justify-content-end text-end me-1 mt-1">
                                             <div className="button-items">
-                                                <button type="button" className="btn btn-info" onClick={(e) => openModal2(e, "save")} disabled={isSubmitting} data-access="save" ><i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Update</button>
-                                                <button type="button" className="btn btn-success" onClick={(e) => openModal2(e, "post")} disabled={isSubmitting} data-access="post" ><i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post</button>
-                                                <button type="button" className="btn btn-danger" onClick={handleCancel} disabled={isSubmitting} ><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
+                                                <button type="button" className="btn btn-info" onClick={(e) => openModal2(e, "save")} ><i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Update</button>
+                                                <button type="button" className="btn btn-success" onClick={(e) => openModal2(e, "post")} ><i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post</button>
+                                                <button type="button" className="btn btn-danger" onClick={handleCancel} ><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
                                             </div>
                                         </div>
                                     </div>
@@ -877,10 +867,10 @@ const EditOrders = () => {
                                 <Button className="btn btn-info" color="success" size="lg" onClick={(e) => {
                                     setSubmitState(true);
                                     handleSubmit(e, submittype);
-                                }} disable={isSubmitting}>
+                                }}>
                                     Yes
                                 </Button>
-                                <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen2(false)} disable={isSubmitting}>
+                                <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen2(false)}>
                                     Cancel
                                 </Button>
                             </div>

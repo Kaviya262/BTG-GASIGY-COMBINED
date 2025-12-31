@@ -22,7 +22,6 @@ import {
   GetGRNById,
   GetGRNNoSeq
 } from "common/data/mastersapi";
-import useAccess from "../../common/access/useAccess";
 
 
 const getUserDetails = () => {
@@ -33,7 +32,6 @@ const getUserDetails = () => {
 }
 
 const ProcurementsAddGRN = () => {
-  const { access, applyAccessUI } = useAccess("Procurement", "GRN");
   const history = useHistory();
   const location = useLocation();
   const { id } = useParams();
@@ -117,12 +115,6 @@ const ProcurementsAddGRN = () => {
   // }, []);
 
   const [grnData, setGrnData] = useState(null);
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   useEffect(() => {
 
@@ -602,15 +594,7 @@ const ProcurementsAddGRN = () => {
 
       // Optional: Redirect after success
       history.push('/procurementsgrn');
-    } 
-    else if(res?.message == "Please try another PO number or refresh the page to load the latest balance quantity..."){
-       Swal.fire({            
-        text: '   Change the PO Number !!! ' + res?.message,
-      }); 
-      setIsSubmitting(false);
-      return;
-    }
-    else {
+    } else {
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -644,27 +628,24 @@ const ProcurementsAddGRN = () => {
                     <Form>
                       <div className="row align-items-center g-3 justify-content-end mb-3">
                         <div className="col-md-12 button-items d-flex gap-2 justify-content-end">
-                          {access.canSave && (
-                            <button
-                              type="button"
-                              className="btn btn-info"
-                              onClick={() => handleSubmit(values, 0)}
-                              disabled={isSubmitting}
-                            >
-                              <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
 
-                            </button>
-                          )}
-                          {access.canPost && (
-                            <button
-                              type="button"
-                              className="btn btn-success fa-pull-right"
-                              onClick={() => handleSubmit(values, 1)}// Post  
-                              disabled={isSubmitting}
-                            >
-                              <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            className="btn btn-info"
+                            onClick={() => handleSubmit(values, 0)}
+                            disabled={isSubmitting}
+                          >
+                            <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
+
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-success fa-pull-right"
+                            onClick={() => handleSubmit(values, 1)}// Post  
+                            disabled={isSubmitting}
+                          >
+                            <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
+                          </button>
                           <button
                             type="button"
                             className="btn btn-danger"

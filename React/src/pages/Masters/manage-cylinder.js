@@ -27,7 +27,6 @@ const GetAllCylinder = async () => {
         ]
     };
 };
-import useAccess from "../../common/access/useAccess";
 
 
 // Initialize filters
@@ -37,21 +36,13 @@ const initFilters = () => ({
     cylindername: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     cylindertypeid: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     GasCode: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    location: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    location: {operator:FilterOperator.AND, constraints:[{value:null, matchMode:FilterMatchMode.STARTS_WITH}]},
     Status: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     nexttestdateStr: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] }
 });
 
 const ManageCylinder = () => {
     const history = useHistory();
-    const { access, applyAccessUI } = useAccess("Masters", "Cylinder");
-    const canViewDetails = !access.loading && access.canViewDetails;
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     const [gas, setGas] = useState([]);
     const [globalFilterValue, setGlobalFilterValue] = useState("");
@@ -89,24 +80,24 @@ const ManageCylinder = () => {
     }, []);
 
     const fetchFilteredData = async () => {
-        const result = await GetFilteredCylinders({ fromDate: "", toDate: "", name: "" });
-        if (result.status) {
-            setGas(result.data.map(item => ({
-                ...item,
-                nexttestdateStr: item.nexttestdate
-                    ? (() => {
-                        const d = new Date(item.nexttestdate);
-                        const yyyy = d.getFullYear();
-                        const mm = String(d.getMonth() + 1).padStart(2, '0');
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        return `${yyyy}-${mm}-${dd}`;
-                    })()
-                    : null
-            })));
-        } else {
-            setGas([]);
-        }
-    };
+    const result = await GetFilteredCylinders({ fromDate: "", toDate: "", name: "" });
+    if (result.status) {
+        setGas(result.data.map(item => ({
+            ...item,
+            nexttestdateStr: item.nexttestdate
+                ? (() => {
+                    const d = new Date(item.nexttestdate);
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                })()
+                : null
+        })));
+    } else {
+        setGas([]);
+    }
+ };
 
 
     const clearFilter = () => {
@@ -212,9 +203,6 @@ const ManageCylinder = () => {
     };
 
     const actionBodyTemplate = rowData => {
-        if (!access?.canEdit) {
-            return null;
-        }
         debugger
         console.log(selectedRow, "rowData :", rowData);
         if (rowData.IsActive == 1) {
@@ -282,16 +270,6 @@ const ManageCylinder = () => {
             />
         </div>
     );
-
-
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
 
 
     return (
@@ -397,7 +375,7 @@ const ManageCylinder = () => {
                                     <StrapButton className="btn btn-danger" onClick={handleCancel}>
                                         <i className="bx bx-window-close label-icon font-size-14 align-middle me-2" ></i>Cancel
                                     </StrapButton>
-                                    <StrapButton className="btn btn-success" onClick={linkAddCylinder} data-access="new">
+                                    <StrapButton className="btn btn-success" onClick={linkAddCylinder}>
                                         <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i> New
                                     </StrapButton>
                                 </div>
@@ -412,7 +390,7 @@ const ManageCylinder = () => {
                                     value={gas}
                                     paginator
                                     showGridlines
-                                    rows={access.records || 10}
+                                    rows={10}
                                     loading={loading}
                                     dataKey="Code"
                                     filters={filters}
@@ -455,9 +433,9 @@ const ManageCylinder = () => {
                                         field="nexttestdateStr"
                                         header="Next Test Date"
                                         filter
-                                        filterPlaceholder="Search by next test date"
+                                        filterPlaceholder="Search by next test date"                                        
                                         style={{ width: '15%' }}
-
+                                       
                                     />
                                     <Column
                                         field="IsActive"

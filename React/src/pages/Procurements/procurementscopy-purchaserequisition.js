@@ -36,7 +36,6 @@ import { useLocation } from "react-router-dom";
 import { head } from "lodash";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import useAccess from "../../common/access/useAccess";
 
 const pmOptions = [
     { label: "NA", value: "NA" },
@@ -55,7 +54,6 @@ const getUserDetails = () => {
     }
 }
 const CopyPurchaseRequisition = () => {
-    const { access, applyAccessUI } = useAccess("Procurement", "Purchase Requisition");
     const [UserData, setUserData] = useState(null);
     const isFirstRender = useRef(true);
 
@@ -109,13 +107,6 @@ const CopyPurchaseRequisition = () => {
     const [vatList, setVatList] = useState([]);
     const [poOptions, setPoOptions] = useState([]);
     const [loadingPOs, setLoadingPOs] = useState(false);
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
     useEffect(() => {
         const userData = getUserDetails();
 
@@ -1425,39 +1416,35 @@ const CopyPurchaseRequisition = () => {
                                                         </div>
                                                         <div className="col-12 col-lg-4 col-md-4 col-sm-4 button-items">
                                                             <button type="button" className="btn btn-danger fa-pull-right" onClick={handleCancel}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Close</button>
-                                                            {access.canPost && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-success fa-pull-right"
-                                                                    onClick={async () => {
-                                                                        setTouched(markAllTouched(values), true);
-                                                                        const validationErrors = await validateForm();
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-success fa-pull-right"
+                                                                onClick={async () => {
+                                                                    setTouched(markAllTouched(values), true);
+                                                                    const validationErrors = await validateForm();
 
-                                                                        if (Object.keys(validationErrors).length === 0) {
-                                                                            handleSubmit(values, 1); // Post
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
-                                                                </button>
-                                                            )}
+                                                                    if (Object.keys(validationErrors).length === 0) {
+                                                                        handleSubmit(values, 1); // Post
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
+                                                            </button>
 
-                                                            {access.canSave && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-info fa-pull-right"
-                                                                    onClick={async () => {
-                                                                        setTouched(markAllTouched(values), true);
-                                                                        const validationErrors = await validateForm();
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-info fa-pull-right"
+                                                                onClick={async () => {
+                                                                    setTouched(markAllTouched(values), true);
+                                                                    const validationErrors = await validateForm();
 
-                                                                        if (Object.keys(validationErrors).length === 0) {
-                                                                            handleSubmit(values, 0); // Save
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
-                                                                </button>
-                                                            )}
+                                                                    if (Object.keys(validationErrors).length === 0) {
+                                                                        handleSubmit(values, 0); // Save
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     <Row>
@@ -2064,30 +2051,16 @@ const CopyPurchaseRequisition = () => {
 
                                                                     <th className="text-center" style={{ width: "6%" }}>Qty</th>
                                                                     <th className="text-center" style={{ width: "6%" }}>UOM</th>
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "8%" }}>Unit Price</th>
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "6%" }}>Discount</th>
-                                                                    )}
+                                                                    <th className="text-center" style={{ width: "8%" }}>Unit Price</th>
+                                                                    <th className="text-center" style={{ width: "6%" }}>Discount</th>
                                                                     <th className="text-center" style={{ width: "6%" }}>Tax</th>
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "4%" }}>Tax %</th>
-                                                                    )}
+                                                                    <th className="text-center" style={{ width: "4%" }}>Tax %</th>
                                                                     {/* <th className="text-center" style={{ width: "8%" }}>Tax (+/-)</th> */}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "5%" }}>Tax Amount</th>
-                                                                    )}
+                                                                    <th className="text-center" style={{ width: "5%" }}>Tax Amount</th>
                                                                     <th className="text-center" style={{ width: "6%" }}>VAT</th>
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "4%" }}>VAT %</th>
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "5%" }}>VAT Amount</th>
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "8%" }}>Total Amount</th>
-                                                                    )}
+                                                                    <th className="text-center" style={{ width: "4%" }}>VAT %</th>
+                                                                    <th className="text-center" style={{ width: "5%" }}>VAT Amount</th>
+                                                                    <th className="text-center" style={{ width: "8%" }}>Total Amount</th>
                                                                 </tr>
                                                             </thead>
 
@@ -2102,21 +2075,18 @@ const CopyPurchaseRequisition = () => {
 
                                                                                     {/* Remove Button */}
                                                                                     <td className="text-center align-middle">
-                                                                                        {access.canDelete && (
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                className="btn btn-sm btn-danger"
-                                                                                                onClick={() => remove(i)}
-                                                                                                title="Remove Row"
-                                                                                                data-access="delete"
-                                                                                                style={{ background: 'none', border: 'none', padding: 0 }}
-                                                                                            >
-                                                                                                <i
-                                                                                                    className="mdi mdi-delete-outline text-danger"
-                                                                                                    style={{ fontSize: '18px', cursor: 'pointer' }}
-                                                                                                ></i>
-                                                                                            </button>
-                                                                                        )}
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            className="btn btn-sm btn-danger"
+                                                                                            onClick={() => remove(i)}
+                                                                                            title="Remove Row"
+                                                                                            style={{ background: 'none', border: 'none', padding: 0 }}
+                                                                                        >
+                                                                                            <i
+                                                                                                className="mdi mdi-delete-outline text-danger"
+                                                                                                style={{ fontSize: '18px', cursor: 'pointer' }}
+                                                                                            ></i>
+                                                                                        </button>
                                                                                     </td>
 
                                                                                     {/* <td className="text-center align-middle">{i + 1}</td> */}
@@ -2294,128 +2264,124 @@ const CopyPurchaseRequisition = () => {
 
 
                                                                                     {/* Unit Price */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
+                                                                                    <td>
 
 
-                                                                                            <Field name={`items[${i}].unitPrice`}>
-                                                                                                {({ field }) => {
-                                                                                                    const formatWithCommas = (value) => {
-                                                                                                        if (!value) return '';
-                                                                                                        const [intPart, decPart] = value.split('.');
-                                                                                                        const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                                                                                                        return decPart !== undefined
-                                                                                                            ? `${intFormatted}.${decPart.slice(0, 3)}`
-                                                                                                            : intFormatted;
-                                                                                                    };
+                                                                                        <Field name={`items[${i}].unitPrice`}>
+                                                                                            {({ field }) => {
+                                                                                                const formatWithCommas = (value) => {
+                                                                                                    if (!value) return '';
+                                                                                                    const [intPart, decPart] = value.split('.');
+                                                                                                    const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                                                                                    return decPart !== undefined
+                                                                                                        ? `${intFormatted}.${decPart.slice(0, 3)}`
+                                                                                                        : intFormatted;
+                                                                                                };
 
-                                                                                                    return (
-                                                                                                        <input
-                                                                                                            type="text"
-                                                                                                            className={`form-control text-end ${errors?.items?.[i]?.unitPrice && touched?.items?.[i]?.unitPrice
-                                                                                                                ? 'is-invalid'
-                                                                                                                : ''
-                                                                                                                }`}
+                                                                                                return (
+                                                                                                    <input
+                                                                                                        type="text"
+                                                                                                        className={`form-control text-end ${errors?.items?.[i]?.unitPrice && touched?.items?.[i]?.unitPrice
+                                                                                                            ? 'is-invalid'
+                                                                                                            : ''
+                                                                                                            }`}
 
-                                                                                                            value={formatWithCommas(field.value?.toString() || '')}
+                                                                                                        value={formatWithCommas(field.value?.toString() || '')}
 
-                                                                                                            onChange={(e) => {
-                                                                                                                // Remove commas
-                                                                                                                let plainValue = e.target.value.replace(/,/g, '');
+                                                                                                        onChange={(e) => {
+                                                                                                            // Remove commas
+                                                                                                            let plainValue = e.target.value.replace(/,/g, '');
 
-                                                                                                                // Allow only digits and one decimal point
-                                                                                                                if (!/^\d*\.?\d*$/.test(plainValue)) {
-                                                                                                                    return; // Ignore invalid characters
-                                                                                                                }
+                                                                                                            // Allow only digits and one decimal point
+                                                                                                            if (!/^\d*\.?\d*$/.test(plainValue)) {
+                                                                                                                return; // Ignore invalid characters
+                                                                                                            }
 
-                                                                                                                // Enforce DECIMAL(24,6) → allow 16 digits before decimal, 6 after
-                                                                                                                if (plainValue.includes('.')) {
-                                                                                                                    const [intPart, decPart] = plainValue.split('.');
-                                                                                                                    plainValue = intPart.slice(0, 12) + '.' + (decPart ? decPart.slice(0, 3) : '');
-                                                                                                                } else {
-                                                                                                                    plainValue = plainValue.slice(0, 12);
-                                                                                                                }
+                                                                                                            // Enforce DECIMAL(24,6) → allow 16 digits before decimal, 6 after
+                                                                                                            if (plainValue.includes('.')) {
+                                                                                                                const [intPart, decPart] = plainValue.split('.');
+                                                                                                                plainValue = intPart.slice(0, 12) + '.' + (decPart ? decPart.slice(0, 3) : '');
+                                                                                                            } else {
+                                                                                                                plainValue = plainValue.slice(0, 12);
+                                                                                                            }
 
-                                                                                                                setFieldValue(`items[${i}].unitPrice`, plainValue);
-                                                                                                            }}
+                                                                                                            setFieldValue(`items[${i}].unitPrice`, plainValue);
+                                                                                                        }}
 
-                                                                                                        />
-                                                                                                    );
-                                                                                                }}
-                                                                                            </Field>
+                                                                                                    />
+                                                                                                );
+                                                                                            }}
+                                                                                        </Field>
 
-                                                                                            {/* <Field
+                                                                                        {/* <Field
                                                                                             name={`items[${i}].unitPrice`}
                                                                                             type="text"
                                                                                             inputMode="decimal"
                                                                                             className="form-control text-end"
                                                                                         /> */}
-                                                                                            {errors.items?.[i]?.unitPrice && touched.items?.[i]?.unitPrice && (
-                                                                                                <div className="text-danger small">{errors.items[i].unitPrice}</div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    )}
+                                                                                        {errors.items?.[i]?.unitPrice && touched.items?.[i]?.unitPrice && (
+                                                                                            <div className="text-danger small">{errors.items[i].unitPrice}</div>
+                                                                                        )}
+                                                                                    </td>
 
                                                                                     {/* Discount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            <Field name={`items[${i}].discount`}>
-                                                                                                {({ field }) => {
-                                                                                                    const formatWithCommas = (value) => {
-                                                                                                        if (!value) return '';
-                                                                                                        const [intPart, decPart] = value.split('.');
-                                                                                                        const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                                                                                                        return decPart !== undefined
-                                                                                                            ? `${intFormatted}.${decPart.slice(0, 2)}`
-                                                                                                            : intFormatted;
-                                                                                                    };
+                                                                                    <td>
+                                                                                        <Field name={`items[${i}].discount`}>
+                                                                                            {({ field }) => {
+                                                                                                const formatWithCommas = (value) => {
+                                                                                                    if (!value) return '';
+                                                                                                    const [intPart, decPart] = value.split('.');
+                                                                                                    const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                                                                                    return decPart !== undefined
+                                                                                                        ? `${intFormatted}.${decPart.slice(0, 2)}`
+                                                                                                        : intFormatted;
+                                                                                                };
 
-                                                                                                    return (
-                                                                                                        <input
-                                                                                                            type="text"
-                                                                                                            className={`form-control text-end ${errors?.items?.[i]?.discount && touched?.items?.[i]?.discount
-                                                                                                                ? 'is-invalid'
-                                                                                                                : ''
-                                                                                                                }`}
+                                                                                                return (
+                                                                                                    <input
+                                                                                                        type="text"
+                                                                                                        className={`form-control text-end ${errors?.items?.[i]?.discount && touched?.items?.[i]?.discount
+                                                                                                            ? 'is-invalid'
+                                                                                                            : ''
+                                                                                                            }`}
 
-                                                                                                            value={formatWithCommas(field.value?.toString() || '')}
+                                                                                                        value={formatWithCommas(field.value?.toString() || '')}
 
-                                                                                                            onChange={(e) => {
-                                                                                                                // Keep only digits and one decimal point
-                                                                                                                let plainValue = e.target.value.replace(/,/g, '');
-                                                                                                                if (!/^\d*\.?\d*$/.test(plainValue)) {
-                                                                                                                    return; // Ignore invalid characters
-                                                                                                                }
+                                                                                                        onChange={(e) => {
+                                                                                                            // Keep only digits and one decimal point
+                                                                                                            let plainValue = e.target.value.replace(/,/g, '');
+                                                                                                            if (!/^\d*\.?\d*$/.test(plainValue)) {
+                                                                                                                return; // Ignore invalid characters
+                                                                                                            }
 
-                                                                                                                // Enforce DECIMAL(18,6) → 12 digits before decimal, 6 after
-                                                                                                                if (plainValue.includes('.')) {
-                                                                                                                    const [intPart, decPart] = plainValue.split('.');
-                                                                                                                    plainValue = intPart.slice(0, 12) + '.' + decPart.slice(0, 2);
-                                                                                                                } else {
-                                                                                                                    plainValue = plainValue.slice(0, 12);
-                                                                                                                }
+                                                                                                            // Enforce DECIMAL(18,6) → 12 digits before decimal, 6 after
+                                                                                                            if (plainValue.includes('.')) {
+                                                                                                                const [intPart, decPart] = plainValue.split('.');
+                                                                                                                plainValue = intPart.slice(0, 12) + '.' + decPart.slice(0, 2);
+                                                                                                            } else {
+                                                                                                                plainValue = plainValue.slice(0, 12);
+                                                                                                            }
 
-                                                                                                                setFieldValue(`items[${i}].discount`, plainValue);
+                                                                                                            setFieldValue(`items[${i}].discount`, plainValue);
 
 
-                                                                                                            }}
+                                                                                                        }}
 
-                                                                                                        />
-                                                                                                    );
-                                                                                                }}
-                                                                                            </Field>
+                                                                                                    />
+                                                                                                );
+                                                                                            }}
+                                                                                        </Field>
 
-                                                                                            {/* <Field
+                                                                                        {/* <Field
                                                                                             name={`items[${i}].discount`}
                                                                                             type="text"
                                                                                             inputMode="decimal"
                                                                                             className="form-control text-end"
                                                                                         /> */}
-                                                                                            {errors.items?.[i]?.discount && touched.items?.[i]?.discount && (
-                                                                                                <div className="text-danger small">{errors.items[i].discount}</div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    )}
+                                                                                        {errors.items?.[i]?.discount && touched.items?.[i]?.discount && (
+                                                                                            <div className="text-danger small">{errors.items[i].discount}</div>
+                                                                                        )}
+                                                                                    </td>
 
                                                                                     <td>
                                                                                         <Select
@@ -2444,20 +2410,18 @@ const CopyPurchaseRequisition = () => {
                                                                                     </td>
 
                                                                                     {/* Tax % */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            <Field
-                                                                                                name={`items[${i}].taxPercent`}
-                                                                                                type="text"
-                                                                                                inputMode="decimal"
-                                                                                                className="form-control text-end"
-                                                                                                disabled
-                                                                                            />
-                                                                                            {errors.items?.[i]?.taxPercent && touched.items?.[i]?.taxPercent && (
-                                                                                                <div className="text-danger small">{errors.items[i].taxPercent}</div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td>
+                                                                                        <Field
+                                                                                            name={`items[${i}].taxPercent`}
+                                                                                            type="text"
+                                                                                            inputMode="decimal"
+                                                                                            className="form-control text-end"
+                                                                                            disabled
+                                                                                        />
+                                                                                        {errors.items?.[i]?.taxPercent && touched.items?.[i]?.taxPercent && (
+                                                                                            <div className="text-danger small">{errors.items[i].taxPercent}</div>
+                                                                                        )}
+                                                                                    </td>
                                                                                     {/* Tax Sign */}
                                                                                     {/* <td className="text-center">
                                                                                         <div className="d-flex justify-content-center">
@@ -2483,19 +2447,17 @@ const CopyPurchaseRequisition = () => {
                                                                                     </td> */}
 
                                                                                     {/* Tax Amount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            <div className="form-control-plaintext">
-                                                                                                {parseFloat(values.items[i]?.taxAmount)?.toLocaleString('en-US', {
-                                                                                                    style: 'decimal',
-                                                                                                    minimumFractionDigits: 2
-                                                                                                }) || "0.00"}
-                                                                                            </div>
-                                                                                            {errors.items?.[i]?.taxAmount && touched.items?.[i]?.taxAmount && (
-                                                                                                <div className="text-danger small">{errors.items[i].taxAmount}</div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        <div className="form-control-plaintext">
+                                                                                            {parseFloat(values.items[i]?.taxAmount)?.toLocaleString('en-US', {
+                                                                                                style: 'decimal',
+                                                                                                minimumFractionDigits: 2
+                                                                                            }) || "0.00"}
+                                                                                        </div>
+                                                                                        {errors.items?.[i]?.taxAmount && touched.items?.[i]?.taxAmount && (
+                                                                                            <div className="text-danger small">{errors.items[i].taxAmount}</div>
+                                                                                        )}
+                                                                                    </td>
 
                                                                                     <td style={{ width: "200px" }}>
                                                                                         <Select
@@ -2524,152 +2486,134 @@ const CopyPurchaseRequisition = () => {
                                                                                         )}
                                                                                     </td>
                                                                                     {/* VAT % */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            <Field
-                                                                                                name={`items[${i}].vatPercent`}
-                                                                                                type="text"
-                                                                                                inputMode="decimal"
-                                                                                                className="form-control text-end"
-                                                                                                disabled
-                                                                                                style={{ width: "100px" }}
-                                                                                            />
-                                                                                            {errors.items?.[i]?.vatPercent && touched.items?.[i]?.vatPercent && (
-                                                                                                <div className="text-danger small">{errors.items[i].vatPercent}</div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td>
+                                                                                        <Field
+                                                                                            name={`items[${i}].vatPercent`}
+                                                                                            type="text"
+                                                                                            inputMode="decimal"
+                                                                                            className="form-control text-end"
+                                                                                            disabled
+                                                                                            style={{ width: "100px" }}
+                                                                                        />
+                                                                                        {errors.items?.[i]?.vatPercent && touched.items?.[i]?.vatPercent && (
+                                                                                            <div className="text-danger small">{errors.items[i].vatPercent}</div>
+                                                                                        )}
+                                                                                    </td>
 
                                                                                     {/* VAT Amount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            <div className="form-control-plaintext">
-                                                                                                {parseFloat(values.items[i]?.vatAmount)?.toLocaleString('en-US', {
-                                                                                                    style: 'decimal',
-                                                                                                    minimumFractionDigits: 2
-                                                                                                }) || "0.00"}
-                                                                                            </div>
-                                                                                            {errors.items?.[i]?.vatAmount && touched.items?.[i]?.vatAmount && (
-                                                                                                <div className="text-danger small">{errors.items[i].vatAmount}</div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        <div className="form-control-plaintext">
+                                                                                            {parseFloat(values.items[i]?.vatAmount)?.toLocaleString('en-US', {
+                                                                                                style: 'decimal',
+                                                                                                minimumFractionDigits: 2
+                                                                                            }) || "0.00"}
+                                                                                        </div>
+                                                                                        {errors.items?.[i]?.vatAmount && touched.items?.[i]?.vatAmount && (
+                                                                                            <div className="text-danger small">{errors.items[i].vatAmount}</div>
+                                                                                        )}
+                                                                                    </td>
 
 
                                                                                     {/* Total Amount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            <div className="form-control-plaintext">
-                                                                                                {parseFloat(values.items[i]?.amount)?.toLocaleString('en-US', {
-                                                                                                    style: 'decimal',
-                                                                                                    minimumFractionDigits: 2
-                                                                                                }) || "0.00"}
-                                                                                            </div>
-                                                                                            {errors.items?.[i]?.amount && touched.items?.[i]?.amount && (
-                                                                                                <div className="text-danger small">{errors.items[i].amount}</div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        <div className="form-control-plaintext">
+                                                                                            {parseFloat(values.items[i]?.amount)?.toLocaleString('en-US', {
+                                                                                                style: 'decimal',
+                                                                                                minimumFractionDigits: 2
+                                                                                            }) || "0.00"}
+                                                                                        </div>
+                                                                                        {errors.items?.[i]?.amount && touched.items?.[i]?.amount && (
+                                                                                            <div className="text-danger small">{errors.items[i].amount}</div>
+                                                                                        )}
+                                                                                    </td>
                                                                                 </tr>
                                                                             ))}
                                                                         </tbody>
 
                                                                         {/* FOOTER */}
                                                                         <tfoot>
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={11} rowSpan={7}>
-                                                                                        {access.canNew && (
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                className="btn btn-sm"
-                                                                                                style={{ borderColor: "black", color: "black" }}
-                                                                                                onClick={() =>
-                                                                                                    push({
-                                                                                                        prdId: "",
-                                                                                                        memoNo: { value: "NA", label: "NA" },
-                                                                                                        itemGroupId: null,
-                                                                                                        itemName: null,
-                                                                                                        uom: "",
-                                                                                                        qty: "",
-                                                                                                        availableStock: "",
-                                                                                                        deliveryDate: "",
-                                                                                                        unitPrice: "",
-                                                                                                        discount: "",
-                                                                                                        taxId: 0,
-                                                                                                        vatId: 0,
-                                                                                                        taxPercent: 0,
-                                                                                                        taxAmount: "",
-                                                                                                        vatPercent: 0,
-                                                                                                        vatAmount: "",
-                                                                                                        amount: "",
-                                                                                                        taxSign: "+",
-                                                                                                    })
-                                                                                                }
-                                                                                            >
-                                                                                                +
-                                                                                            </button>
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>Sub Total</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.subTotal)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>Discount</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.discountValue)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        {/* <strong>Tax (+/-)</strong> */}
-                                                                                        <strong>Tax</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.taxValue)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>VAT</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.vatValue)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>Net Total</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.netTotal)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
+                                                                            <tr>
+                                                                                <td colSpan={11} rowSpan={7}>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="btn btn-sm"
+                                                                                        style={{ borderColor: "black", color: "black" }}
+                                                                                        onClick={() =>
+                                                                                            push({
+                                                                                                prdId: "",
+                                                                                                memoNo: { value: "NA", label: "NA" },
+                                                                                                itemGroupId: null,
+                                                                                                itemName: null,
+                                                                                                uom: "",
+                                                                                                qty: "",
+                                                                                                availableStock: "",
+                                                                                                deliveryDate: "",
+                                                                                                unitPrice: "",
+                                                                                                discount: "",
+                                                                                                taxId: 0,
+                                                                                                vatId: 0,
+                                                                                                taxPercent: 0,
+                                                                                                taxAmount: "",
+                                                                                                vatPercent: 0,
+                                                                                                vatAmount: "",
+                                                                                                amount: "",
+                                                                                                taxSign: "+",
+                                                                                            })
+                                                                                        }
+                                                                                    >
+                                                                                        +
+                                                                                    </button>
+                                                                                </td>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>Sub Total</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.subTotal)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>Discount</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.discountValue)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    {/* <strong>Tax (+/-)</strong> */}
+                                                                                    <strong>Tax</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.taxValue)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>VAT</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.vatValue)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>Net Total</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{values.currency?.label ?? "-"}</td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.netTotal)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
                                                                         </tfoot>
                                                                     </>
                                                                 )}

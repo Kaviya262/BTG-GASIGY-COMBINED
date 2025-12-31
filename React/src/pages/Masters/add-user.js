@@ -17,10 +17,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import { useHistory, useLocation } from "react-router-dom";
 import { CreateMasterUser, GetDepartmentById, GetDepartmentByCode, GetDepartmentByName } from "../../../src/common/data/mastersapi";
-import useAccess from "../../common/access/useAccess";
 
 const AddUser = () => {
-  const { access, applyAccessUI } = useAccess("Masters", "Users");
   const history = useHistory();
   const location = useLocation();
   const editUserData = location.state?.userData || null;
@@ -30,15 +28,15 @@ const AddUser = () => {
   const [errormsg, setErrormsg] = useState();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departmentOptions, setDepartmentOptions] = useState([]);
-  const [roleOptions, setRoleOptions] = useState([]);
+  const [roleOptions, setRoleOptions] = useState([]);  
 
-  const initialValues = {
-    userid: editUserData?.userid ?? "",
+  const initialValues = { 
+    userid:editUserData?.userid ?? "",
     id: editUserData?.id || "",
     branchId: editUserData?.branchId || "",
     departmentId: editUserData?.department ?? "",
     roleId: editUserData?.role ?? "",
-    roleName: editUserData?.roleName ?? "",
+    roleName : editUserData?.roleName ?? "",
     firstName: editUserData?.firstName || "",
     middleName: editUserData?.middleName || "",
     lastName: editUserData?.lastName || "",
@@ -55,23 +53,13 @@ const AddUser = () => {
       : null,
     activestatus: editUserData?.isActive ? "1" : "0",
     remarks: editUserData?.remark || "",
-    createdBy: editUserData?.createdBy || 1,
-  };
+    createdBy : editUserData?.createdBy || 1,
+  };   
 
   const handleCancel = () => {
     debugger
     history.push("/manage-users");
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]); useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   useEffect(() => {
     fetchDepartName();
@@ -208,7 +196,7 @@ const AddUser = () => {
       lastName: values.lastName,
       password: values.btgpassword,
       role: values.roleId,
-      roleName: values.roleName,
+      roleName : values.roleName,
       department: String(values.departmentId),
       fromDate: fromDateOnly,
       toDate: toDateOnly,
@@ -223,7 +211,7 @@ const AddUser = () => {
       if (response.statusCode === 200 || response.statusCode === 201) {
         setSuccessmsg(response.message);
         setTimeout(() => {
-          history.push("/manage-users");
+           history.push("/manage-users");   
         }, 3000);
       } else if (response.statusCode === 400) {
         setErrormsg(response.message);
@@ -234,7 +222,7 @@ const AddUser = () => {
         "An unexpected error occurred. Please check your input or try again later."
       );
     } finally {
-      setSubmitting(false);
+      setSubmitting(false);        
     }
   };
 
@@ -280,16 +268,14 @@ const AddUser = () => {
                         <Col md="12" className="text-end mt-3">
                           <div className="row align-items-center g-3 justify-content-end">
                             <div className="col-md-12 text-end button-items">
-                              {access.canSave && (
-                                <button type="submit" className="btn btn-info">
-                                  <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
-                                  {isSubmitting
-                                    ? "Please wait..."
-                                    : editUserData
-                                      ? "Update"
-                                      : "Save"}
-                                </button>
-                              )}
+                              <button type="submit" className="btn btn-info">
+                                <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
+                                {isSubmitting
+                                  ? "Please wait..."
+                                  : editUserData
+                                    ? "Update"
+                                    : "Save"}
+                              </button>
                               <button type="button" className="btn btn-danger" onClick={handleCancel}>
                                 <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel
                               </button>
@@ -391,7 +377,7 @@ const AddUser = () => {
                             <Select
                               name="roleId"
                               options={roleOptions}
-                              value={roleOptions.find(
+                              value={roleOptions.find( 
                                 opt => String(opt.value) === String(values.roleId)
                               )}
                               onChange={opt => {

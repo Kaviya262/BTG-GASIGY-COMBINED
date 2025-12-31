@@ -38,7 +38,6 @@ import {
 import Swal from 'sweetalert2';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import useAccess from "../../common/access/useAccess";
 
 const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -69,7 +68,6 @@ const initFilters = () => ({
 });
 
 const ProcurementManagePurchaseRequistion = () => {
-    const { access, applyAccessUI } = useAccess("Procurement", "Purchase Requisition");
     const history = useHistory();
     // Suppliers with added 'Active' property (for switch toggle)
     const initialSuppliers = [
@@ -119,11 +117,6 @@ const ProcurementManagePurchaseRequistion = () => {
     const [selectedPODetail, setSelectedPODetail] = useState(null);
     const [poOptions, setPoOptions] = useState([]); // ← Add this
 
-    // Discussion Modal State
-    const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
-    const [currentDiscussion, setCurrentDiscussion] = useState({ prId: null, comment: "", role: "" });
-    const [replyText, setReplyText] = useState("");
-
     const getSeverity = (Status) => {
         switch (Status) {
             case 'unqualified':
@@ -152,12 +145,6 @@ const ProcurementManagePurchaseRequistion = () => {
     ];
 
     const [prTypeMap, setPrTypeMap] = useState({});
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         const fetchPrTypes = async () => {
@@ -341,7 +328,6 @@ const ProcurementManagePurchaseRequistion = () => {
 
 
     const actionBodyTemplate = (rowData) => {
-        if (!access?.canEdit) return null;
         if (rowData.issubmitted == 0) {
             return (
                 <div className="d-flex align-items-center justify-content-center gap-3">
@@ -693,27 +679,10 @@ const ProcurementManagePurchaseRequistion = () => {
     };
 
 
-    // const actionclaimBodyTemplate = (rowData) => {
-    //     return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
-    //         onClick={() => handleShowDetails(rowData)}>{rowData.PR_NUMBER}</span>;
-    // };
-
     const actionclaimBodyTemplate = (rowData) => {
-        if (!access?.canViewDetails) {
-            return <span style={{ color: "black" }}>{rowData.PR_NUMBER}</span>;
-        }
-
-        return (
-            <span
-                style={{ cursor: "pointer", color: "blue" }}
-                className="btn-rounded btn btn-link"
-                onClick={() => handleShowDetails(rowData)}
-            >
-                {rowData.PR_NUMBER}
-            </span>
-        );
+        return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+            onClick={() => handleShowDetails(rowData)}>{rowData.PR_NUMBER}</span>;
     };
-
 
     const handleDownloadFile = async (data) => {
         const fileId = data.prid ? data.prid : 0;
@@ -749,33 +718,7 @@ const ProcurementManagePurchaseRequistion = () => {
     };
 
 
-    const handleDiscussionClick = (prId, comment, role) => {
-        setCurrentDiscussion({ prId, comment, role });
-        setReplyText("");
-        setDiscussionModalOpen(true);
-    };
-
-    const submitReply = () => {
-        if (!replyText.trim()) {
-            Swal.fire("Error", "Please enter a reply", "error");
-            return;
-        }
-        // Placeholder for API call
-        console.log(`Replying to PR ${currentDiscussion.prId} (${currentDiscussion.role}): ${replyText}`);
-
-        // Use a generic success message for now
-        Swal.fire({
-            icon: 'success',
-            title: 'Reply Sent',
-            text: 'Your reply has been sent successfully!',
-            timer: 2000,
-            showConfirmButton: false
-        });
-
-        setDiscussionModalOpen(false);
-    };
-
-    const ApproverGridIndicator = ({ approved, PRId, comment, role }) => {
+    const ApproverGridIndicator = ({ approved, PRId, comment }) => {
         let severity = 'secondary'; // default gray
         if (approved === "A") severity = 'success';
         else if (approved === "D") severity = 'warning';
@@ -783,15 +726,12 @@ const ProcurementManagePurchaseRequistion = () => {
         if (approved === "D") {
             return (
                 <>
-                    {/* Tooltip removed in favor of click action as requested */}
-                    {/* <Tooltip target={`.badge-${PRId}`} content={`Discussion comment : ${comment}`} position="top" /> */}
+                    <Tooltip target={`.badge-${PRId}`} content={`Discussion comment : ${comment}`} position="top" />
                     <Badge
                         className={`badge-${PRId}`}
                         value={approved}
                         severity={severity}
-                        style={{ fontSize: '13px', margin: '0', cursor: 'pointer' }}
-                        onClick={() => handleDiscussionClick(PRId, comment, role)}
-                        title="Click to view discussion and reply"
+                        style={{ fontSize: '13px', margin: '0' }}
                     />
                 </>
             );
@@ -894,14 +834,6 @@ const ProcurementManagePurchaseRequistion = () => {
         }
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -972,7 +904,7 @@ const ProcurementManagePurchaseRequistion = () => {
                                     <button type="button" className="btn btn-info" onClick={searchData}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={cancelFilter}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
                                     <button type="button" className="btn btn-secondary" onClick={exportToExcel}> <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Export</button>
-                                    <button type="button" className="btn btn-success" onClick={linkAddPurchaseRequisition} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={linkAddPurchaseRequisition}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -984,7 +916,7 @@ const ProcurementManagePurchaseRequistion = () => {
                                     value={requisitionWithLabels}
                                     paginator
                                     showGridlines
-                                    rows={access.records || 10}
+                                    rows={20}
                                     loading={loading}
                                     dataKey="PRId"
                                     filters={filters}
@@ -1054,19 +986,17 @@ const ProcurementManagePurchaseRequistion = () => {
                                         filterPlaceholder="Search by created date"
                                         className="text-left"
                                     /> */}
-                                    {access.canViewRate && (
-                                        <Column
-                                            field="NetAmount"
-                                            header="Total Amount"
-                                            filter
-                                            filterPlaceholder="Search by total amount"
-                                            className="text-right"
-                                            style={{ textAlign: "right" }}
-                                            body={(rowData) =>
-                                                rowData.NetAmount?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                                            }
-                                        />
-                                    )}
+                                    <Column
+                                        field="NetAmount"
+                                        header="Total Amount"
+                                        filter
+                                        filterPlaceholder="Search by total amount"
+                                        className="text-right"
+                                        style={{ textAlign: "right" }}
+                                        body={(rowData) =>
+                                            rowData.NetAmount?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                        }
+                                    />
                                     <Column
                                         field="CreatedByName"
                                         header="Created By"
@@ -1098,7 +1028,6 @@ const ProcurementManagePurchaseRequistion = () => {
                                         body={(r) => <ApproverGridIndicator approved={r.reqdmstatus}
                                             PRId={r.PRId}
                                             comment={r.pr_comment}
-                                            role="GM"
                                         />} />
                                     <Column
                                         className="text-center"
@@ -1109,7 +1038,6 @@ const ProcurementManagePurchaseRequistion = () => {
                                             approved={r.reqdrtatus}
                                             PRId={r.PRId}
                                             comment={r.pr_comment}
-                                            role="Director"
                                         />}
 
                                     />
@@ -1210,9 +1138,14 @@ const ProcurementManagePurchaseRequistion = () => {
                                                 >
                                                     {val || "N/A"}
                                                 </a>
-                                            ) : (label === "Supplier" || label === "Currency") ? (
+                                            ) : (label === "Supplier") ? (
                                                 <b>{val}</b>
-                                            ) : (
+                                            ) 
+                                            : (label === "Currency") ? (
+                                                <b style={{color:"green"}}>{val}</b>
+                                            ) 
+                                            
+                                            : (
                                                 val
                                             )}
                                         </Col>
@@ -1224,26 +1157,29 @@ const ProcurementManagePurchaseRequistion = () => {
 
                             <DataTable value={selectedDetail.Details} footerColumnGroup={
                                 <ColumnGroup>
-                                    {access.canViewRate && (
-                                        <Row>
-                                            <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column
-                                                footer={<b>{selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                                            />
-                                            <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column
-                                                footer={<b>{selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                                            />
-                                            <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column
-                                                footer={<b>{selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                                            />
-                                            <Column
-                                                footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                                            />
-                                        </Row>
-                                    )}
+                                    <Row>
+                                        <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+
+
+                                        <Column
+                                            footer={<b>{selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                                        />
+                                        <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                                        <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                                        <Column
+                                            footer={<b>{selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                                        />
+                                        <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                                        <Column
+                                            footer={<b>{selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                                        />
+
+                                        <Column
+                                                                            footerStyle={{color:"#ff5a00"}}
+
+                                            footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                                        />
+                                    </Row>
                                 </ColumnGroup>
                             }>
                                 <Column header="#" body={(_, { rowIndex }) => rowIndex + 1} />
@@ -1261,77 +1197,64 @@ const ProcurementManagePurchaseRequistion = () => {
                                     }
                                 />
                                 <Column field="UOMName" header="UOM" />
-                                {access.canViewRate && (
-                                    <Column
-                                        field="UnitPrice"
-                                        header="Unit Price"
-                                        body={(rowData) =>
-                                            rowData.UnitPrice?.toLocaleString('en-US', {
-                                                style: 'decimal',
-                                                minimumFractionDigits: 2
-                                            })
-                                        }
-                                    />
-                                )}
-                                {access.canViewRate && (
-                                    <Column
-                                        field="DiscountValue"
-                                        header="Discount"
-                                        body={(rowData) =>
-                                            rowData.DiscountValue?.toLocaleString('en-US', {
-                                                style: 'decimal',
-                                                minimumFractionDigits: 2
-                                            })
-                                        }
-                                        footer={selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                    />
-                                )}
+                                <Column
+                                    field="UnitPrice"
+                                    header="Unit Price"
+                                    body={(rowData) =>
+                                        rowData.UnitPrice?.toLocaleString('en-US', {
+                                            style: 'decimal',
+                                            minimumFractionDigits: 2
+                                        })
+                                    }
+                                />
+                                <Column
+                                    field="DiscountValue"
+                                    header="Discount"
+                                    body={(rowData) =>
+                                        rowData.DiscountValue?.toLocaleString('en-US', {
+                                            style: 'decimal',
+                                            minimumFractionDigits: 2
+                                        })
+                                    }
+                                    footer={selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                />
                                 <Column field="taxname" header="Tax" />
-                                {access.canViewRate && (
-                                    <Column field="TaxPerc" header="Tax %" />
-                                )}
-                                {access.canViewRate && (
-                                    <Column
-                                        field="TaxValue"
-                                        header="Tax Amount"
-                                        body={(rowData) =>
-                                            rowData.TaxValue?.toLocaleString('en-US', {
-                                                style: 'decimal',
-                                                minimumFractionDigits: 2
-                                            })
-                                        }
-                                        footer={selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                    />
-                                )}
-                                {access.canViewRate && (
-                                    <Column field="vatPerc" header="VAT %" />
-                                )}
-                                {access.canViewRate && (
-                                    <Column
-                                        field="vatValue"
-                                        header="VAT Amount"
-                                        body={(rowData) =>
-                                            rowData.vatValue?.toLocaleString('en-US', {
-                                                style: 'decimal',
-                                                minimumFractionDigits: 2
-                                            })
-                                        }
-                                        footer={selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                    />
-                                )}
-                                {access.canViewRate && (
-                                    <Column
-                                        field="NetTotal"
-                                        header="Total Amount"
-                                        body={(rowData) =>
-                                            rowData.NetTotal?.toLocaleString('en-US', {
-                                                style: 'decimal',
-                                                minimumFractionDigits: 2
-                                            })
-                                        }
-                                        footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                                    />
-                                )}
+                                <Column field="TaxPerc" header="Tax %" />
+                                <Column
+                                    field="TaxValue"
+                                    header="Tax Amount"
+                                    body={(rowData) =>
+                                        rowData.TaxValue?.toLocaleString('en-US', {
+                                            style: 'decimal',
+                                            minimumFractionDigits: 2
+                                        })
+                                    }
+                                    footer={selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                />
+                                <Column field="vatPerc" header="VAT %" />
+                                <Column
+                                    field="vatValue"
+                                    header="VAT Amount"
+                                    body={(rowData) =>
+                                        rowData.vatValue?.toLocaleString('en-US', {
+                                            style: 'decimal',
+                                            minimumFractionDigits: 2
+                                        })
+                                    }
+                                    footer={selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                />
+                                <Column
+                                    field="NetTotal"
+                                    header="Total Amount"
+                                    body={(rowData) =>
+                                        rowData.NetTotal?.toLocaleString('en-US', {
+                                            style: 'decimal',
+                                            minimumFractionDigits: 2
+                                        })
+                                    }
+                                    bodyStyle={{color:"#ff5a00"}}
+                                    footer={<b >{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                                />
                             </DataTable>
 
 
@@ -1425,40 +1348,6 @@ const ProcurementManagePurchaseRequistion = () => {
                 </ModalBody>
                 <ModalFooter>
                     <button type="button" className="btn btn-danger" onClick={() => setPoDetailVisible(false)}>
-                        Close
-                    </button>
-                </ModalFooter>
-            </Modal>
-
-            {/* Discussion Reply Modal */}
-            <Modal isOpen={discussionModalOpen} toggle={() => setDiscussionModalOpen(false)} centered>
-                <ModalHeader toggle={() => setDiscussionModalOpen(false)}>
-                    Discussion with {currentDiscussion.role}
-                </ModalHeader>
-                <ModalBody>
-                    <div className="mb-3">
-                        <Label className="fw-bold">Message from {currentDiscussion.role}:</Label>
-                        <div className="p-3 bg-light border rounded text-secondary">
-                            {currentDiscussion.comment ? currentDiscussion.comment : <em>No comment data available.</em>}
-                        </div>
-                    </div>
-                    <div className="mb-3">
-                        <Label className="fw-bold" for="replyInput">Your Reply:</Label>
-                        <Input
-                            type="textarea"
-                            id="replyInput"
-                            rows="4"
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            placeholder="Type your reply here..."
-                        />
-                    </div>
-                </ModalBody>
-                <ModalFooter>
-                    <button type="button" className="btn btn-primary" onClick={submitReply}>
-                        <i className="bx bx-send label-icon font-size-16 align-middle me-2"></i> Reply
-                    </button>
-                    <button type="button" className="btn btn-secondary" onClick={() => setDiscussionModalOpen(false)}>
                         Close
                     </button>
                 </ModalFooter>

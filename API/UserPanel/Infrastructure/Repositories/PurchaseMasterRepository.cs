@@ -1,12 +1,9 @@
 ﻿using BackEnd.Master;
 using BackEnd.Procurement;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
 using Core.Models;
 using Core.Procurement.Master;
 using Dapper;
-using MediatR;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -19,12 +16,10 @@ namespace Infrastructure.Repositories
    public class PurchaseMasterRepository: IPurchaseMasterRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
 
-        public PurchaseMasterRepository(IUnitOfWorkDB2 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository)
+        public PurchaseMasterRepository(IUnitOfWorkDB2 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
 
         public async Task<object> GetUserDetails(Int32 branchid,string Searchtext,int orgid,int id)
@@ -51,20 +46,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetUserDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -98,20 +79,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetDepartMentDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -145,20 +112,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetPurchaseTypeDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -191,20 +144,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetUomDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -239,20 +178,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetItemDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id, groupid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -287,20 +212,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetItemGroup),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -334,20 +245,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetPRType),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -381,20 +278,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetSupplierDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -429,20 +312,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetPOSupplierDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -477,20 +346,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetPaymentTermsDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -525,20 +380,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseMasterRepository),
-                    Method_Function = nameof(GetDeliveryTermsDetails),
-                    UserId = 0,
-                    ScreenName = "Purchase Master",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, Searchtext, orgid, id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,

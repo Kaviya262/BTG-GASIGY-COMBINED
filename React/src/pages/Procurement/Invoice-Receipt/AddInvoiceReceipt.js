@@ -37,13 +37,12 @@ import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import { useHistory } from "react-router-dom";
-import {
+import {GetPaymentMethods,
   GetPurchaseRequisitionSupplierList, GetGRNList, GetSupplierList, GetIRList, SaveIRN, EditIRN, UpdateIRN, GetInvoiceReceiptAddDetails, SaveAddIRNGRNDet, GenerateSPC, GetAllIRNList, uploadIRNAttachment, GetGRNById, DownloadInvoiceReceiptFile, IRNGetBy
 
 } from "common/data/mastersapi";
 import Swal from "sweetalert2";
 import { startOfWeek, endOfWeek } from "date-fns";
-import useAccess from "../../../common/access/useAccess";
 // const poOptions = [...new Set(sampleItems.map((i) => i.poNo))].map((po) => ({
 //   label: `PO-${po}`,
 //   value: po
@@ -71,7 +70,6 @@ const getUserDetails = () => {
 }
 
 const AddInvoiceReceipt = () => {
-  const { access, applyAccessUI } = useAccess("Procurement", "IRN");
   const formikRef = useRef();
   const today = new Date();
   const defaultFromDate = startOfWeek(today, { weekStartsOn: 1 }); // Monday
@@ -102,14 +100,9 @@ const AddInvoiceReceipt = () => {
   const [currentRow, setCurrentRow] = useState(null); // which row we are uploading for
   const [newFiles, setNewFiles] = useState([]);
   const [existingFiles, setExistingFiles] = useState([]);
+    const [modeOfPaymentOptions, setModeOfPaymentOptions] = useState([]);
 
   const toggleModal = () => setShowModal(!showModal);
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   // useEffect(() => {
   //   handleSearch(dueFromDate, dueToDate);
@@ -135,6 +128,16 @@ const AddInvoiceReceipt = () => {
               schema.required("Invoice Date is required").typeError("Invalid date"),
             otherwise: (schema) => schema.nullable(),
           }),
+          modeOfPaymentId: Yup.number()
+          .nullable()
+          .when("grnId", {
+            is: (grnId) => selectedItems.includes(grnId),   // GRN checkbox selected
+            then: Yup.number()
+              .min(1, "Mode of Payment is required")
+              .required("Mode of Payment is required"),
+            otherwise: Yup.number().nullable(),             // Not selected → ignore
+          }),
+      
           dueDate: Yup.date().nullable().when("grnId", {
             is: (grnId) => selectedItems.includes(grnId),
             then: (schema) =>
@@ -232,6 +235,7 @@ const AddInvoiceReceipt = () => {
           const formValues = {
             items: [
               {
+                 modeOfPaymentId:header.ModeOfPaymentId,
                 receiptnote_hdr_id: header.receiptnote_hdr_id,
                 supplierId: header.supplier_id,
                 supplierName: header.suppliername,
@@ -461,8 +465,19 @@ const AddInvoiceReceipt = () => {
     if (isEditMode) {
       loadEditData(irnid);
     }
+    const fetchDropdownData = async () => {
+    var paymentModes=await GetPaymentMethods(1,0);
 
+    const paymentOptions = Array.isArray(paymentModes)?
+            paymentModes.map((mode)=>({
+                 value:  mode.PaymentMethodId,
+                 label: mode.PaymentMethod
+            })):[];
 
+            setModeOfPaymentOptions(paymentOptions);
+    
+          }
+          fetchDropdownData();
     // load();
   }, []);
   const loadEditData = async (id) => {
@@ -544,6 +559,7 @@ const AddInvoiceReceipt = () => {
             poNo: po,
             grnNo: null,
             poid: inv.po_id,
+            modeOfPaymentId:0,
             grnid: 0,
             spc: inv.spc,
             // 🔹 all items for this PO
@@ -567,6 +583,7 @@ const AddInvoiceReceipt = () => {
             poNo: null,
             grnNo: grn,
             poid: 0,
+            modeOfPaymentId:0,
             spc: inv.spc,
             grnid: inv.grn_id,
             // 🔹 all items for this GRN
@@ -933,6 +950,7 @@ const AddInvoiceReceipt = () => {
           grnId: item.grnid,
           grnNo: item.grnno,
           poid: item.poid,
+          modeOfPaymentId:item.modeOfPaymentId,
           pono: item.pono,
           grnDate: item.grndate,
           supplierId: item.supplierid,
@@ -1191,6 +1209,7 @@ const AddInvoiceReceipt = () => {
           receiptnote_hdr_id: row.receiptnote_hdr_id || 0,
           grnid: row.grnId,
           poid: row.poid || 0,
+          modeOfPaymentId:row.modeOfPaymentId ||0,
           supplierid: row.supplierId,
           invoiceno: row.invoiceNo || "",
           invoicedate: searchFormatDate(row.invoiceDate) || "",
@@ -1223,27 +1242,9 @@ const AddInvoiceReceipt = () => {
         : await SaveAddIRNGRNDet(payload);
 
       if (!res?.status) {
-    // Check if message contains balance allocation issue
-    const balanceMsgKeywords = [
-        "Allocated amount exceeds remaining balance",
-        "No remaining balance available"
-    ];
-
-    const isBalanceWarning = balanceMsgKeywords.some(keyword => res?.message.includes(keyword));
-
-    if (isBalanceWarning) {
-        Swal.fire({
-            title: "Warning",
-            text: res?.message,
-            icon: "warning", 
-            confirmButtonText: "OK"
-        });
-    } else {
         Swal.fire("Error", res?.message || "Operation failed", "error");
-    }
-    return;
-}
-
+        return;
+      }
 
       // 4️⃣ Upload attachments for each item
       for (const item of filteredItems) {
@@ -1319,10 +1320,10 @@ const AddInvoiceReceipt = () => {
     const handleDownload = (e) => {
       e.preventDefault();
       let fullPath = rowData.filepath;
-      if (!fullPath.endsWith('/') && !fullPath.endsWith('\\')) {
-        fullPath += '/';
-      }
-      fullPath += rowData.filename;
+    if (!fullPath.endsWith('/') && !fullPath.endsWith('\\')) {
+      fullPath += '/';
+    }
+    fullPath += rowData.filename;
       DownloadInvoiceReceiptFile(rowData.receiptnote_hdr_id, fullPath);
     };
 
@@ -1348,21 +1349,18 @@ const AddInvoiceReceipt = () => {
                 <div>
                   <div className="row align-items-center g-3 justify-content-end mb-3">
                     <div className="col-md-12 button-items d-flex gap-2 justify-content-end">
-                      {access.canSave && (
-                        <button
-                          type="button"
-                          className="btn btn-info"
-                          onClick={() => formikRef.current.submitForm()}
-                        >
-                          <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
 
-                        </button>
-                      )}
-                      {access.canPost && (
-                        <button type="button" className="btn btn-primary me-2" onClick={handleGenerateSPC} title="Generate Supplier Payment Claim">
-                          <i className="bx bxs-file label-icon font-size-16 align-middle me-2"></i>Generate SPC
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="btn btn-info"
+                        onClick={() => formikRef.current.submitForm()}
+                      >
+                        <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
+
+                      </button>
+                      <button type="button" className="btn btn-primary me-2" onClick={handleGenerateSPC} title="Generate Supplier Payment Claim">
+                        <i className="bx bxs-file label-icon font-size-16 align-middle me-2"></i>Generate SPC
+                      </button>
                       <button
                         type="button"
                         className="btn btn-danger"
@@ -1442,24 +1440,16 @@ const AddInvoiceReceipt = () => {
                               <th>Supplier</th>
                               <th>PO No.</th>
                               <th>GRN No.</th>
-                              <th>Invoice No.</th>
-                              <th>Invoice Date</th>
-                              <th>Due Date</th>
-                              {access.canViewRate && (
-                                <th style={{ width: "10%" }}>PO Amt</th>
-                              )}
-                              {access.canViewRate && (
-                                <th style={{ width: "10%" }}>Advance Payment</th>
-                              )}
-                              {access.canViewRate && (
-                                <th style={{ width: "10%" }}>Already Received</th>
-                              )}
-                              {access.canViewRate && (
-                                <th style={{ width: "10%" }}>Allocated Amt</th>
-                              )}
-                              {access.canViewRate && (
-                                <th style={{ width: "10%" }}>Balance Amt</th>
-                              )}
+                              <th style={{ width: "6%" }}>Invoice No.</th>
+                              <th style={{ width: "6%" }}>Invoice Date</th>
+                              <th style={{ width: "6%" }}>Due Date</th>
+                              <th style={{ width: "10%" }}>Mode of Payment</th>
+
+                              <th style={{ width: "10%" }}>PO Amt</th>
+                              <th style={{ width: "10%" }}>Advance Payment</th>
+                              <th style={{ width: "10%" }}>Already Received</th>
+                              <th style={{ width: "10%" }}>Allocated Amt</th>
+                              <th style={{ width: "10%" }}>Balance Amt</th>
                               <th>Upload Invoice</th>
                               <th style={{ width: "20px" }}>
                                 <input
@@ -1481,37 +1471,16 @@ const AddInvoiceReceipt = () => {
                                 <td>{item.pono}</td>
                                 {/* GRN No → Link */}
                                 <td>
-                                  {access?.canViewDetails ? (
-                                     <span style={{ whiteSpace: "nowrap" }}>
-                                     {item.grnNo.split(",").map((grn,i,arr)=>
-                                      {
-                                      const grnList = item.grnNo.split(",");
-                                      const idList = item.grnId.split(",");
-                                      const singleId = idList[grnList.indexOf(grn)];
-
-                                      return (                                         
-                                          <React.Fragment  key={i}>
-                                            <a
-                                            href="#"
-                                            onClick={(e) => {
-                                            e.preventDefault();
-                                            handleShowDetails({
-                                              ...item,
-                                              grnId :singleId.trim(),
-                                             });
-                                            }}
-                                            style={{ textDecoration: "underline", cursor: "pointer"}}
-                                          >                                                                       
-                                      {grn.trim()}
-                                      </a>
-                                      {i<arr.length-1 && ", "}
-                                      </React.Fragment>
-                                      );
-                                  })}
-                                  </span> 
-                                  ) : (
-                                    <span>{item.grnNo}</span>
-                                  )}
+                                  <a
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleShowDetails(item);
+                                    }}
+                                    style={{ textDecoration: "underline", cursor: "pointer" }}
+                                  >
+                                    {item.grnNo}
+                                  </a>
                                 </td>
 
                                 {/* Invoice No */}
@@ -1519,10 +1488,8 @@ const AddInvoiceReceipt = () => {
                                   <Input
                                     name={`items[${index}].invoiceNo`}
                                     maxLength="20"
-                                    data-access="edit"
                                     value={values.items[index].invoiceNo || ""}
                                     onChange={(e) => setFieldValue(`items[${index}].invoiceNo`, e.target.value)}
-                                    disabled={!access?.canEdit}
                                     invalid={!!(errors.items?.[index]?.invoiceNo && touched.items?.[index]?.invoiceNo)}
                                   />
 
@@ -1540,7 +1507,6 @@ const AddInvoiceReceipt = () => {
                                       : ""
                                       }`}
                                     value={item.invoiceDate || null}
-                                    // disabled={!access?.canEdit}
                                     placeholder="DD-MM-YYYY"
                                     onChange={(date) =>
                                       setFieldValue(
@@ -1552,8 +1518,6 @@ const AddInvoiceReceipt = () => {
                                       altInput: true,
                                       altFormat: "d-M-Y", // display format
                                       dateFormat: "Y-m-d", // internal value YYYY-MM-DD
-                                      clickOpens: access?.canEdit,
-                                      disabled: !access?.canEdit,
                                     }}
                                   />
                                   <ErrorMessage
@@ -1582,8 +1546,6 @@ const AddInvoiceReceipt = () => {
                                       altInput: true,
                                       altFormat: "d-M-Y",
                                       dateFormat: "Y-m-d",
-                                      clickOpens: access?.canEdit,
-                                      disabled: !access?.canEdit,
                                     }}
                                   />
                                   <ErrorMessage
@@ -1592,115 +1554,130 @@ const AddInvoiceReceipt = () => {
                                     className="invalid-feedback"
                                   />
                                 </td>
-                                {access.canViewRate && (
-                                  <td style={{ textAlign: "right" }}>
-                                    {/* {values.items[index].poAmount || "0.00"} */}
-                                    {values.items[index].poAmount}
-                                  </td>
-                                )}
-                                {access.canViewRate && (
-                                  <td style={{ textAlign: "right" }}>
-                                    {/* {values.items[index].advancePayment || "0.00"} */}
-                                    {/* {parseFloat(values.items[index].advancePayment || 0).toLocaleString("en-US", {
+                                <td>
+  <Select
+     className={` ${errors.items?.[index]?.modeOfPaymentId && touched.items?.[index]?.modeOfPaymentId
+      ? "is-invalid"
+      : ""
+      }`}
+
+    name={`items[${index}].modeOfPaymentId`}
+    options={modeOfPaymentOptions}
+    value={
+      modeOfPaymentOptions.find(
+        (opt) => opt.value === values.items[index].modeOfPaymentId
+      ) || null
+    }
+    placeholder="Select"
+    onChange={(selected) => {
+      setFieldValue(`items[${index}].modeOfPaymentId`, selected?.value || 0);
+     }}
+    menuPortalTarget={document.body} // avoid dropdown clipping inside table
+    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+  />
+  <ErrorMessage
+                                    name={`items[${index}].modeOfPaymentId`}
+                                    component="div"
+                                    className="invalid-feedback"
+                                  />
+</td>
+
+                                <td style={{ textAlign: "right" }}>
+                                  {/* {values.items[index].poAmount || "0.00"} */}
+                                  {values.items[index].poAmount}
+                                </td>
+                                <td style={{ textAlign: "right" }}>
+                                  {/* {values.items[index].advancePayment || "0.00"} */}
+                                  {/* {parseFloat(values.items[index].advancePayment || 0).toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
                                   })} */}
 
-                                    {values.items[index].advancePayment}
-                                  </td>
-                                )}
-                                {access.canViewRate && (
-                                  <td style={{ textAlign: "right" }}>
-                                    {/* {values.items[index].alreadyReceived || "0.00"} */}
-                                    {/* {parseFloat(values.items[index].alreadyReceived || 0).toLocaleString("en-US", {
+                                  {values.items[index].advancePayment}
+                                </td>
+                                <td style={{ textAlign: "right" }}>
+                                  {/* {values.items[index].alreadyReceived || "0.00"} */}
+                                  {/* {parseFloat(values.items[index].alreadyReceived || 0).toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
                                   })} */}
 
-                                    {values.items[index].alreadyReceived}
-                                  </td>
-                                )}
-                                {access.canViewRate && (
-                                  <td>
-                                    <Input
-                                      style={{ textAlign: "right" }}
-                                      name={`items[${index}].balanceAmount`}
-                                      value={values.items[index].balanceAmount ?? ""}
-                                      disabled={!access?.canEdit}
-                                      placeholder="0.00"
-                                      onChange={(e) => {
-                                        let input = e.target;
-                                        let raw = input.value.replace(/,/g, "");
-                                        if (!/^\d*(\.\d{0,3})?$/.test(raw)) return;
+                                  {values.items[index].alreadyReceived}
+                                </td>
+                                <td>
+                                  <Input
+                                    style={{ textAlign: "right" }}
+                                    name={`items[${index}].balanceAmount`}
+                                    value={values.items[index].balanceAmount ?? ""}
+                                    placeholder="0.00"
+                                    onChange={(e) => {
+                                      let input = e.target;
+                                      let raw = input.value.replace(/,/g, "");
+                                      if (!/^\d*(\.\d{0,3})?$/.test(raw)) return;
 
 
-                                        setFieldValue(`items[${index}].balanceAmount`, raw);
-                                      }}
+                                      setFieldValue(`items[${index}].balanceAmount`, raw);
+                                    }}
 
-                                      onBlur={(e) => {
-                                        const raw = String(e.target.value || "").replace(/,/g, "");
-                                        const enteredBalance = parseFloat(raw) || 0;
+                                    onBlur={(e) => {
+                                      const raw = String(e.target.value || "").replace(/,/g, "");
+                                      const enteredBalance = parseFloat(raw) || 0;
 
-                                        const parseNum = (v) => parseFloat(String(v || "0").replace(/,/g, "")) || 0;
+                                      const parseNum = (v) => parseFloat(String(v || "0").replace(/,/g, "")) || 0;
 
-                                        const poAmt = parseNum(values.items[index].poAmount);
-                                        const adv = parseNum(values.items[index].advancePayment);
-                                        const already = parseNum(values.items[index].alreadyReceived);
-                                        const oribal = parseNum(values.items[index].oribal);
+                                      const poAmt = parseNum(values.items[index].poAmount);
+                                      const adv = parseNum(values.items[index].advancePayment);
+                                      const already = parseNum(values.items[index].alreadyReceived);
+                                      const oribal = parseNum(values.items[index].oribal);
 
-                                        // system balance = PO - (Advance + Already)
-                                        const systemBalance = poAmt - (adv + already);
-                                        debugger;
-                                        // allocated = systemBalance - enteredBalance
-                                        let allocate = oribal - enteredBalance;
-                                        if (allocate < 0) allocate = 0;
+                                      // system balance = PO - (Advance + Already)
+                                      const systemBalance = poAmt - (adv + already);
+                                      debugger;
+                                      // allocated = systemBalance - enteredBalance
+                                      let allocate = oribal - enteredBalance;
+                                      if (allocate < 0) allocate = 0;
 
-                                        // Format Balance and Allocated with commas only (keep decimals as typed)
-                                        const formatWithCommas = (num) => {
-                                          if (!num && num !== 0) return "";
-                                          const [intPart, decPart] = num.toString().split(".");
-                                          const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                                          return decPart !== undefined ? `${formattedInt}.${decPart}` : formattedInt;
-                                        };
+                                      // Format Balance and Allocated with commas only (keep decimals as typed)
+                                      const formatWithCommas = (num) => {
+                                        if (!num && num !== 0) return "";
+                                        const [intPart, decPart] = num.toString().split(".");
+                                        const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                        return decPart !== undefined ? `${formattedInt}.${decPart}` : formattedInt;
+                                      };
 
-                                        setFieldValue(`items[${index}].balanceAmount`, formatWithCommas(enteredBalance));
-                                        setFieldValue(`items[${index}].allocated`, formatWithCommas(allocate));
-                                      }}
-                                      invalid={
-                                        !!(
-                                          errors.items?.[index]?.balanceAmount &&
-                                          touched.items?.[index]?.balanceAmount
-                                        )
-                                      }
-                                    />
+                                      setFieldValue(`items[${index}].balanceAmount`, formatWithCommas(enteredBalance));
+                                      setFieldValue(`items[${index}].allocated`, formatWithCommas(allocate));
+                                    }}
+                                    invalid={
+                                      !!(
+                                        errors.items?.[index]?.balanceAmount &&
+                                        touched.items?.[index]?.balanceAmount
+                                      )
+                                    }
+                                  />
 
-                                    <ErrorMessage
-                                      name={`items[${index}].balanceAmount`}
-                                      component="div"
-                                      className="invalid-feedback"
-                                    />
-                                  </td>
-                                )}
-                                {access.canViewRate && (
-                                  <td style={{ textAlign: "right" }}>
-                                    {/* {values.items[index].allocated || "0.00"} */}
-                                    {/* {parseFloat(values.items[index].allocated || 0).toLocaleString("en-US", {
+                                  <ErrorMessage
+                                    name={`items[${index}].balanceAmount`}
+                                    component="div"
+                                    className="invalid-feedback"
+                                  />
+                                </td>
+                                <td style={{ textAlign: "right" }}>
+                                  {/* {values.items[index].allocated || "0.00"} */}
+                                  {/* {parseFloat(values.items[index].allocated || 0).toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
                                   })} */}
-                                    {values.items[index].allocated}
-                                  </td>
-                                )}
+                                  {values.items[index].allocated}
+                                </td>
 
                                 {/* Upload Invoice */}
                                 <td>
-                                  {access.canEdit && (
-                                    <button
-                                      type="button"
-                                      className="btn btn-success"
-                                      onClick={() => handleOpenUpload(index, values)}
-                                    >
-                                      <i className="fa fa-paperclip label-icon font-size-14 align-middle"></i>{" "}
-                                      Attach
-                                    </button>
-                                  )}
+                                  <button
+                                    type="button"
+                                    className="btn btn-success"
+                                    onClick={() => handleOpenUpload(index, values)}
+                                  >
+                                    <i className="fa fa-paperclip label-icon font-size-14 align-middle"></i>{" "}
+                                    Attach
+                                  </button>
 
                                   {item.attachments?.length > 0 && (
                                     <span className="badge bg-success ms-2">
@@ -1712,7 +1689,6 @@ const AddInvoiceReceipt = () => {
                                   <input
                                     type="checkbox"
                                     value={item.grnId}
-                                    disabled={!access?.canEdit}
                                     checked={selectedItems.includes(item.grnId)}
                                     onChange={(e) => handleCheckBoxChange(e, item)}
                                   />

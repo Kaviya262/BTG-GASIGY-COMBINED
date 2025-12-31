@@ -21,7 +21,6 @@ import {
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { startOfToday } from 'date-fns';
-import useAccess from "../../common/access/useAccess";
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -34,13 +33,6 @@ const initFilters = () => ({
 
 const ManageCurrency = () => {
     const history = useHistory();
-    const { access, applyAccessUI } = useAccess("Masters", "Currency");
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
     const [currency, setCurrency] = useState([]);
     const [globalFilterValue, setGlobalFilterValue] = useState("");
     const [filters, setFilters] = useState(initFilters());
@@ -282,11 +274,8 @@ const ManageCurrency = () => {
         }
     };
 
-    const actionBodyTemplate = (rowData) => {
+    const actionBodyTemplate = (rowData) => { 
         console.log(selectedRow, "rowData :", rowData);
-        if (!access?.canEdit) {
-            return null;
-        }
         if (rowData.IsActive == 1) {
             return (
                 <div className="actions">
@@ -301,7 +290,7 @@ const ManageCurrency = () => {
                 </div>
             )
         }
-        else {
+        else {      
             return (
                 <div className="actions">
 
@@ -405,15 +394,6 @@ const ManageCurrency = () => {
             </div>
         </div>
     );
-
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -453,7 +433,7 @@ const ManageCurrency = () => {
                                 <div className="col-12 col-lg-4 col-md-3 col-sm-3  button-items" style={{ textAlign: "right" }}>
                                     <button type="button" className="btn btn-info" onClick={handleSearch}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={handleSearchCancel}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-                                    <button type="button" className="btn btn-success" onClick={openNewCurrencyModal} data-access="new">
+                                    <button type="button" className="btn btn-success" onClick={openNewCurrencyModal}>
                                         <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New
                                     </button>
 
@@ -465,7 +445,7 @@ const ManageCurrency = () => {
                         <Col lg="12">
                             <Card>
                                 <DataTable
-                                    value={filteredCurrency} paginator rows={access.records || 10}
+                                    value={filteredCurrency} paginator rows={10}
                                     loading={loading} dataKey="CurrencyId" filters={filters}
                                     globalFilterFields={["CurrencyCode", "CurrencyName", "CurrencySymbol"]}
                                     header={renderHeader()}
@@ -553,7 +533,7 @@ const ManageCurrency = () => {
                                                     </Row>
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 text-end button-items">
-                                                            <Button type="submit" data-access="save" className="btn btn-info" disabled={isSubmitting}>
+                                                            <Button type="submit" className="btn btn-info" disabled={isSubmitting}>
                                                                 <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
                                                                 {isSubmitting ? editMode ? "Updating" : "Saving" :
                                                                     editMode ? "Update" : "Save"}

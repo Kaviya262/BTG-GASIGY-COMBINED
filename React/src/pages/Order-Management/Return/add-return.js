@@ -36,12 +36,10 @@ import {
   UpdateReturnOrder,
 } from "../../../common/data/mastersapi";
 import { toast } from "react-toastify";
-import useAccess from "../../../common/access/useAccess";
 
 const animatedComponents = makeAnimated();
 
 const AddReturn = () => {
-  const { access, applyAccessUI } = useAccess("Sales", "Return Order");
   const history = useHistory();
   const { id } = useParams();
   const [isClearable] = useState(true);
@@ -103,12 +101,6 @@ const AddReturn = () => {
       otherwise: Yup.array().nullable(),
     }),
   });
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   // Only fetch seq no for NEW records
   useEffect(() => {
@@ -434,7 +426,6 @@ const AddReturn = () => {
                               color="info"
                               onClick={() => setSubmitType(0)}
                               disabled={isSubmitting}
-                              data-access="save"
                             >
                               Save
                             </Button>{" "}
@@ -443,7 +434,6 @@ const AddReturn = () => {
                               color="success"
                               onClick={() => setSubmitType(1)}
                               disabled={isSubmitting}
-                              data-access="post"
                             >
                               Post
                             </Button>{" "}

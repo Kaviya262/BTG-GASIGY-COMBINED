@@ -1,35 +1,28 @@
-﻿using BackEnd.Currency;
-using BackEnd.Procurement.InvoiceReceipt;
+﻿using System.Data;
+using System.Dynamic;
 using BackEnd.Procurement.PurchaseOrder;
-using BackEnd.Shared;
+using BackEnd.Procurement.InvoiceReceipt;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Supplier;
-using Core.Master.Transactionlog;
 using Core.Models;
-using Core.Procurement.InvoiceReceipt;
 using Dapper;
+using Core.Procurement.InvoiceReceipt;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using BackEnd.Shared;
+using BackEnd.Currency;
+using Core.Master.Supplier;
+using Org.BouncyCastle.Ocsp;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
-using Org.BouncyCastle.Ocsp;
-using System.Data;
-using System.Dynamic;
-using System.Text.Json;
 
 namespace Infrastructure.Repositories
 {
     public class InvoiceReceiptRepository : IInvoiceReceiptRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
         string IPAddress = "";
-        public InvoiceReceiptRepository(IUnitOfWorkDB2 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public InvoiceReceiptRepository(IUnitOfWorkDB2 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
         public async Task<object> GetPONoAutoComplete(int supplier_id, int category_id, int org_id)
@@ -57,19 +50,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(GetPONoAutoComplete),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { supplier_id, category_id, org_id })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -103,19 +85,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(GetSupplierGRNAutoComplete),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { supplier_id, category_id, org_id })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -148,19 +119,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(getSupplierPODetailsView),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { po_id, org_id, cid })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -194,19 +154,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(GetInvoiceReceiptAll),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { supplierid, org_id, branchid })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -239,19 +188,6 @@ namespace Infrastructure.Repositories
                 const string getLastInsertedIdSql = "SELECT LAST_INSERT_ID();";
                 var insertedHeaderId = await _connection.QuerySingleAsync<int>(getLastInsertedIdSql);
 
-                // Log transaction
-                await LogTransactionAsync(
-                    id: insertedHeaderId,
-                    branchId: Obj.Header.branchid,
-                    orgId: Obj.Header.orgid,
-                    actionType: "Insert",
-                    actionDescription: "Added new IRN Header",
-                    oldValue: null,
-                    newValue: Obj.Header,
-                    tableName: "tbl_invoice_receiptnote_header",
-                    userId: Obj.Header.userid
-                );
-
                 int recipid = insertedHeaderId;              
 
                 string updatesql = "";
@@ -283,21 +219,7 @@ namespace Infrastructure.Repositories
                         grn_id=detail.grn_id
 
                     });
-
-                    int insertSummaryId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertSummaryId,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Insert",
-                        actionDescription: "Added new Irn Summary",
-                        oldValue: null,
-                        newValue: Obj.Header,
-                        tableName: "tbl_invoicereceipt_summary",
-                        userId: Obj.Header.userid
-                    );
-
+                     
                 }
  
                 foreach (var req in Obj.Requisition)
@@ -330,20 +252,6 @@ namespace Infrastructure.Repositories
                         ip_address = req.ip_address,
                         currencyid=req.currencyid
                     });
-
-                    int insertDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertDetailsId,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Insert",
-                        actionDescription: "Added new Irn Details",
-                        oldValue: null,
-                        newValue: Obj.Header,
-                        tableName: "tbl_invoicereceipt_detail",
-                        userId: Obj.Header.userid
-                    );
                 }
 
                 if (Obj.Header.isGenerated == true)
@@ -360,19 +268,8 @@ namespace Infrastructure.Repositories
                 };
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(AddIRN),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -391,19 +288,8 @@ namespace Infrastructure.Repositories
 
                 return new ResponseModel() { Data = null, Message = "Invoice Receipt Generated successfully", Status = true };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(GenerateInvoiceReceipt),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
                 return new ResponseModel() { Data = null, Message = "Something went wrong", Status = false };
             }
         }
@@ -413,38 +299,6 @@ namespace Infrastructure.Repositories
             try
             {
                 int Result = 0;
-                var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_invoice_receiptnote_header where receiptnote_hdr_id = @receiptnote_hdr_id", new { receiptnote_hdr_id = Obj.Header.receiptnote_hdr_id });
-                var oldDetails = new List<object>();
-                foreach (var d in Obj.Details)
-                {
-                    if (d.receiptsummarydtl_id > 0)
-                    {
-                        var oldDetailvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_invoicereceipt_summary where receiptsummarydtl_id = @receiptsummarydtl_id", new { receiptsummarydtl_id = d.receiptsummarydtl_id });
-
-
-                        oldDetails.Add(oldDetailvalue);
-                    }
-                    else
-                    {
-                        oldDetails.Add(null);
-                    }
-                }
-                var oldRequisition = new List<object>();
-                foreach (var r in Obj.Requisition)
-                {
-                    if (r.receiptdtl_id > 0)
-                    {
-                        var oldDetailvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_invoicereceipt_detail where receiptdtl_id = @receiptdtl_id", new { receiptdtl_id = r.receiptdtl_id });
-
-
-                        oldRequisition.Add(oldDetailvalue);
-                    }
-                    else
-                    {
-                        oldRequisition.Add(null);
-                    }
-                }
-
                 const string headerSql = @"
             UPDATE tbl_invoice_receiptnote_header
             SET 
@@ -460,18 +314,6 @@ namespace Infrastructure.Repositories
 
 
                 await _connection.ExecuteAsync(headerSql, Obj.Header);
-
-                await LogTransactionAsync(
-                    id: Obj.Header.receiptnote_hdr_id,
-                    branchId: Obj.Header.branchid,
-                    orgId: Obj.Header.orgid,
-                    actionType: "Update",
-                    actionDescription: "Updated Irn Header",
-                    oldValue: oldvalue,
-                    newValue: Obj.Header,
-                    tableName: "tbl_invoice_receiptnote_header",
-                    userId: Obj.Header.userid
-                );
 
                 int recipid = Obj.Header.receiptnote_hdr_id;
                 var pridToPodidMap = new Dictionary<int, int>();
@@ -489,21 +331,7 @@ namespace Infrastructure.Repositories
                         `IsActive`)
                         VALUES (@recipid, @po_id, @invoice_no, @invoice_date, @due_date, @file_attach_path,@file_name,@spc,@grn_id,@isactive);
                         ";
-
                         receiptsummarydtl_id = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: receiptsummarydtl_id,
-                            branchId: Obj.Header.branchid,
-                            orgId: Obj.Header.orgid,
-                            actionType: "Insert",
-                            actionDescription: "Added new Irn Summary",
-                            oldValue: null,
-                            newValue: Obj.Details,
-                            tableName: "tbl_invoicereceipt_summary",
-                            userId: Obj.Header.userid
-                        );
                     }
                     else
                     {
@@ -529,17 +357,6 @@ namespace Infrastructure.Repositories
                         userid = detail.userid
                     });
                     receiptsummarydtl_id = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    await LogTransactionAsync(
-                        id: detail.receiptsummarydtl_id,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Update",
-                        actionDescription: "Updated Irn summary",
-                        oldValue: oldDetails,
-                        newValue: Obj.Details,
-                        tableName: "tbl_invoicereceipt_summary",
-                        userId: Obj.Header.userid
-                    );
                 }
 
                 foreach (var req in Obj.Requisition)
@@ -554,20 +371,6 @@ namespace Infrastructure.Repositories
                         VALUES
                         (@receiptnote_hdr_id,@receiptsummarydtl_id, @item_id, @unit_price, @qty, @rate, @total_amount, @tax_perc, @total_value, @vat_perc, @vat_value,
                          @net_amount, @isActive, @ip_address);";
-
-                        int insertDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: insertDetailsId,
-                            branchId: Obj.Header.branchid,
-                            orgId: Obj.Header.orgid,
-                            actionType: "Insert",
-                            actionDescription: "Added new Irn Details",
-                            oldValue: null,
-                            newValue: Obj.Header,
-                            tableName: "tbl_invoicereceipt_detail",
-                            userId: Obj.Header.userid
-                        );
                     }
                     else
                     {
@@ -596,18 +399,6 @@ namespace Infrastructure.Repositories
                         isactive = req.isactive,
                         ip_address = req.ip_address,
                     });
-
-                    await LogTransactionAsync(
-                        id: req.receiptdtl_id,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Update",
-                        actionDescription: "Updated Irn Details",
-                        oldValue: oldDetails,
-                        newValue: Obj.Details,
-                        tableName: "tbl_invoicereceipt_detail",
-                        userId: Obj.Header.userid
-                    );
                 }
 
                 if (Obj.Header.isGenerated == true)
@@ -624,19 +415,8 @@ namespace Infrastructure.Repositories
                 };
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(updateSupplierPODetailsView),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -689,19 +469,8 @@ namespace Infrastructure.Repositories
                     };
                 }
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(getSupplierPODetailsEditView),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { po_id, org_id })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -727,19 +496,8 @@ namespace Infrastructure.Repositories
 
                 return new ResponseModel() { Data = Modellist, Message = "Success", Status = true };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(getSearchbySupplierduedate),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, supplierid, fromdate, todate })
-                });
                 return new ResponseModel() { Data = null, Message = "Something went wrong", Status = false };
             }
         }
@@ -760,19 +518,8 @@ namespace Infrastructure.Repositories
 
                 return new ResponseModel() { Data = Modellist, Message = "Success", Status = true };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(getIRNGRNDetails),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { receiptnote_hdr_id })
-                });
                 return new ResponseModel() { Data = null, Message = "Something went wrong", Status = false };
             }
         }
@@ -793,19 +540,8 @@ namespace Infrastructure.Repositories
 
                 return new ResponseModel() { Data = Modellist, Message = "Success", Status = true };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(getAddInvoiceReceiptDetails),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, fromdate, todate })
-                });
                 return new ResponseModel() { Data = null, Message = "Something went wrong", Status = false };
             }
         }
@@ -813,8 +549,8 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                int Result = 0;
-
+                int Result = 0;                
+                
                 var pridToPodidMap = new Dictionary<int, int>();
                 string message = "";
                 var detailSqls = "";
@@ -824,48 +560,20 @@ namespace Infrastructure.Repositories
                         int receiptnote_hdr_id = detail.receiptnote_hdr_id;
                         if (receiptnote_hdr_id == 0)
                         {
-                        var sqlCheck = @"SELECT nettotal,balance_amount From tbl_purchaseorder_header WHERE poid=@poid;";
-
-                        var poData = await _connection.QuerySingleOrDefaultAsync<dynamic>(sqlCheck,
-                            new { poid = detail.poid });
-
-                        if (poData != null)
-                        {
-                            decimal latestRemaining = (decimal)poData.balance_amount;
-                            decimal enteredAmt = detail.balance_payment;
-                            decimal poAmount = (decimal)poData.nettotal;
-                            decimal alreadyReceived = poAmount - latestRemaining;
-
-                            if (latestRemaining < enteredAmt)
-                            {
-                                string msg = latestRemaining > 0
-                                  ? $"Allocated amount exceeds remaining balance. Total PO amount: {poAmount:F2}, " +
-                                  $" Remaining balance: {latestRemaining:F2}. Please enter a valid amount."
-                                  : $"No remaining balance available. Total PO amount: {poAmount:F2}, already received: {alreadyReceived:F2}. " +
-                                  $"Cannot allocate more.";
-
-                                return new ResponseModel()
-                                {
-                                    Data = null,
-                                    Status = false,
-                                    Message = msg,
-                                };
-                            }
-                        }
-
-                        var response = "select concat(prefixtext, lpad(doc_number+1,7,'0')) as text from master_documentnumber a where doc_type=5 and a.unit=" + detail.branchid + " and a.orgid =" + detail.orgid + ";";
+                            var response = "select concat(prefixtext, lpad(doc_number+1,7,'0')) as text from master_documentnumber a where doc_type=5 and a.unit=" + detail.branchid + " and a.orgid =" + detail.orgid + ";";
                             var seqno = await _connection.QuerySingleAsync<string>(response);
 
                             detailSqls = @"
                         INSERT INTO `tbl_IRNReceipt_detail`
-                        (`docno`, `docdate`,`supplier_id`,`grn_id`,`poid`,`receiptno`,`receiptdate`,`duedate`,`filepath` ,
+                        (`ModeOfPaymentId`,`docno`, `docdate`,`supplier_id`,`grn_id`,`poid`,`receiptno`,`receiptdate`,`duedate`,`filepath` ,
                         `spc`,`isgenerated`,`createdby`,`createddate`,`isactive`,`filename`,`paymenttermid`, `po_amount`, `adv_payment`, `balance_payment`,`alreadyrecivedamount`, `balancepaymentamount`)
-                        VALUES (@docno, NOW(), @supplierid, @grnid, @poid, @invoiceno, @invoicedate,@duedate,@filepath,@spc,0,@createdby,
+                        VALUES (@ModeOfPaymentId,@docno, NOW(), @supplierid, @grnid, @poid, @invoiceno, @invoicedate,@duedate,@filepath,@spc,0,@createdby,
                         NOW(),1,@filename,@paymenttermid, @poamount, @advpayment, @balancepayment, @alreadyrecivedamount, @balancepaymentamount);
                         SELECT LAST_INSERT_ID();";
 
                             var podid = await _connection.QuerySingleAsync<int>(detailSqls, new
                             {
+                                ModeOfPaymentId=detail.ModeOfPaymentId,
                                 receiptnote_hdr_id = detail.receiptnote_hdr_id,
                                 docno = seqno,
                                 invoiceno = detail.invoiceno,
@@ -887,20 +595,7 @@ namespace Infrastructure.Repositories
                                 balancepaymentamount = detail.balancepaymentamount
                             });
 
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: podid,
-                            branchId: 1,
-                            orgId: 1,
-                            actionType: "Insert",
-                            actionDescription: "Added new Irn Details",
-                            oldValue: null,
-                            newValue: Obj.item,
-                            tableName: "tbl_IRNReceipt_detail",
-                            userId: 1
-                        );
-
-                        var UpdateSeq = "update master_documentnumber set Doc_Number=Doc_Number+1 where Doc_Type=5 and unit=1; ";
+                            var UpdateSeq = "update master_documentnumber set Doc_Number=Doc_Number+1 where Doc_Type=5 and unit=1; ";
                             Result = await _connection.ExecuteAsync(UpdateSeq, Obj.item); 
 
                         string updatepurchaseorder = "CALL proc_irnbalance(@irnid);";
@@ -910,18 +605,17 @@ namespace Infrastructure.Repositories
                         }
                         else
                         {
-                        //detailSqls = @"UPDATE tbl_IRNReceipt_detail SET `isactive` = 0 WHERE receiptnote_hdr_id = @receiptnote_hdr_id;";
-                        //await _connection.ExecuteAsync(detailSqls, new { receiptnote_hdr_id = detail.receiptnote_hdr_id });
+                            //detailSqls = @"UPDATE tbl_IRNReceipt_detail SET `isactive` = 0 WHERE receiptnote_hdr_id = @receiptnote_hdr_id;";
+                            //await _connection.ExecuteAsync(detailSqls, new { receiptnote_hdr_id = detail.receiptnote_hdr_id });
 
-                        var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_IRNReceipt_detail where receiptnote_hdr_id = @receiptnote_hdr_id", new { receiptnote_hdr_id = detail.receiptnote_hdr_id });
-
-                        var updateSqls = @"UPDATE tbl_IRNReceipt_detail SET `receiptno` = @invoiceno, `receiptdate` = @invoicedate, `duedate` = @duedate,
+                            var updateSqls = @"UPDATE tbl_IRNReceipt_detail SET `ModeOfPaymentId`=@ModeOfPaymentId, `receiptno` = @invoiceno, `receiptdate` = @invoicedate, `duedate` = @duedate,
                         `po_amount` = @poamount,`adv_payment` = @advpayment,`balance_payment` = @balancepayment, `alreadyrecivedamount` = @alreadyrecivedamount,
                         `balancepaymentamount` = @balancepaymentamount, `modifyby` = @createdby, `modifydate` = NOW()
                         WHERE receiptnote_hdr_id = @receiptnote_hdr_id;";
 
                             await _connection.ExecuteAsync(updateSqls, new
                             {
+                                ModeOfPaymentId=detail.ModeOfPaymentId,
                                 receiptnote_hdr_id = detail.receiptnote_hdr_id,
                                 invoiceno = detail.invoiceno,
                                 invoicedate = detail.invoicedate,
@@ -933,18 +627,6 @@ namespace Infrastructure.Repositories
                                 balancepaymentamount = detail.balancepaymentamount,
                                 createdby = detail.createdby,
                             });
-
-                        await LogTransactionAsync(
-                            id: detail.receiptnote_hdr_id,
-                            branchId: 1,
-                            orgId: 1,
-                            actionType: "Update",
-                            actionDescription: "Updated Irn Details",
-                            oldValue: oldvalue,
-                            newValue: detail,
-                            tableName: "tbl_IRNReceipt_detail",
-                            userId: 1
-                        );
 
                         string updatepurchaseorder = "CALL proc_irnbalance(@irnid);";
                         await _connection.ExecuteAsync(updatepurchaseorder, new { irnid = detail.poid });
@@ -971,19 +653,8 @@ namespace Infrastructure.Repositories
                 };
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(AddIRNGRN),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1009,19 +680,8 @@ namespace Infrastructure.Repositories
 
                 return new ResponseModel() { Data = Modellist, Message = "Success", Status = true };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(getIRNDetails),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, fromdate, todate })
-                });
                 return new ResponseModel() { Data = null, Message = "Something went wrong", Status = false };
             }
         }
@@ -1029,7 +689,7 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_IRNReceipt_detail where receiptnote_hdr_id = @receiptnote_hdr_id", new { receiptnote_hdr_id = receiptnote_hdr_id });
+                
 
                 const string updateDetailsSql = @"
                     UPDATE tbl_IRNReceipt_detail 
@@ -1044,34 +704,11 @@ namespace Infrastructure.Repositories
                     recipid = receiptnote_hdr_id
                 });
 
-                await LogTransactionAsync(
-                            id: receiptnote_hdr_id,
-                            branchId: 1,
-                            orgId: 1,
-                            actionType: "Update",
-                            actionDescription: "Updated Irn Details",
-                            oldValue: oldvalue,
-                            newValue: new { receiptnote_hdr_id= receiptnote_hdr_id, file_path = file_path, file_name = file_name },
-                            tableName: "tbl_IRNReceipt_detail",
-                            userId: 1
-                        );
-
                 return new SharedModelWithResponse() { Data = null, Message = "Documents Uploaded successfully", Status = true };
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(InvoiceReceiptAttachment),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(new { receiptnote_hdr_id, file_path, file_name })
-                });
                 return new ResponseModel() { Data = null, Message = "Something went wrong", Status = false };
             }
         }
@@ -1098,20 +735,6 @@ namespace Infrastructure.Repositories
 
                 await _connection.ExecuteAsync(insertDetailSql, parameterData);
 
-                var insertattachmentId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                // Log transaction
-                await LogTransactionAsync(
-                    id: insertattachmentId,
-                    branchId: 1,
-                    orgId: 1,
-                    actionType: "Insert",
-                    actionDescription: "Added new Irn Details Attachment",
-                    oldValue: null,
-                    newValue: list,
-                    tableName: "tbl_invoicereceipt_attachment",
-                    userId: 1
-                );
-
                 return new SharedModelWithResponse()
                 {
                     Data = null,
@@ -1122,19 +745,8 @@ namespace Infrastructure.Repositories
                 return new SharedModelWithResponse() { Data = null, Message = "Documents Uploaded successfully", Status = true };
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(InvoiceReceiptDocAttachment),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(list)
-                });
                 return new ResponseModel() { Data = null, Message = "Something went wrong", Status = false };
             }
         }
@@ -1157,9 +769,9 @@ namespace Infrastructure.Repositories
                     {
                         detailSqls = @"
                         INSERT INTO `tbl_IRNReceipt_detail`
-                        (`docno`, `docdate`,`supplier_id`,`grn_id`,`poid`, `receiptno`,`receiptdate`,`duedate`,`filepath` ,
+                        (`ModeOfPaymentId`,`docno`, `docdate`,`supplier_id`,`grn_id`,`poid`, `receiptno`,`receiptdate`,`duedate`,`filepath` ,
                         `spc`,`isgenerated`,`createdby`,`createddate`,`isactive`,`filename`,`paymenttermid`, `po_amount`, `adv_payment`, `balance_payment`, `alreadyrecivedamount`, `balancepaymentamount`)
-                        VALUES (@docno, NOW(), @supplierid, @grnid,@poid, @invoiceno, @invoicedate,@duedate,@filepath,@spc,1,@createdby,
+                        VALUES (@ModeOfPaymentId,@docno, NOW(), @supplierid, @grnid,@poid, @invoiceno, @invoicedate,@duedate,@filepath,@spc,1,@createdby,
                         NOW(),1,@filename,@paymenttermid, @poamount, @advpayment, @balancepayment, @alreadyrecivedamount, @balancepaymentamount);
                         SELECT LAST_INSERT_ID();";
 
@@ -1169,6 +781,7 @@ namespace Infrastructure.Repositories
 
                         var podid = await _connection.QuerySingleAsync<int>(detailSqls, new
                         {
+                            ModeOfPaymentId=detail.ModeOfPaymentId,
                             receiptnote_hdr_id = detail.receiptnote_hdr_id,
                             docno = seqno,
                             invoiceno = detail.invoiceno,
@@ -1193,19 +806,6 @@ namespace Infrastructure.Repositories
                         var recipquery = "select isgenerated from tbl_IRNReceipt_detail a where receiptnote_hdr_id=" + lastprimaryId + ";";
                         var isgenerated = await _connection.QuerySingleAsync<string>(recipquery);
 
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: lastprimaryId,
-                            branchId: 1,
-                            orgId: 1,
-                            actionType: "Insert",
-                            actionDescription: "Added new Irn Details",
-                            oldValue: null,
-                            newValue: detail,
-                            tableName: "tbl_IRNReceipt_detail",
-                            userId: 1
-                        );
-
                         if (isgenerated == "1")
                         {
                             string updatetofinance = "call proc_InsertInvoiceToFinance(1," + lastprimaryId + ");";
@@ -1222,8 +822,6 @@ namespace Infrastructure.Repositories
                     {
                         int rec_id = detail1.receiptnote_hdr_id;
 
-                        var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_IRNReceipt_detail where receiptnote_hdr_id = @receiptnote_hdr_id", new { receiptnote_hdr_id =detail1.receiptnote_hdr_id });
-
                         const string updateDetailsSql = @"
                             UPDATE tbl_IRNReceipt_detail 
                             SET isgenerated = 1 ,spc=@spc
@@ -1233,18 +831,6 @@ namespace Infrastructure.Repositories
                         int lastprimaryId = rec_id;
                         var recipquery = "select isgenerated from tbl_IRNReceipt_detail a where receiptnote_hdr_id=" + lastprimaryId + ";";
                         var isgenerated = await _connection.QuerySingleAsync<string>(recipquery);
-
-                        await LogTransactionAsync(
-                            id: detail1.receiptnote_hdr_id,
-                            branchId: 1,
-                            orgId: 1,
-                            actionType: "Update",
-                            actionDescription: "Updated Irn Details",
-                            oldValue: oldvalue,
-                            newValue: detail1,
-                            tableName: "tbl_IRNReceipt_detail",
-                            userId: 1
-                        );
 
                         if (isgenerated == "1")
                         {
@@ -1270,19 +856,8 @@ namespace Infrastructure.Repositories
                 };
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoiceReceiptRepository),
-                    Method_Function = nameof(GenerateInvoiceReceiptIRN),
-                    UserId = 0,
-                    ScreenName = "InvoiceReceipt",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1290,30 +865,6 @@ namespace Infrastructure.Repositories
                     Status = false
                 };
             }
-        }
-
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Procurement",
-                ScreenName = "IRN",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 3
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
         }
     }
 }

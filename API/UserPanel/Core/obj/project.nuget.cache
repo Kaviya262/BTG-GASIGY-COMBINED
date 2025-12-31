@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "0jpIYkuHx4g=",
+  "dgSpecHash": "oVi1+7vwQnc=",
   "success": true,
-  "projectFilePath": "D:\\BTG\\Development\\BTG-DEV\\gasify\\API\\UserPanel\\Core\\Core.csproj",
+  "projectFilePath": "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\Core\\Core.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\closedxml\\0.104.2\\closedxml.0.104.2.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\closedxml.parser\\1.2.0\\closedxml.parser.1.2.0.nupkg.sha512",

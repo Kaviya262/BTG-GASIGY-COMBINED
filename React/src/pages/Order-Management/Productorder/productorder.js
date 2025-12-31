@@ -22,10 +22,7 @@ import {
 } from "../../../common/data/mastersapi";
 import { AutoComplete } from "primereact/autocomplete";
 import * as XLSX from "xlsx";
-import useAccess from "../../../common/access/useAccess";
-
 const ProductOrder = () => {
-    const { access, applyAccessUI } = useAccess("Sales", "Production Order");
     const [isClearable, setIsClearable] = useState(true);
     const [isSearchable, setIsSearchable] = useState(true);
     const [isDisabled, setIsDisabled] = useState(false);
@@ -91,12 +88,6 @@ const ProductOrder = () => {
     };
 
     useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
-    useEffect(() => {
         fetchProductionNumbers();
         //fetchProductionOrders();
     }, []);
@@ -131,7 +122,6 @@ const ProductOrder = () => {
     }, []);
 
     const fetchProductionOrders = async () => {
-        setLoading(true); // Show loading spinner
         try {
             const updatedFilter = {
                 ...quotefilter,
@@ -269,32 +259,16 @@ const ProductOrder = () => {
         return <Tag value={option.label} severity={getSeverity(option.value)} />;
     };
 
-    // const actionBodyTemplate = (rowData) => {
-    //     return (
-    //         <div className="actions">
-    //             {rowData.Status != "Posted" && (
-    //                 <span style={{ marginRight: '0.5rem' }} title="Edit" onClick={() => editRow(rowData)} >
-    //                     <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-    //                 </span>
-    //             )}
-    //         </div>
-    //     )
-    // };
     const actionBodyTemplate = (rowData) => {
         return (
             <div className="actions">
-                {rowData.Status !== "Posted" && access.canEdit && (
-                    <span
-                        style={{ marginRight: '0.5rem', cursor: 'pointer' }}
-                        title="Edit"
-                        onClick={() => editRow(rowData)}
-                        data-access="edit" // <-- Add this
-                    >
+                {rowData.Status != "Posted" && (
+                    <span style={{ marginRight: '0.5rem' }} title="Edit" onClick={() => editRow(rowData)} >
                         <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                     </span>
                 )}
             </div>
-        );
+        )
     };
 
     const exportToExcel = () => {
@@ -337,14 +311,6 @@ const ProductOrder = () => {
         setSelectedProductionNo(null);
     };
     useEffect(() => { fetchProductionOrders() }, [isseacrch]);
-
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
 
     return (
         <React.Fragment>
@@ -436,7 +402,7 @@ const ProductOrder = () => {
                                     <button type="button" className="btn btn-secondary" onClick={exportToExcel}>
                                         <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Export
                                     </button>
-                                    <button type="button" className="btn btn-success" onClick={handleAddpk} data-access="new">
+                                    <button type="button" className="btn btn-success" onClick={handleAddpk}>
                                         <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New
                                     </button>
                                 </div>
@@ -448,7 +414,7 @@ const ProductOrder = () => {
                                     value={quotes}
                                     paginator
                                     showGridlines
-                                    rows={access.records || 10}
+                                    rows={10}
                                     loading={loading}
                                     dataKey="prod_id"
                                     filters={filters}

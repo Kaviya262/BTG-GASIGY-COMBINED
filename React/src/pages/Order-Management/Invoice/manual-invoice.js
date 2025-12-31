@@ -116,6 +116,18 @@ const ManualInvoice = () => {
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
       },
+      CurrencyCode:{
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+      },
+      PONumber:{
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+      },
+      CalculatedPrice:{
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+      },
       Salesinvoicesdate: {
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
@@ -306,7 +318,7 @@ const ManualInvoice = () => {
     return (
       <Dropdown
         value={options.value}
-        options={statuses}
+        options={[{value:"P",label:"P"},{value:"S",label:"S"}]}
         onChange={e => options.filterCallback(e.value, options.index)}
         itemTemplate={statusItemTemplate}
         placeholder="Select One"
@@ -529,7 +541,6 @@ const ManualInvoice = () => {
                     type="button"
                     className="btn btn-success"
                     onClick={linkAddinvoice}
-                    data-access="new"
                   >
                     <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>
                     New
@@ -555,6 +566,7 @@ const ManualInvoice = () => {
                     "Currency",
                     "TotalAmount",
                     "CalculatedPrice",
+                    "CurrencyCode"
                   ]}
                   header={header}
                   emptyMessage="No Records found."
@@ -591,7 +603,7 @@ const ManualInvoice = () => {
                   />
                   <Column
                     field="CurrencyCode"
-                    header="CurrencyCode"
+                    header="Currency"
                     filter
                     filterPlaceholder="Search by CurrencyCode"
                   />

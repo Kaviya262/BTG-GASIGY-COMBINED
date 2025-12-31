@@ -35,8 +35,6 @@ import {
 } from "common/data/mastersapi";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import useAccess from "../../common/access/useAccess";
-
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     pono: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
@@ -66,7 +64,6 @@ const getUserDetails = () => {
     }
 }
 const ProcurementsManagePurchaseOrder = () => {
-    const { access, applyAccessUI } = useAccess("Procurement", "Purchase Order");
     const history = useHistory();
 
     // State
@@ -115,13 +112,6 @@ const ProcurementsManagePurchaseOrder = () => {
     const FilterTypes = [
         { name: "Supplier", value: 1 }, { name: "PO No", value: 2 }
     ];
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
     // const cancelFilter = async () => {
     //     try {
     //         const requestorid = '';
@@ -617,27 +607,10 @@ const ProcurementsManagePurchaseOrder = () => {
         }
     };
 
-    // const actionclaimBodyTemplate = (rowData) => {
-    //     return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
-    //         onClick={() => handleShowDetails(rowData)}>{rowData.pono}</span>;
-    // };
-
     const actionclaimBodyTemplate = (rowData) => {
-        if (!access?.canViewDetails) {
-            return <span>{rowData.pono}</span>;
-        }
-
-        return (
-            <span
-                style={{ cursor: "pointer", color: "blue" }}
-                className="btn-rounded btn btn-link"
-                onClick={() => handleShowDetails(rowData)}
-            >
-                {rowData.pono}
-            </span>
-        );
+        return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+            onClick={() => handleShowDetails(rowData)}>{rowData.pono}</span>;
     };
-
 
     const fetchPOPrint = async (poid) => {
         const response = await GetPurchaseOrderPrint(poid, 1, 1);
@@ -662,9 +635,6 @@ const ProcurementsManagePurchaseOrder = () => {
     //     };
 
     const actionPOPrintBodyTemplate = (rowData) => {
-        if (!access?.canPrint) {
-            return null;
-        }
         return (
             <button
                 className="btn btn-success"
@@ -903,14 +873,6 @@ const ProcurementsManagePurchaseOrder = () => {
         }
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
 
     return (
         <>
@@ -978,7 +940,7 @@ const ProcurementsManagePurchaseOrder = () => {
                                 <div className={`col-12 ${selectedFilterType ? 'col-lg-5' : 'col-lg-9'} d-flex justify-content-end flex-wrap gap-2`} >
                                     <button type="button" className="btn btn-info" onClick={searchData}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={cancelFilter}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-                                    <button type="button" className="btn btn-success" onClick={linkAddPurchaseOrder} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={linkAddPurchaseOrder}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -991,7 +953,7 @@ const ProcurementsManagePurchaseOrder = () => {
                                     value={purchaseOrders}
                                     paginator
                                     showGridlines
-                                    rows={access.records || 10}
+                                    rows={20}
                                     loading={isLoading}
                                     dataKey="poid"
                                     filters={filters}
@@ -1039,15 +1001,14 @@ const ProcurementsManagePurchaseOrder = () => {
                                         filterPlaceholder="Search by Currency"
                                         className="text-left"
                                     />
-                                    {access.canViewRate && (
-                                        <Column style={{ textAlign: "right" }} field="totalamount" header="Total Amount"
-                                            body={(rowData) =>
-                                                rowData.totalamount?.toLocaleString('en-US', {
-                                                    style: 'decimal',
-                                                    minimumFractionDigits: 2
-                                                })
-                                            } />
-                                    )}
+
+                                    <Column style={{ textAlign: "right" }} field="totalamount" header="Total Amount"
+                                        body={(rowData) =>
+                                            rowData.totalamount?.toLocaleString('en-US', {
+                                                style: 'decimal',
+                                                minimumFractionDigits: 2
+                                            })
+                                        } />
 
                                     <Column
                                         field="CreatedDate"
@@ -1376,70 +1337,54 @@ const ProcurementsManagePurchaseOrder = () => {
                                 // footer={selectedDetail.Header?.subtotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                 />
                                 <Column field="uom" header="UOM" />
-                                {access.canViewRate && (
-                                    <Column
-                                        field="unitprice"
-                                        header="Unit Price"
-                                        body={(rowData) =>
-                                            rowData.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                                        }
-                                        footer={selectedDetail.Header?.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                    />
-                                )}
+                                <Column
+                                    field="unitprice"
+                                    header="Unit Price"
+                                    body={(rowData) =>
+                                        rowData.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedDetail.Header?.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                                {access.canViewRate && (
+                                <Column
+                                    field="discountvalue"
+                                    header="Discount"
+                                    body={(rowData) =>
+                                        rowData.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedDetail.Header?.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                                    <Column
-                                        field="discountvalue"
-                                        header="Discount"
-                                        body={(rowData) =>
-                                            rowData.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                                        }
-                                        footer={selectedDetail.Header?.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                    />
-                                )}
+                                <Column field="taxperc" header="Tax %" />
 
-                                {access.canViewRate && (
+                                <Column
+                                    field="taxvalue"
+                                    header="Tax Amt"
+                                    body={(rowData) =>
+                                        rowData.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedDetail.Header?.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                                    <Column field="taxperc" header="Tax %" />
-                                )}
-                                {access.canViewRate && (
+                                <Column field="vatperc" header="VAT %" />
 
-                                    <Column
-                                        field="taxvalue"
-                                        header="Tax Amt"
-                                        body={(rowData) =>
-                                            rowData.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                                        }
-                                        footer={selectedDetail.Header?.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                    />
-                                )}
-                                {access.canViewRate && (
+                                <Column
+                                    field="vatvalue"
+                                    header="VAT Amt"
+                                    body={(rowData) =>
+                                        rowData.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedDetail.Header?.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                                    <Column field="vatperc" header="VAT %" />
-                                )}
-                                {access.canViewRate && (
-
-                                    <Column
-                                        field="vatvalue"
-                                        header="VAT Amt"
-                                        body={(rowData) =>
-                                            rowData.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                                        }
-                                        footer={selectedDetail.Header?.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                    />
-                                )}
-                                {access.canViewRate && (
-
-                                    <Column
-                                        field="nettotal"
-                                        header="Total Amt"
-                                        body={(rowData) =>
-                                            rowData.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                                        }
-                                        footer={<b>{selectedDetail.Header?.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</b>}
-                                    />
-                                )}
+                                <Column
+                                    field="nettotal"
+                                    header="Total Amt"
+                                    body={(rowData) =>
+                                        rowData.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={<b>{selectedDetail.Header?.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</b>}
+                                />
                             </DataTable>
 
                         </>
@@ -1825,9 +1770,13 @@ const ProcurementsManagePurchaseOrder = () => {
                                                 >
                                                     {val || "N/A"}
                                                 </a>
-                                            ) : (label === "Supplier" || label === "Currency") ? (
+                                            ) : (label === "Supplier") ? (
                                                 <b>{val}</b>
-                                            ) : (
+                                            ) : (label === "Currency") ? (
+                                                <b style={{color:"green"}}>{val}</b>
+                                            )  
+                                            
+                                            : (
                                                 val
                                             )}
                                         </Col>
@@ -1839,18 +1788,16 @@ const ProcurementsManagePurchaseOrder = () => {
 
                             <DataTable value={selectedPRDetail.Details} footerColumnGroup={
                                 <ColumnGroup>
-                                    {access.canViewRate && (
-                                        <Row>
-                                            <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column footer={<b>{selectedPRDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
-                                            <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column footer={<b>{selectedPRDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
-                                            <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                                            <Column footer={<b>{selectedPRDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
-                                            <Column footer={<b>{selectedPRDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
-                                        </Row>
-                                    )}
+                                    <Row>
+                                        <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                                        <Column footer={<b>{selectedPRDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
+                                        <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                                        <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                                        <Column footer={<b>{selectedPRDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
+                                        <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                                        <Column footer={<b>{selectedPRDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
+                                        <Column    footerStyle={{color:"#ff5a00"}} footer={<b>{selectedPRDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>} />
+                                    </Row>
                                 </ColumnGroup>
                             }>
                                 <Column header="#" body={(_, { rowIndex }) => rowIndex + 1} />
@@ -1858,28 +1805,14 @@ const ProcurementsManagePurchaseOrder = () => {
                                 <Column field="ItemName" header="Item Name" />
                                 <Column field="Qty" header="Qty" body={(row) => row.Qty?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
                                 <Column field="UOMName" header="UOM" />
-                                {access.canViewRate && (
-                                    <Column field="UnitPrice" header="Unit Price" body={(row) => row.UnitPrice?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
-                                )}
-                                {access.canViewRate && (
-                                    <Column field="DiscountValue" header="Discount" body={(row) => row.DiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
-                                )}
+                                <Column field="UnitPrice" header="Unit Price" body={(row) => row.UnitPrice?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
+                                <Column field="DiscountValue" header="Discount" body={(row) => row.DiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
                                 <Column field="taxname" header="Tax" />
-                                {access.canViewRate && (
-                                    <Column field="TaxPerc" header="Tax %" />
-                                )}
-                                {access.canViewRate && (
-                                    <Column field="TaxValue" header="Tax Amount" body={(row) => row.TaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
-                                )}
-                                {access.canViewRate && (
-                                    <Column field="vatPerc" header="VAT %" />
-                                )}
-                                {access.canViewRate && (
-                                    <Column field="vatValue" header="VAT Amount" body={(row) => row.vatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
-                                )}
-                                {access.canViewRate && (
-                                    <Column field="NetTotal" header="Total Amount" body={(row) => row.NetTotal?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
-                                )}
+                                <Column field="TaxPerc" header="Tax %" />
+                                <Column field="TaxValue" header="Tax Amount" body={(row) => row.TaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
+                                <Column field="vatPerc" header="VAT %" />
+                                <Column field="vatValue" header="VAT Amount" body={(row) => row.vatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
+                                <Column field="NetTotal"    bodyStyle={{color:"#ff5a00"}} header="Total Amount" body={(row) => row.NetTotal?.toLocaleString('en-US', { minimumFractionDigits: 2 })} />
                             </DataTable>
 
                             <Row className="mt-3">

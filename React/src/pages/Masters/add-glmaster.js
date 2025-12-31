@@ -115,7 +115,7 @@ const AddGLMaster = () => {
             }
         };
         if (!isEditMode) {
-            fetchSequence();
+        fetchSequence();
         }
     }, [selectedCategory, selectedAccountType]); // remove !isEditMode
 

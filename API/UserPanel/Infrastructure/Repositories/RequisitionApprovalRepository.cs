@@ -3,18 +3,12 @@ using BackEnd.Procurement.PurchaseMemo;
 using BackEnd.Procurement.PurchaseRequitision;
 using Core.Abstractions;
 using Core.Finance.Approval;
-using Core.Master.ErrorLog;
-using Core.Master.Supplier;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.OrderMng.Invoices;
 using Core.Procurement.Approval;
 using Core.Procurement.PurchaseMemo;
 using Core.Procurement.PurchaseRequisition;
 using Dapper;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Vml.Office;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -29,14 +23,10 @@ namespace Infrastructure.Repositories
    public class RequisitionApprovalRepository : IRequisitionApprovalRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
 
-        public RequisitionApprovalRepository(IUnitOfWorkDB2 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public RequisitionApprovalRepository(IUnitOfWorkDB2 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
              
 
@@ -63,22 +53,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RequisitionApprovalRepository),
-                    Method_Function = nameof(GetAllAsync),
-                    UserId = 0,
-                    ScreenName = "Requisition Approval",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                       Id, branchId, orgid, userid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -93,21 +69,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldDetails = new List<object>();
-
-                foreach (var d in obj.approve)
-                {
-                    if (d.prid > 0)
-                    {
-                        var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_PurchaseRequisition_Header where PRId = @PRId", new { PRId = d.prid });
-
-                        oldDetails.Add(oldvalue);
-                    }
-                    else
-                    {
-                        oldDetails.Add(null);
-                    }
-                }
                 string updatedetails = @"
                     UPDATE tbl_PurchaseRequisition_Header
                     SET 
@@ -152,21 +113,6 @@ namespace Infrastructure.Repositories
                     await _connection.ExecuteAsync(updatedetailsstatus, item);
                 }
 
-                foreach (var item in obj.approve)
-                {
-                    await LogTransactionAsync(
-            id: item.prid,
-            branchId: 1,
-            orgId: 1,
-            actionType: "Update",
-            actionDescription: "Updated Purchase Requisition Approve",
-            oldValue: oldDetails,
-            newValue: obj,
-            tableName: "tbl_PurchaseRequisition_Header",
-            userId: 1
-        );
-                }
-
                 return new ResponseModel
                 {
                     Data = 1,
@@ -176,17 +122,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RequisitionApprovalRepository),
-                    Method_Function = nameof(ApproveAsync),
-                    UserId = obj.UserId,
-                    ScreenName = "Requisition Approval",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -219,22 +154,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RequisitionApprovalRepository),
-                    Method_Function = nameof(GetRemarksList),
-                    UserId = 0,
-                    ScreenName = "Requisition Approval",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        prid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -269,22 +190,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RequisitionApprovalRepository),
-                    Method_Function = nameof(GetHistoryAsync),
-                    UserId = 0,
-                    ScreenName = "Requisition Approval",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        id, userid, branchId, orgid, fromdate, todate
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -294,28 +201,5 @@ namespace Infrastructure.Repositories
             }
         }
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Procurement",
-                ScreenName = "Purchase Requisition Approval",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 3
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 }

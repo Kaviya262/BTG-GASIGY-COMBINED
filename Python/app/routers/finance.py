@@ -372,3 +372,19 @@ async def update_reference_endpoint(
         raise HTTPException(status_code=400, detail="Failed to update reference. ID might not exist.")
         
     return {"status": "success", "message": "Reference updated successfully"}
+
+
+@router.put("/bulk-update-reference")
+async def bulk_update_reference(
+    payload: schemas.BulkUpdateReferenceRequest,
+    db: AsyncSession = Depends(database.get_db)
+):
+    """
+    Updates the Invoice Number (Reference) for multiple AR entries at once.
+    """
+    success = await crud.bulk_update_ar_reference(db, payload.ids, payload.new_reference)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to update records.")
+        
+    return {"status": "success", "message": "Records updated successfully"}

@@ -28,7 +28,6 @@ import { GetAllMasterSalesOrder, GetDriversList, GetTruckList, SaveMasterSalesOr
 import { GetPackerList, GetPackingpackno, } from 'common/data/invoiceapi';
 import { orders } from 'common/data';
 import logo from '../../../assets/images/logo.png';
-import useAccess from "../../../common/access/useAccess";
 
 // Format date function
 const formatDate = (dateString) => {
@@ -42,7 +41,6 @@ const formatDate = (dateString) => {
 };
 
 const TransportPlanner = () => {
-  const { access, applyAccessUI } = useAccess("Distribution", "Master SO");
   const driverOptions = [
     { label: "Anwar", value: "Anwar" },
     { label: "Shafiq", value: "Shafiq" },
@@ -204,12 +202,6 @@ const TransportPlanner = () => {
   };
 
   useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
-
-  useEffect(() => {
     const loadOptions = async () => {
       if (!selectedFilterType) {
         setAutoOptions([]);
@@ -218,69 +210,59 @@ const TransportPlanner = () => {
 
       try {
         // Fetch ALL sales orders (all pages) without filters to get unique IDs across all pages
-        // const branchId = 1;
-        // const allSalesOrdersResponse = await GetAllMasterSalesOrder(
-        //   0, // searchBy = 0 means no filter
-        //   0, // customerId = 0
-        //   0, // gasCodeId = 0
-        //   branchId
-        // );
+        const branchId = 1;
+        const allSalesOrdersResponse = await GetAllMasterSalesOrder(
+          0, // searchBy = 0 means no filter
+          0, // customerId = 0
+          0, // gasCodeId = 0
+          branchId
+        );
 
         let result = [];
         if (selectedFilterType.value === 1) {
           // Customer - Get all customers from API
           const allCustomers = await GetCustomer(1, 0);
           // Extract unique customer IDs from ALL sales orders (all pages)
-          // const uniqueCustomerIds = [...new Set(
-          //   allSalesOrdersResponse.data
-          //     .map(item => item["CustomerId"] || 0)
-          //     .filter(id => id > 0)
-          // )];
-          // // Filter to only show customers that exist in any sales order
-          // const filteredCustomers = allCustomers.filter(customer =>
-          //   uniqueCustomerIds.includes(customer.CustomerId || customer.id)
-          // );
-          // // Format for react-select
-          // result = filteredCustomers.map(c => ({
-          //   label: c.CustomerName || c.Customer,
-          //   value: c.CustomerId || c.id,
-          // }));
-          // setAutoOptions(result);
-          setAutoOptions(allCustomers.map(c =>
-          ({
+          const uniqueCustomerIds = [...new Set(
+            allSalesOrdersResponse.data
+              .map(item => item["CustomerId"] || 0)
+              .filter(id => id > 0)
+          )];
+          // Filter to only show customers that exist in any sales order
+          const filteredCustomers = allCustomers.filter(customer =>
+            uniqueCustomerIds.includes(customer.CustomerId || customer.id)
+          );
+          // Format for react-select
+          result = filteredCustomers.map(c => ({
             label: c.CustomerName || c.Customer,
             value: c.CustomerId || c.id,
-          })));
+          }));
+          setAutoOptions(result);
         } else if (selectedFilterType.value === 2) {
           // Gas Code - Get all gas codes from API
           const allGasCodes = await fetchGasList(1, 0);
           // Extract unique gas code IDs from ALL sales orders (all pages)
-          // const uniqueGasCodeIds = [...new Set(
-          //   allSalesOrdersResponse.data
-          //     .map(item => {
-          //       const gasCodeId = item["Gas Code"];
-          //       // Convert to string for consistent comparison, but keep original type in set
-          //       return gasCodeId !== undefined && gasCodeId !== null && gasCodeId !== "" ? gasCodeId : null;
-          //     })
-          //     .filter(id => id !== null && id !== "")
-          // )];
-          // // Filter to only show gas codes that exist in any sales order (across all pages)
-          // const filteredGasCodes = allGasCodes.filter(gas => {
-          //   const gasCodeId = gas["Gas Code"] || gas.GasCodeId || gas.id;
-          //   // Use consistent comparison - convert both to string for comparison
-          //   return uniqueGasCodeIds.some(id => String(id) === String(gasCodeId));
-          // });
-          // // Format for react-select
-          // result = filteredGasCodes.map(g => ({
-          //   label: g.GasCodeName || g.GasCode,
-          //   value: g["Gas Code"] || g.GasCodeId || g.id,
-          // }));
-          // setAutoOptions(result);
-          setAutoOptions(allGasCodes.map(g =>
-          ({
+          const uniqueGasCodeIds = [...new Set(
+            allSalesOrdersResponse.data
+              .map(item => {
+                const gasCodeId = item["Gas Code"];
+                // Convert to string for consistent comparison, but keep original type in set
+                return gasCodeId !== undefined && gasCodeId !== null && gasCodeId !== "" ? gasCodeId : null;
+              })
+              .filter(id => id !== null && id !== "")
+          )];
+          // Filter to only show gas codes that exist in any sales order (across all pages)
+          const filteredGasCodes = allGasCodes.filter(gas => {
+            const gasCodeId = gas["Gas Code"] || gas.GasCodeId || gas.id;
+            // Use consistent comparison - convert both to string for comparison
+            return uniqueGasCodeIds.some(id => String(id) === String(gasCodeId));
+          });
+          // Format for react-select
+          result = filteredGasCodes.map(g => ({
             label: g.GasCodeName || g.GasCode,
             value: g["Gas Code"] || g.GasCodeId || g.id,
-          })));
+          }));
+          setAutoOptions(result);
         } else {
           setAutoOptions([]);
         }
@@ -424,7 +406,7 @@ const TransportPlanner = () => {
           alreadyPostedQty: alreadyPostedQty, // Store already posted quantity
           originalRemainingQty: originalRemainingQty,
           balancesqty: balancesqty,
-          uomId: item["UomId"] || 2,
+
           estTime: item["Seq Time"]?.substring(0, 5) || "",
           driver: item["Driver"] || "",
           driverId: item["DriverId"] || null,
@@ -662,8 +644,7 @@ const TransportPlanner = () => {
         Balance_Qty: (order.soQty ?? 0) -
           (order.alreadyPostedQty ?? 0) -
           (order.plannedQty ?? 0),
-        // uomid: 1,
-        uomid: order.uomId || 2,
+        uomid: 1,
         SeqTime: order.estTime || "00:00:00",
         DriverId: order.driverId || null,
         TruckId: order.truckId || null,
@@ -845,8 +826,7 @@ const TransportPlanner = () => {
     setSalesOrders(prev => {
       return prev.map(item => {
         const syncFields = ["driver", "truck", "packer", "estTime"];
-        // const shouldSync = syncFields.includes(field) && item.convertToPDL && item.id !== id;
-        const shouldSync = syncFields.includes(field) && prev.find(i => i.id === id)?.convertToPDL && item.convertToPDL;
+        const shouldSync = syncFields.includes(field) && item.convertToPDL && item.id !== id;
 
         if (item.id === id || shouldSync) {
           if (field === "estTime") {
@@ -924,7 +904,6 @@ const TransportPlanner = () => {
       <InputText
         value={displayValue}
         onChange={(e) => {
-          if (!access.canEdit) return;
           const input = e.target.value.replace(/[^0-9]/g, '') || '0'; // Only allow numbers
           const num = parseInt(input, 10);
           if (num < 0) {
@@ -942,7 +921,6 @@ const TransportPlanner = () => {
         inputMode="numeric"
         placeholder={maxQty === 0 ? "No quantity available" : ""}
         tooltip={`Max: ${maxQty} | Pending: ${rowData.pendingQty}`}
-        disabled={!access.canEdit}
       />
     );
   };
@@ -974,10 +952,9 @@ const TransportPlanner = () => {
     <input
       type="time"
       value={rowData.estTime}
-      onChange={e => { if (!access.canEdit) return; updateField(rowData.id, "estTime", e.target.value) }}
+      onChange={e => updateField(rowData.id, "estTime", e.target.value)}
       style={{ width: "100%", padding: '0.5rem', borderRadius: '4px', border: '1px solid #ced4da' }}
       placeholder="HH:mm"
-      disabled={!access.canEdit}
     />
   );
 
@@ -1002,10 +979,10 @@ const TransportPlanner = () => {
     const label = selectedTruck?.label || "";
 
     // If NOT editing → show plain text
-    if (!access.canEdit || editingTruck !== rowData.id) {
+    if (editingTruck !== rowData.id) {
       return (
         <div
-          onClick={() => { if (!access.canEdit) return; setEditingTruck(rowData.id) }}
+          onClick={() => setEditingTruck(rowData.id)}
           style={{
             cursor: "pointer",
             padding: "4px 6px",
@@ -1040,18 +1017,15 @@ const TransportPlanner = () => {
             minHeight: 32,
             height: 32,
             fontSize: 12,
-            cursor: access.canEdit ? "text" : "not-allowed",
           }),
         }}
         options={truckList}
         value={selectedTruck || null}
         onChange={(opt) => {
-          if (!access.canEdit) return;
           handleInputChange("truck", opt?.label, rowData, "truckId", opt?.value);
           setEditingTruck(null); // Close dropdown after selecting
         }}
         onBlur={() => setEditingTruck(null)} // Click outside → close
-        disabled={!access.canEdit}
       />
     );
   };
@@ -1147,8 +1121,8 @@ const TransportPlanner = () => {
     return (
       <Checkbox
         checked={rowData.convertToPDL}
-        onChange={(e) => { if (!access.canEdit) return; updateField(rowData.id, "convertToPDL", e.checked) }}
-        disabled={!access.canEdit}
+        onChange={(e) => updateField(rowData.id, "convertToPDL", e.checked)}
+
       />
     );
   };
@@ -1222,76 +1196,72 @@ const TransportPlanner = () => {
   };
 
   const searchData = async () => {
-    setLoading(true); // Show loading spinner
-    try {
-      const filterValue = selectedAutoItem?.value || 0;
-      const filterType = filterValue ? selectedFilterType?.value : 0;
+    const filterValue = selectedAutoItem?.value || 0;
+    const filterType = filterValue ? selectedFilterType?.value : 0;
 
-      const customerId = filterType === 1 ? filterValue : 0;
-      const gasCodeId = filterType === 2 ? filterValue : 0;
+    const customerId = filterType === 1 ? filterValue : 0;
+    const gasCodeId = filterType === 2 ? filterValue : 0;
 
-      const res = await GetAllMasterSalesOrder(
-        filterType,
-        customerId,
-        gasCodeId,
-        1
-      );
+    const res = await GetAllMasterSalesOrder(
+      filterType,
+      customerId,
+      gasCodeId,
+      1
+    );
 
-      if (res.status) {
-        const mappedData = res.data.map((item, index) => ({
-          id: item["Id"] || index + 1,
-          soid: item["SO Id"] || 0,
-          salesOrder: item["SO No."] || "",
-          soDate: item["SO Date"]?.split("T")[0] || "",
-          customer: item["Customer"] || "",
-          customerId: item["CustomerId"] || 0,
-          detailsId: item["Detail Id"] || 0,
-          gasCodeId: item["Gas Code"] || 0,
-          gasCode: item["GasCodeName"] || "",
-          gasDescription: item["Gas Description"] || "",
-          exchangeRate: item["exchangeRate"] || 0,
-          CurrencyId: item["CurrencyId"] || 0,
-          PONumber: item["PONumber"] || 0,
+    // const res = await GetPurchaseRequisitionList(filterType, filterValue, orgId, branchId, userData?.u_id);
+    if (res.status) {
+      const mappedData = res.data.map((item, index) => ({
+        id: item["Id"] || index + 1,
+        soid: item["SO Id"] || 0,
+        salesOrder: item["SO No."] || "",
+        soDate: item["SO Date"]?.split("T")[0] || "",
+        customer: item["Customer"] || "",
+        customerId: item["CustomerId"] || 0,
+        detailsId: item["Detail Id"] || 0,
+        gasCodeId: item["Gas Code"] || 0,
+        gasCode: item["GasCodeName"] || "",
+        gasDescription: item["Gas Description"] || "",
+        exchangeRate: item["exchangeRate"] || 0,
+        CurrencyId: item["CurrencyId"] || 0,
+        PONumber: item["PONumber"] || 0,
 
-          soQty: item["SO Qty"] || 0,
-          pendingQty: item["Pend Qty"] || 0,
-          balanceQty: item["Balance_Qty"] || 0, // ✅ Mapped properly now
+        soQty: item["SO Qty"] || 0,
+        pendingQty: item["Pend Qty"] || 0,
+        balanceQty: item["Balance_Qty"] || 0, // ✅ Mapped properly now
 
-          // plannedQty: item["Balance_Qty"] || 0,
-          plannedQty: item["Plan Deliv Qty"] > 0 ? item["Plan Deliv Qty"] : 0,
-          customerdetailid: item["customerdetailid"] || 0,
+        // plannedQty: item["Balance_Qty"] || 0,
+        plannedQty: item["Plan Deliv Qty"] > 0 ? item["Plan Deliv Qty"] : 0,
+        customerdetailid: item["customerdetailid"] || 0,
 
-          estTime: item["Seq Time"]?.substring(0, 5) || "",
-          driver: item["Driver"] || "",
-          driverId: item["DriverId"] || null,
-          truckId: item["TruckId"] || null,
-          truck: item["Truck"] || "",
-          packer: item["Packer"] || "",
-          packerId: item["PackerId"] || null,
-          instruction: item["Deliv Inst"] || "",
-          status: item["Status"] === "Posted" ? "P" : "S",
-          pckId: item["PackingId"] || null,
+        estTime: item["Seq Time"]?.substring(0, 5) || "",
+        driver: item["Driver"] || "",
+        driverId: item["DriverId"] || null,
+        truckId: item["TruckId"] || null,
+        truck: item["Truck"] || "",
+        packer: item["Packer"] || "",
+        packerId: item["PackerId"] || null,
+        instruction: item["Deliv Inst"] || "",
+        status: item["Status"] === "Posted" ? "P" : "S",
+        pckId: item["PackingId"] || null,
 
-          packingDetailId: item["PackingDetailId"] || null,
-          packerHeaderId: item["PackerHeaderId"] || null,
-          packingSODetailId: item["PackingSODetailId"] || null,
-          PackingHeaderId: item["PackingHeaderId"] || null,
+        packingDetailId: item["PackingDetailId"] || null,
+        packerHeaderId: item["PackerHeaderId"] || null,
+        packingSODetailId: item["PackingSODetailId"] || null,
+        PackingHeaderId: item["PackingHeaderId"] || null,
 
-          packingCustomerDetailId: item["PackingCustomerDetailId"] || null,
-          packingCustomerPackingId: item["PackingCustomerPackingId"] || null,
-          packingCustomerCustomerId: item["PackingCustomerCustomerId"] || null,
+        packingCustomerDetailId: item["PackingCustomerDetailId"] || null,
+        packingCustomerPackingId: item["PackingCustomerPackingId"] || null,
+        packingCustomerCustomerId: item["PackingCustomerCustomerId"] || null,
 
-          PackingGasDetailId: item["PackingGasDetailId"] || null,
-          Sqdtlid: item["Sqdtlid"] || null,
-          convertToPDL: false,
-          IsSubmitted: item["IsSubmitted"] !== undefined ? item["IsSubmitted"] : null,
-          IsQtyMatched: item["IsQtyMatched"] !== undefined ? item["IsQtyMatched"] : null,
-        }));
+        PackingGasDetailId: item["PackingGasDetailId"] || null,
+        Sqdtlid: item["Sqdtlid"] || null,
+        convertToPDL: false,
+        IsSubmitted: item["IsSubmitted"] !== undefined ? item["IsSubmitted"] : null,
+        IsQtyMatched: item["IsQtyMatched"] !== undefined ? item["IsQtyMatched"] : null,
+      }));
 
-        setSalesOrders(mappedData);
-      }
-    } finally {
-      setLoading(false);
+      setSalesOrders(mappedData);
     }
   };
 
@@ -1350,10 +1320,10 @@ const TransportPlanner = () => {
     const label = selectedPacker?.label || "";
 
     // Show plain text when NOT editing
-    if (!access.canEdit || editingPacker !== rowData.id) {
+    if (editingPacker !== rowData.id) {
       return (
         <div
-          onClick={() => { if (!access.canEdit) return; setEditingPacker(rowData.id) }}
+          onClick={() => setEditingPacker(rowData.id)}
           style={{
             cursor: "pointer",
             padding: "4px 6px",
@@ -1388,7 +1358,6 @@ const TransportPlanner = () => {
             minHeight: 32,
             height: 32,
             fontSize: 12,
-            cursor: access.canEdit ? "text" : "not-allowed",
           }),
         }}
         name="packer"
@@ -1396,7 +1365,6 @@ const TransportPlanner = () => {
         placeholder="Select Packer"
         value={selectedPacker || null}
         onChange={(opt) => {
-          if (!access.canEdit) return;
           handleInputChange(
             "packer",
             opt?.label,
@@ -1407,7 +1375,6 @@ const TransportPlanner = () => {
           setEditingPacker(null); // close dropdown
         }}
         onBlur={() => setEditingPacker(null)} // click outside → close
-        disabled={!access.canEdit}
       />
     );
   };
@@ -1419,10 +1386,11 @@ const TransportPlanner = () => {
     const selectedDriver = driverNameList.find(opt => opt.value === rowData.driverId);
     const label = selectedDriver?.label || "";
 
-    if (!access.canEdit || editingDriver !== rowData.id) {
+    // Show plain text when NOT editing
+    if (editingDriver !== rowData.id) {
       return (
         <div
-          onClick={() => { if (!access.canEdit) return; setEditingDriver(rowData.id) }}
+          onClick={() => setEditingDriver(rowData.id)}
           style={{
             cursor: "pointer",
             padding: "4px 6px",
@@ -1457,8 +1425,6 @@ const TransportPlanner = () => {
             minHeight: 32,
             height: 32,
             fontSize: 12,
-            // backgroundColor: access.canEdit ? "#fff" : "#e9ecef",
-            cursor: access.canEdit ? "text" : "not-allowed",
           }),
         }}
         name="driver"
@@ -1466,7 +1432,6 @@ const TransportPlanner = () => {
         value={selectedDriver || null}
         placeholder="Select Driver"
         onChange={(opt) => {
-          if (!access.canEdit) return;
           handleInputChange(
             "driver",
             opt?.label,
@@ -1477,7 +1442,6 @@ const TransportPlanner = () => {
           setEditingDriver(null); // close dropdown
         }}
         onBlur={() => setEditingDriver(null)} // click outside → close dropdown
-        disabled={!access.canEdit}
       />
     );
   };
@@ -1645,14 +1609,6 @@ const TransportPlanner = () => {
     const DelivInstCell = ({ inst }) => <span>{inst}</span>;
     const convertToPDLTemplate = () => <input type="checkbox" />;
     const statusTemplate = (rowData) => <span>{rowData.status}</span>;
-  }
-
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
   }
 
   return (
@@ -1840,7 +1796,6 @@ const TransportPlanner = () => {
                     type="button"
                     className="btn btn-info"
                     onClick={handlePrint}
-                    data-access="print"
                   >
                     <i className="bx bx-printer label-icon font-size-16 align-middle me-2"></i>
                     Print
@@ -1865,15 +1820,16 @@ const TransportPlanner = () => {
               <Card>
                 <DataTable
                   value={filteredOrders}
-                  rows={access.records || 10}
+                  rows={10}
                   sortField="salesOrder"
                   sortOrder={1}
                   header={header}
-                  loading={loading}
                   paginator
                   filters={filters}
                   globalFilterFields={['customer', 'id', 'salesOrder', 'status', 'gasCode', 'gasDescription', 'soQty', 'pendingQty', 'plannedQty', 'driver', 'truck', 'packer', 'instruction', 'soDate']}
                   globalFilter={globalFilter}
+                  scrollable
+                  scrollHeight="400px"
                   responsiveLayout="scroll"
                   className='blue-bg'
                   emptyMessage="No order found."
@@ -1886,23 +1842,17 @@ const TransportPlanner = () => {
                     header="SO No."
                     filter
                     filterPlaceholder="Search by SO No."
-                    body={(rowData) =>
-                      access.canViewDetails ? ( // ✅ Only render if user has access
-                        <span
-                          onClick={() => handleSODoubleClick(rowData)}
-                          style={{ cursor: 'pointer', color: '#007bff', textDecoration: 'underline' }}
-                          data-access="viewdetails"
-                        >
-                          {rowData.salesOrder}
-                        </span>
-                      ) : (
-                        <span style={{ color: '#999' }}>{rowData.salesOrder}</span>
-                      )
-                    }
+                    body={(rowData) => (
+                      <span
+                        onClick={() => handleSODoubleClick(rowData)}
+                        style={{ cursor: 'pointer', color: '#007bff', textDecoration: 'underline' }}
+                      >
+                        {rowData.salesOrder}
+                      </span>
+                    )}
                     style={{ textAlign: 'center' }}
-                    className="text-center"
+                    className='text-center'
                   />
-
 
                   <Column
                     headerStyle={{ textAlign: 'center' }}
@@ -2207,17 +2157,13 @@ const TransportPlanner = () => {
         <ModalFooter>
           {!pdlNumber ? (
             <>
-              {access.canSave && (
-                <Button className="btn btn-info" onClick={() => confirmPDLSave(0)} disabled={pdlWorking} data-access="save">
-                  Save
-                </Button>
-              )}
+              <Button className="btn btn-info" onClick={() => confirmPDLSave(0)} disabled={pdlWorking}>
+                Save
+              </Button>
 
-              {access.canPost && (
-                <Button className="btn btn-success" onClick={() => confirmPDLSave(1)} disabled={pdlWorking} data-access="post">
-                  Post
-                </Button>
-              )}
+              <Button className="btn btn-success" onClick={() => confirmPDLSave(1)} disabled={pdlWorking}>
+                Post
+              </Button>
               <Button className='btn btn-danger' onClick={() => setShowPDLModal(false)} disabled={pdlWorking}>
                 Cancel
               </Button>

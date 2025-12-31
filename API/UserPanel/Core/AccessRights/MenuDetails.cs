@@ -58,8 +58,6 @@ namespace Core.AccessRights
 
     public class ScreenPermissions
     {
-        public int ModuleId { get; set; }
-        public int ScreenId { get; set; }
         public string ScreenName { get; set; } = string.Empty;
         public Permissions Permissions { get; set; } = new Permissions();
     }
@@ -83,7 +81,6 @@ namespace Core.AccessRights
     public class Permissions
     {
         public bool View { get; set; }
-        public bool New { get; set; }
         public bool Edit { get; set; }
         public bool Delete { get; set; }
         public bool Post { get; set; }
@@ -138,7 +135,6 @@ namespace Core.AccessRights
         public string Module { get; set; }
         public string Screen { get; set; }
         public bool View { get; set; }
-        public bool New { get; set; }
         public bool Edit { get; set; }
         public bool Delete { get; set; }
         public bool Post { get; set; }

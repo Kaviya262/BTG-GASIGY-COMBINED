@@ -17,14 +17,10 @@ import QuotationSalesForm from "./QuotationSalesForm";
 import { handleSalesOrderSubmit } from "./DirectSalesForm";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
-import useAccess from "../../../common/access/useAccess";
-
 const animatedComponents = makeAnimated();
 
 const AddOrders = forwardRef(function AddOrdersForm(props, ref) {
     const [childValidationPassed, setChildValidationPassed] = useState(true);
-    const { access, applyAccessUI } = useAccess("Sales", "Orders");
-
 
     const handleChildValidation = (isValid) => {
         setChildValidationPassed(isValid);
@@ -77,13 +73,6 @@ const AddOrders = forwardRef(function AddOrdersForm(props, ref) {
     const [gasCodeSaveList, setGasCodeSaveList] = useState([]);
     const [SQDetails, setSQDetails] = useState([]);
     const [initialSeq, setInitialSeq] = useState("");
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -409,7 +398,7 @@ const AddOrders = forwardRef(function AddOrdersForm(props, ref) {
                             history.push("/manage-order");
                         }, 1000);
                     } else {
-                        setErrorMsg([response?.message || "Something went wrong. Please try again."]);
+                        setErrorMsg([response?.Message || "Something went wrong. Please try again."]);
                     }
                 } catch (error) {
                     console.error("Error in AddSO:", error);
@@ -513,26 +502,6 @@ const AddOrders = forwardRef(function AddOrdersForm(props, ref) {
     //     }
 
     // };
-
-    // Auto-hide success and error messages after 2 seconds
-    useEffect(() => {
-        if (successMsg) {
-            const timer = setTimeout(() => {
-                setSuccessMsg("");
-            }, 2000); // 2000ms = 2 seconds
-            return () => clearTimeout(timer);
-        }
-    }, [successMsg]);
-
-    useEffect(() => {
-        if (errorMsg.length > 0) {
-            const timer = setTimeout(() => {
-                setErrorMsg([]);
-            }, 2000); // 2 seconds
-            return () => clearTimeout(timer);
-        }
-    }, [errorMsg]);
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -544,51 +513,27 @@ const AddOrders = forwardRef(function AddOrdersForm(props, ref) {
                                 <div className="content clearfix mt-1" style={{ minHeight: "560px" }}>
                                     <div className="row mb-2">
                                         <div className="col-12 col-lg-8 col-md-8 col-sm-8 button-items mt-1">
-                                            {/* {errorMsg.length > 0 && (
+                                            {errorMsg.length > 0 && (
                                                 <div className="alert alert-danger alert-new">
                                                     {errorMsg[0]}
                                                 </div>
-                                            )} */}
+                                            )}
                                             {/* {successStatus &&
                                                 <UncontrolledAlert color="success" role="alert">
                                                     {successMsg}
                                                 </UncontrolledAlert>
                                             } */}
-                                            {/* {successMsg && (
+                                            {successMsg && (
                                                 <UncontrolledAlert color="success" className="alert-new">
                                                     {successMsg}
                                                 </UncontrolledAlert>
-                                            )} */}
-
-                                            {errorMsg.length > 0 && (
-                                                <div className="alert alert-danger alert-dismissible fade show alert-new" role="alert">
-                                                    {errorMsg[0]}
-                                                    <button
-                                                        type="button"
-                                                        className="btn-close"
-                                                        onClick={() => setErrorMsg([])}
-                                                        aria-label="Close"
-                                                    ></button>
-                                                </div>
-                                            )}
-
-                                            {successMsg && (
-                                                <div className="alert alert-success alert-dismissible fade show alert-new" role="alert">
-                                                    {successMsg}
-                                                    <button
-                                                        type="button"
-                                                        className="btn-close"
-                                                        onClick={() => setSuccessMsg("")}
-                                                        aria-label="Close"
-                                                    ></button>
-                                                </div>
                                             )}
 
                                         </div>
                                         <div className="col-12 col-lg-4 justify-content-end text-end me-1 mt-1">
                                             <div className="button-items">
-                                                <button type="button" className="btn btn-info" onClick={(e) => openModal2(e, "save")} disabled={isSubmitting} data-access="save"><i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Save</button>
-                                                <button type="button" className="btn btn-success" onClick={(e) => openModal2(e, "post")} disabled={isSubmitting} data-access="post"><i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post</button>
+                                                <button type="button" className="btn btn-info" onClick={(e) => openModal2(e, "save")} disabled={isSubmitting}><i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Save</button>
+                                                <button type="button" className="btn btn-success" onClick={(e) => openModal2(e, "post")} disabled={isSubmitting}><i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post</button>
                                                 <button type="button" className="btn btn-danger" onClick={handleCancel} disabled={isSubmitting}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
                                             </div>
                                         </div>
@@ -726,11 +671,10 @@ const AddOrders = forwardRef(function AddOrdersForm(props, ref) {
                                 <Button className="btn btn-info" color="success" size="lg" onClick={(e) => {
                                     setSubmitState(true);
                                     handleSubmit(e, submittype);
-                                    setIsModalOpen2(false);
                                 }}>
                                     Yes
                                 </Button>
-                                <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen2(false)} >
+                                <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen2(false)}>
                                     Cancel
                                 </Button>
                             </div>

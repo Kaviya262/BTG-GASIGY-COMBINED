@@ -34,12 +34,10 @@ import {
   GetInvoiceSNo,
   UpdateInvoice,
 } from "../../../common/data/invoiceapi";
-import useAccess from "../../../common/access/useAccess";
 
 const animatedComponents = makeAnimated();
 
 const AddInvoice = () => {
-  const { access, applyAccessUI } = useAccess("Sales", "Sales Invoice");
   const history = useHistory();
   const { id } = useParams();
   const currentDate = new Date();
@@ -74,13 +72,6 @@ const AddInvoice = () => {
   const [totalQty, setTotalQty] = useState();
   const [totalPrice, setTotalPrice] = useState();
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
-
   // Fetch customer list on initial load
   useEffect(() => {
     const getCustomerList = async () => {
@@ -417,7 +408,6 @@ const AddInvoice = () => {
                               color="success"
                               onClick={() => setSubmitType(1)}
                               disabled={isSubmitting}
-                              data-access="post"
                             >
                               <i className="bx bxs-save me-2"></i>Post
                             </Button>
@@ -529,7 +519,6 @@ const AddInvoice = () => {
                               toggleTooltip={toggleTooltip}
                               totalQty={totalQty}
                               totalPrice={totalPrice}
-                              access={access}
                             />
                           </Col>
                         </Row>
@@ -621,7 +610,6 @@ const PackingDetailsTable = ({
   toggleTooltip,
   totalQty,
   totalPrice,
-  access,
 }) => (
   <Table className="table mb-0">
     <thead style={{ backgroundColor: "#3e90e2" }}>
@@ -633,15 +621,9 @@ const PackingDetailsTable = ({
         <th className="text-center">Picked Qty</th>
         <th className="text-center">UOM</th>
         <th className="text-center">Currency</th>
-        {access.canViewRate && (
-          <th className="text-center">Unit Price</th>
-        )}
-        {access.canViewRate && (
-          <th className="text-center">Total Price</th>
-        )}
-        {access.canViewRate && (
-          <th className="text-center">Price (IDR)</th>
-        )}
+        <th className="text-center">Unit Price</th>
+        <th className="text-center">Total Price</th>
+        <th className="text-center">Price (IDR)</th>
         <th className="text-center">Delivery Details</th>
       </tr>
     </thead>
@@ -674,36 +656,30 @@ const PackingDetailsTable = ({
             <td className="text-end">{item.pickedQty || ""}</td>
             <td className="text-center">{item.UOM || ""}</td>
             <td className="text-center">{item.CurrencyName || ""}</td>
-            {access.canViewRate && (
-              <td className="text-end">
-                {new Intl.NumberFormat("en-US", {
-                  style: "decimal",
-                  currency: "IDR",
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(item.unitPrice || 0)}
-              </td>
-            )}
-            {access.canViewRate && (
-              <td className="text-end">
-                {new Intl.NumberFormat("en-US", {
-                  style: "decimal",
-                  currency: "IDR",
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(item.totalPrice || 0)}
-              </td>
-            )}
-            {access.canViewRate && (
-              <td className="text-end">
-                {new Intl.NumberFormat("en-US", {
-                  style: "decimal",
-                  currency: "IDR",
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(item.price || 0)}
-              </td>
-            )}
+            <td className="text-end">
+              {new Intl.NumberFormat("en-US", {
+                style: "decimal",
+                currency: "IDR",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(item.unitPrice || 0)}
+            </td>
+            <td className="text-end">
+              {new Intl.NumberFormat("en-US", {
+                style: "decimal",
+                currency: "IDR",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(item.totalPrice || 0)}
+            </td>
+            <td className="text-end">
+              {new Intl.NumberFormat("en-US", {
+                style: "decimal",
+                currency: "IDR",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(item.price || 0)}
+            </td>
 
             <td className="text-center">
               <span
@@ -736,20 +712,16 @@ const PackingDetailsTable = ({
             maximumFractionDigits: 0,
           }).format(totalQty)}
         </td>
-        {access.canViewRate && (
-          <td colSpan="4" className="text-end fw-bold">
-            Total Price
-          </td>
-        )}
-        {access.canViewRate && (
-          <td className="text-end fw-bold">
-            {new Intl.NumberFormat("en-US", {
-              style: "decimal",
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }).format(totalPrice)}
-          </td>
-        )}
+        <td colSpan="4" className="text-end fw-bold">
+          Total Price
+        </td>
+        <td className="text-end fw-bold">
+          {new Intl.NumberFormat("en-US", {
+            style: "decimal",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(totalPrice)}
+        </td>
         <td></td>
       </tr>
     </tfoot>

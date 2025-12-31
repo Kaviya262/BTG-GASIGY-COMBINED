@@ -18,7 +18,6 @@ import Select from "react-select";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import useAccess from "../../../common/access/useAccess";
 
 const getUserDetails = () => {
     if (localStorage.getItem("authUser")) {
@@ -28,7 +27,6 @@ const getUserDetails = () => {
 }
 
 const AddPurchaseMemo = () => {
-    const { access, applyAccessUI } = useAccess("Procurement", "Purchase Memo");
     const { id } = useParams();
     const purchase_memo_id = Number(id ?? 0);
     const isEditMode = !!id;
@@ -84,12 +82,6 @@ const AddPurchaseMemo = () => {
         ],
     });
 
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
         setAttachments((prev) => {
@@ -133,89 +125,89 @@ const AddPurchaseMemo = () => {
     };
 
 
-    const validationSchema = Yup.object().shape({
-        pmNo: Yup.string().required("PM No. is required"),
+const validationSchema = Yup.object().shape({
+  pmNo: Yup.string().required("PM No. is required"),
 
-        pmDate: Yup.date()
-            .required("PM Date is required")
-            .typeError("Invalid PM Date"),
+  pmDate: Yup.date()
+    .required("PM Date is required")
+    .typeError("Invalid PM Date"),
 
-        btgDeliveryAddress: Yup.string().required("BTG Delivery Address is required"),
+  btgDeliveryAddress: Yup.string().required("BTG Delivery Address is required"),
 
-        items: Yup.array()
-            .of(
-                Yup.object().shape({
-                    itemid: Yup.string()
-                        .nullable()
-                        .required("Item Name is required"),
-                    departmentid: Yup.string()
-                        .nullable()
-                        .required("Department is required"),
-                    itemGroupId: Yup.string()
-                        .nullable()
-                        .required("Item Group is required"),
-                    uom: Yup.string().required("UOM is required"),
-                    qty: Yup.number()
-                        .typeError("Qty must be a number")
-                        .positive("Qty must be greater than 0")
-                        .required("Qty is required"),
-                    availableStock: Yup.number()
-                        .nullable()
-                        .typeError("Available Stock must be a number"),
-                    deliveryDate: Yup.date()
-                        .required("Delivery Date is required")
-                        .typeError("Invalid date"),
-                })
-            )
-            // integrated duplicate UOM validation
-            .test("duplicate-uom-check", null, function (items) {
-                if (!items || items.length === 0) return true;
+  items: Yup.array()
+    .of(
+      Yup.object().shape({
+        itemid: Yup.string()
+          .nullable()
+          .required("Item Name is required"),
+        departmentid: Yup.string()
+          .nullable()
+          .required("Department is required"),
+        itemGroupId: Yup.string()
+          .nullable()
+          .required("Item Group is required"),
+        uom: Yup.string().required("UOM is required"),
+        qty: Yup.number()
+          .typeError("Qty must be a number")
+          .positive("Qty must be greater than 0")
+          .required("Qty is required"),
+        availableStock: Yup.number()
+          .nullable()
+          .typeError("Available Stock must be a number"),
+        deliveryDate: Yup.date()
+          .required("Delivery Date is required")
+          .typeError("Invalid date"),
+      })
+    )
+    // integrated duplicate UOM validation
+    .test("duplicate-uom-check", null, function (items) {
+      if (!items || items.length === 0) return true;
 
-                const seen = new Map();
+      const seen = new Map();
 
-                for (let idx = 0; idx < items.length; idx++) {
-                    const row = items[idx];
-                    const key = `${row.itemGroupId || ""}_${row.itemid || ""}_${row.uom || ""}`;
+      for (let idx = 0; idx < items.length; idx++) {
+        const row = items[idx];
+        const key = `${row.itemGroupId || ""}_${row.itemid || ""}_${row.uom || ""}`;
 
-                    if (key !== "_") {
-                        if (seen.has(key)) {
-                            // Return the specific error path
-                            return this.createError({
-                                path: `items[${idx}].uom`,
-                                message: "Same UOM already used",
-                            });
-                        }
-                        seen.set(key, idx);
-                    }
-                }
+        if (key !== "_") {
+          if (seen.has(key)) {
+            // Return the specific error path
+            return this.createError({
+              path: `items[${idx}].uom`,
+              message: "Same UOM already used",
+            });
+          }
+          seen.set(key, idx);
+        }
+      }
 
-                return true;
-            }),
-    });
+      return true;
+    }),
+});
 
 
-    const validateDuplicateUom = (items = []) => {
-        const errors = {};
-        const seen = new Map();
+const validateDuplicateUom = (items = []) => {
+  const errors = {};
+  const seen = new Map();               
 
-        items.forEach((row, idx) => {
-            const key = `${row.itemGroupId || ""}_${row.itemid || ""}_${row.uom || ""}`;
+  items.forEach((row, idx) => {
+    const key = `${row.itemGroupId || ""}_${row.itemid || ""}_${row.uom || ""}`;
 
-            if (seen.has(key) && key !== "_") {
-                const prevIdx = seen.get(key);
-                // mark current row
-                errors[idx] = errors[idx] || {};
-                errors[idx].uom = "Same UOM already used ";
+    if (seen.has(key) && key !== "_") {               
+      const prevIdx = seen.get(key);
+      // mark current row
+      errors[idx] = errors[idx] || {};
+      errors[idx].uom = "Same UOM already used ";
 
-                //   errors[prevIdx] = errors[prevIdx] || {};
-                //   errors[prevIdx].uom = `Same UOM already used in Row ${idx + 1}`;
-            } else if (key !== "_") {
-                seen.set(key, idx);
-            }
-        });
+    //   errors[prevIdx] = errors[prevIdx] || {};
+    //   errors[prevIdx].uom = `Same UOM already used in Row ${idx + 1}`;
+    } else if (key !== "_") {
+      seen.set(key, idx);
+    }
+  });
 
-        return Object.keys(errors).length ? { items: errors } : {};
-    };
+  return Object.keys(errors).length ? { items: errors } : {};
+};
 
     function formatDateToMySQL(datetime) {
         if (!datetime) return null;
@@ -675,41 +667,35 @@ const AddPurchaseMemo = () => {
                                                     <div className="col-12 col-lg-4 col-md-4 col-sm-4 button-items">
                                                         <button type="button" className="btn btn-danger fa-pull-right" onClick={handleCancel}>
                                                             <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Close</button>
-                                                        {access.canPost && (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-success fa-pull-right"
-                                                                data-access="post"
-                                                                onClick={async () => {
-                                                                    setTouched(markAllTouched(values), true);
-                                                                    const validationErrors = await validateForm();
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-success fa-pull-right"
+                                                            onClick={async () => {
+                                                                setTouched(markAllTouched(values), true);
+                                                                const validationErrors = await validateForm();
 
-                                                                    if (Object.keys(validationErrors).length === 0) {
-                                                                        handleSubmit(values, 1); // Post
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
-                                                            </button>
-                                                        )}
+                                                                if (Object.keys(validationErrors).length === 0) {
+                                                                    handleSubmit(values, 1); // Post
+                                                                }
+                                                            }}
+                                                        >
+                                                            <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
+                                                        </button>
 
-                                                        {access.canSave && (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-info fa-pull-right"
-                                                                data-access="save"
-                                                                onClick={async () => {
-                                                                    setTouched(markAllTouched(values), true);
-                                                                    const validationErrors = await validateForm();
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-info fa-pull-right"
+                                                            onClick={async () => {
+                                                                setTouched(markAllTouched(values), true);
+                                                                const validationErrors = await validateForm();
 
-                                                                    if (Object.keys(validationErrors).length === 0) {
-                                                                        handleSubmit(values, 0); // Save
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
-                                                            </button>
-                                                        )}
+                                                                if (Object.keys(validationErrors).length === 0) {
+                                                                    handleSubmit(values, 0); // Save
+                                                                }
+                                                            }}
+                                                        >
+                                                            <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}
+                                                        </button>
                                                     </div>
                                                 </div>
                                                 <Row className="mb-3">
@@ -893,7 +879,7 @@ const AddPurchaseMemo = () => {
                                                                 <th className="text-center" style={{ width: "10%" }}>Item Group</th>
                                                                 <th className="text-center" style={{ width: "15%" }}>Item Name</th>
                                                                 <th className="text-center" style={{ width: "10%" }}>Department</th>
-
+                                                               
                                                                 <th className="text-center" style={{ width: "5%" }}>Qty</th>
                                                                 <th className="text-center" style={{ width: "7%" }}>UOM</th>
                                                                 <th className="text-center" style={{ width: "5%" }}>Avail. Stock</th>
@@ -995,7 +981,7 @@ const AddPurchaseMemo = () => {
                                                                                 </td>
 
                                                                                 {/* UOM */}
-
+                                                                               
 
                                                                                 {/* Qty */}
                                                                                 {/* <td>
@@ -1023,51 +1009,51 @@ const AddPurchaseMemo = () => {
                                                                                         }}
                                                                                     /> */}
 
-                                                                                    <Field name={`items[${i}].qty`}>
-                                                                                        {({ field }) => {
-                                                                                            const formatWithCommas = (value) => {
-                                                                                                if (!value) return '';
-                                                                                                const [intPart, decPart] = value.split('.');
-                                                                                                const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                                                                                                return decPart !== undefined
-                                                                                                    ? `${intFormatted}.${decPart.slice(0, 3)}`
-                                                                                                    : intFormatted;
-                                                                                            };
-
-                                                                                            return (
-                                                                                                <input
-                                                                                                    type="text"
-                                                                                                    className={`form-control text-end ${errors?.items?.[i]?.qty && touched?.items?.[i]?.qty
-                                                                                                        ? 'is-invalid'
-                                                                                                        : ''
-                                                                                                        }`}
-
-                                                                                                    value={formatWithCommas(field.value?.toString() || '')}
-
-                                                                                                    onChange={(e) => {
-                                                                                                        // Remove commas
-                                                                                                        let plainValue = e.target.value.replace(/,/g, '');
-
-                                                                                                        // Allow only digits and one decimal point
-                                                                                                        if (!/^\d*\.?\d*$/.test(plainValue)) {
-                                                                                                            return; // Ignore invalid characters
-                                                                                                        }
-
-                                                                                                        // Enforce DECIMAL(24,6) → allow 16 digits before decimal, 6 after
-                                                                                                        if (plainValue.includes('.')) {
-                                                                                                            const [intPart, decPart] = plainValue.split('.');
-                                                                                                            plainValue = intPart.slice(0, 12) + '.' + (decPart ? decPart.slice(0, 3) : '');
-                                                                                                        } else {
-                                                                                                            plainValue = plainValue.slice(0, 12);
-                                                                                                        }
-
-                                                                                                        setFieldValue(`items[${i}].qty`, plainValue);
-                                                                                                    }}
-
-                                                                                                />
-                                                                                            );
-                                                                                        }}
-                                                                                    </Field>
+                                                                                      <Field name={`items[${i}].qty`}>
+                                                                                                                                                                                                                                                                        {({ field }) => {
+                                                                                                                                                                                                                                                                            const formatWithCommas = (value) => {
+                                                                                                                                                                                                                                                                                if (!value) return '';
+                                                                                                                                                                                                                                                                                const [intPart, decPart] = value.split('.');
+                                                                                                                                                                                                                                                                                const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                                                                                                                                                                                                                                                                return decPart !== undefined
+                                                                                                                                                                                                                                                                                    ? `${intFormatted}.${decPart.slice(0, 3)}`
+                                                                                                                                                                                                                                                                                    : intFormatted;
+                                                                                                                                                                                                                                                                            };
+                                                                                                                                                                            
+                                                                                                                                                                                                                                                                            return (
+                                                                                                                                                                                                                                                                                <input
+                                                                                                                                                                                                                                                                                    type="text"
+                                                                                                                                                                                                                                                                                    className={`form-control text-end ${errors?.items?.[i]?.qty && touched?.items?.[i]?.qty
+                                                                                                                                                                                                                                                                                            ? 'is-invalid'
+                                                                                                                                                                                                                                                                                            : ''
+                                                                                                                                                                                                                                                                                        }`}
+                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                    value={formatWithCommas(field.value?.toString() || '')}
+                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                    onChange={(e) => {
+                                                                                                                                                                                                                                                                                        // Remove commas
+                                                                                                                                                                                                                                                                                        let plainValue = e.target.value.replace(/,/g, '');
+                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                        // Allow only digits and one decimal point
+                                                                                                                                                                                                                                                                                        if (!/^\d*\.?\d*$/.test(plainValue)) {
+                                                                                                                                                                                                                                                                                            return; // Ignore invalid characters
+                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                        // Enforce DECIMAL(24,6) → allow 16 digits before decimal, 6 after
+                                                                                                                                                                                                                                                                                        if (plainValue.includes('.')) {
+                                                                                                                                                                                                                                                                                            const [intPart, decPart] = plainValue.split('.');
+                                                                                                                                                                                                                                                                                            plainValue = intPart.slice(0, 12) + '.' + (decPart ? decPart.slice(0, 3) : '');
+                                                                                                                                                                                                                                                                                        } else {
+                                                                                                                                                                                                                                                                                            plainValue = plainValue.slice(0, 12);
+                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                        setFieldValue(`items[${i}].qty`, plainValue);
+                                                                                                                                                                                                                                                                                    }}
+                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                />
+                                                                                                                                                                                                                                                                            );
+                                                                                                                                                                                                                                                                        }}
+                                                                                                                                                                                                                                                                    </Field>
                                                                                     {errors.items?.[i]?.qty && touched.items?.[i]?.qty && (
                                                                                         <div className="text-danger small">{errors.items[i].qty}</div>
                                                                                     )}
@@ -1130,46 +1116,44 @@ const AddPurchaseMemo = () => {
                                                                                 {/* Remove Button */}
                                                                                 <td className="text-center">
                                                                                     {/* {i > 0 && ( */}
-                                                                                    {access.canEdit && (
-                                                                                        editingRowIndex === i ? (
-                                                                                            <button
-                                                                                                type="button"
 
-                                                                                                onClick={() => setEditingRowIndex(null)}
-                                                                                                style={{ background: 'none', border: 'none', padding: 0, marginRight: '10px' }}
-                                                                                            >
-                                                                                                <i
-                                                                                                    className="mdi mdi-check text-primary"
-                                                                                                    style={{ fontSize: '18px', cursor: 'pointer' }}
-                                                                                                ></i>
-
-                                                                                            </button>
-                                                                                        ) : (
-                                                                                            <button
-                                                                                                type="button"
-
-                                                                                                onClick={() => { if (item?.itemGroupId) { loadItemNameOptions(item.itemGroupId, i); } setEditingRowIndex(i); }}
-                                                                                                // disabled={editingRowIndex !== null}
-                                                                                                style={{ background: 'none', border: 'none', padding: 0, marginRight: '10px' }}
-                                                                                            >
-                                                                                                <i className="mdi mdi-pencil-outline text-success" style={{ fontSize: '18px', cursor: 'pointer' }}></i>
-                                                                                            </button>
-                                                                                        )
-                                                                                    )}
-                                                                                    {access.canDelete && (
+                                                                                    {editingRowIndex === i ? (
                                                                                         <button
                                                                                             type="button"
-                                                                                            className="btn btn-sm btn-danger"
-                                                                                            onClick={() => remove(i)}
-                                                                                            title="Remove Row"
-                                                                                            style={{ background: 'none', border: 'none', padding: 0 }}
+
+                                                                                            onClick={() => setEditingRowIndex(null)}
+                                                                                            style={{ background: 'none', border: 'none', padding: 0, marginRight: '10px' }}
                                                                                         >
                                                                                             <i
-                                                                                                className="mdi mdi-delete-outline text-danger"
+                                                                                                className="mdi mdi-check text-primary"
                                                                                                 style={{ fontSize: '18px', cursor: 'pointer' }}
                                                                                             ></i>
+
+                                                                                        </button>
+                                                                                    ) : (
+                                                                                        <button
+                                                                                            type="button"
+
+                                                                                            onClick={() => { if (item?.itemGroupId) { loadItemNameOptions(item.itemGroupId, i); } setEditingRowIndex(i); }}
+                                                                                            // disabled={editingRowIndex !== null}
+                                                                                            style={{ background: 'none', border: 'none', padding: 0, marginRight: '10px' }}
+                                                                                        >
+                                                                                            <i className="mdi mdi-pencil-outline text-success" style={{ fontSize: '18px', cursor: 'pointer' }}></i>
                                                                                         </button>
                                                                                     )}
+
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="btn btn-sm btn-danger"
+                                                                                        onClick={() => remove(i)}
+                                                                                        title="Remove Row"
+                                                                                        style={{ background: 'none', border: 'none', padding: 0 }}
+                                                                                    >
+                                                                                        <i
+                                                                                            className="mdi mdi-delete-outline text-danger"
+                                                                                            style={{ fontSize: '18px', cursor: 'pointer' }}
+                                                                                        ></i>
+                                                                                    </button>
 
 
                                                                                     {/* )} */}
@@ -1185,29 +1169,27 @@ const AddPurchaseMemo = () => {
                                                                         <tr>
                                                                             {/* Add Row Button across first 4 columns */}
                                                                             <td colSpan="3">
-                                                                                {access.canNew && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="btn btn-sm"
-                                                                                        style={{ borderColor: "black", color: "black" }}
-                                                                                        disabled={values.isNew}
-                                                                                        onClick={() => {
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="btn btn-sm"
+                                                                                    style={{ borderColor: "black", color: "black" }}
+                                                                                    disabled={values.isNew}
+                                                                                    onClick={() => {
 
 
-                                                                                            setEditingRowIndex(values.items.length);
-                                                                                            push({
-                                                                                                itemName: null,
-                                                                                                department: null,
-                                                                                                uom: "",
-                                                                                                qty: "",
-                                                                                                availableStock: "",
-                                                                                                deliveryDate: "",
-                                                                                            });
-                                                                                        }
-                                                                                        }
-                                                                                    >+
-                                                                                    </button>
-                                                                                )}
+                                                                                        setEditingRowIndex(values.items.length);
+                                                                                        push({
+                                                                                            itemName: null,
+                                                                                            department: null,
+                                                                                            uom: "",
+                                                                                            qty: "",
+                                                                                            availableStock: "",
+                                                                                            deliveryDate: "",
+                                                                                        });
+                                                                                    }
+                                                                                    }
+                                                                                >+
+                                                                                </button>
                                                                             </td>
 
                                                                             {/* Total Qty Label in 5th column (Qty column) */}

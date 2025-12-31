@@ -3,6 +3,8 @@ from sqlalchemy import select, desc, update
 from datetime import datetime
 from . import schemas
 from .models import ARReceipt
+from sqlalchemy import text
+from typing import List
 
 # ----------------------------------------------------------
 # 1. CREATE AR RECEIPT
@@ -313,5 +315,27 @@ async def update_invoice_reference(db: AsyncSession, invoice_id: int, new_refere
         return result.rowcount > 0
     except Exception as e:
         print(f"Error updating reference: {e}")
+        await db.rollback()
+        return False
+
+async def bulk_update_ar_reference(db: AsyncSession, ar_ids: List[int], new_reference: str):
+    try:
+        # 1. Update Accounts Receivable Table (This reflects in the Report)
+        query_ar = text("""
+            UPDATE tbl_accounts_receivable 
+            SET invoice_no = :ref 
+            WHERE ar_id IN :ids
+        """)
+        
+        # 2. Optional: Update Header Table too (To keep them in sync if they are linked)
+        # Note: This assumes 'ar_id' in AR table corresponds to 'id' in Header, 
+        # or there is a link. If not, only run the first query.
+        
+        await db.execute(query_ar, {"ref": new_reference, "ids": tuple(ar_ids)})
+        await db.commit()
+        
+        return True
+    except Exception as e:
+        print(f"Error bulk updating reference: {e}")
         await db.rollback()
         return False

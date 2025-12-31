@@ -32,7 +32,6 @@ import { Editor } from "react-draft-wysiwyg";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import { AutoComplete } from "primereact/autocomplete";
 import makeAnimated from "react-select/animated";
-import useAccess from "../../../common/access/useAccess";
 const animatedComponents = makeAnimated();
 import {
   fetchGasList,
@@ -53,7 +52,6 @@ import {
 
 
 const AddQuotation = () => {
-  const { access, applyAccessUI } = useAccess("Sales", "Quotations");
   const history = useHistory();
   const [isClearable, setIsClearable] = useState(true);
   const [isSearchable, setIsSearchable] = useState(true);
@@ -202,12 +200,6 @@ const AddQuotation = () => {
 
 
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
 
 
@@ -1200,7 +1192,6 @@ const AddQuotation = () => {
                             className="btn btn-success fa-pull-right"
                             onClick={e => openModal2(e, "post")}
                             disabled="true"
-                            data-access="post"
                           >
                             <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
                             Post
@@ -1210,7 +1201,6 @@ const AddQuotation = () => {
                             className="btn btn-info fa-pull-right"
                             onClick={e => openModal2(e, "Ready To Post")}
                             disabled={isSubmitting}
-                            data-access="save"
                           >
                             <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>
                             Ready To Post
@@ -1220,7 +1210,6 @@ const AddQuotation = () => {
                             className="btn btn-info fa-pull-right"
                             onClick={e => openModal2(e, "save")}
                             disabled={isSubmitting}
-                            data-access="save"
                           >
                             <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>
                             Save
@@ -1391,17 +1380,15 @@ const AddQuotation = () => {
 
                                           />
 
-                                          {access.canSave && (
-                                            <button
-                                              type="button"
-                                              className="btn btn-info fa-pull-right"
-                                              onClick={e => setIsModalOpen3(true)} disabled={sqbasicinfo.IsWithCustomer}
-                                              data-access="save"
 
-                                            >
-                                              <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
-                                            </button>
-                                          )}
+                                          <button
+                                            type="button"
+                                            className="btn btn-info fa-pull-right"
+                                            onClick={e => setIsModalOpen3(true)} disabled={sqbasicinfo.IsWithCustomer}
+
+                                          >
+                                            <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
+                                          </button>
 
                                         </div>
                                         {/*                                       
@@ -1952,17 +1939,15 @@ const AddQuotation = () => {
                                           className="text-center"
                                           style={{ width: "2%" }}
                                         >
-                                          {access.canNew && (
-                                            <span
-                                              style={{
-                                                cursor: "pointer",
-                                                alignItems: "center",
-                                              }}
-                                              onClick={handleAddItem}
-                                            >
-                                              <i className="mdi mdi-plus" />
-                                            </span>
-                                          )}
+                                          <span
+                                            style={{
+                                              cursor: "pointer",
+                                              alignItems: "center",
+                                            }}
+                                            onClick={handleAddItem}
+                                          >
+                                            <i className="mdi mdi-plus" />
+                                          </span>
                                         </th>
                                         <th className="text-center required-label">
                                           Gas Code
@@ -1991,30 +1976,24 @@ const AddQuotation = () => {
                                         >
                                           Currency
                                         </th>
-                                        {access.canViewRate && (
-                                          <th
-                                            className="text-center required-label"
-                                            style={{ width: "12%" }}
-                                          >
-                                            Unit Price
-                                          </th>
-                                        )}
-                                        {access.canViewRate && (
-                                          <th
-                                            className="text-center"
-                                            style={{ width: "11%" }}
-                                          >
-                                            Total Price{" "}
-                                          </th>
-                                        )}
-                                        {access.canViewRate && (
-                                          <th
-                                            className="text-center"
-                                            style={{ width: "14%" }}
-                                          >
-                                            Price (IDR)
-                                          </th>
-                                        )}
+                                        <th
+                                          className="text-center required-label"
+                                          style={{ width: "12%" }}
+                                        >
+                                          Unit Price
+                                        </th>
+                                        <th
+                                          className="text-center"
+                                          style={{ width: "11%" }}
+                                        >
+                                          Total Price{" "}
+                                        </th>
+                                        <th
+                                          className="text-center"
+                                          style={{ width: "14%" }}
+                                        >
+                                          Price (IDR)
+                                        </th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -2024,20 +2003,17 @@ const AddQuotation = () => {
                                         return (
                                           <tr key={item.GasCodeId || index}>
                                             <td>
-                                              {access.canDelete && (
-                                                <span
-                                                  color="danger"
-                                                  className="btn-sm"
-                                                  onClick={() => openModal(index)}
+                                              <span
+                                                color="danger"
+                                                className="btn-sm"
+                                                onClick={() => openModal(index)}
+                                                title="Delete"
+                                              >
+                                                <i
+                                                  className="mdi mdi-trash-can-outline label-icon align-middle"
                                                   title="Delete"
-                                                  data-access="delete"
-                                                >
-                                                  <i
-                                                    className="mdi mdi-trash-can-outline label-icon align-middle"
-                                                    title="Delete"
-                                                  />
-                                                </span>
-                                              )}
+                                                />
+                                              </span>
                                             </td>
                                             <td>
                                               <Select
@@ -2220,94 +2196,85 @@ const AddQuotation = () => {
                                                 ))}
                                               </Input>
                                             </td>
-                                            {access.canViewRate && (
-                                              <td>
-                                                <Input
-                                                  type="text"
-                                                  inputMode="numeric"
-                                                  className="text-end"
-                                                  maxLength={15}
-                                                  value={formatCurrency(
-                                                    quotationDetails[index]
-                                                      .UnitPrice
-                                                  )}
-                                                  onChange={e => {
-                                                    const raw =
-                                                      e.target.value.replace(
-                                                        /[^0-9]/g,
-                                                        ""
-                                                      );
-                                                    if (raw.length <= 11) {
-                                                      handleUnitPriceChange(
-                                                        index,
-                                                        raw
-                                                      );
-                                                    }
-                                                  }}
-                                                  onKeyDown={e => {
-                                                    if (
-                                                      e.key === "." ||
-                                                      e.key === "e" ||
-                                                      e.key === "-" ||
-                                                      (e.key.length === 1 &&
-                                                        !/[0-9]/.test(e.key))
-                                                    ) {
-                                                      e.preventDefault();
-                                                    }
-                                                  }}
-                                                />
-                                              </td>
-                                            )}
-                                            {access.canViewRate && (
-                                              <td>
-                                                {/* <Input type="text" disabled name="TotalPrice" value={quotationDetails[index].TotalPrice} id={`TotalPrice-${index}`} className="text-end"/> */}
 
-                                                <Input
-                                                  type="text"
-                                                  disabled
-                                                  name="TotalPrice"
-                                                  className="text-end"
-                                                  value={new Intl.NumberFormat(
-                                                    "en-US",
-                                                    {
-                                                      style: "decimal",
-                                                      minimumFractionDigits: 2,
-                                                      maximumFractionDigits: 2,
-                                                    }
-                                                  ).format(
-                                                    quotationDetails[index]
-                                                      ?.TotalPrice || 0
-                                                  )}
-                                                  id={`TotalPrice-${index}`}
+                                            <td>
+                                              <Input
+                                                type="text"
+                                                inputMode="numeric"
+                                                className="text-end"
+                                                maxLength={15}
+                                                value={formatCurrency(
+                                                  quotationDetails[index]
+                                                    .UnitPrice
+                                                )}
+                                                onChange={e => {
+                                                  const raw =
+                                                    e.target.value.replace(
+                                                      /[^0-9]/g,
+                                                      ""
+                                                    );
+                                                  if (raw.length <= 11) {
+                                                    handleUnitPriceChange(
+                                                      index,
+                                                      raw
+                                                    );
+                                                  }
+                                                }}
+                                                onKeyDown={e => {
+                                                  if (
+                                                    e.key === "." ||
+                                                    e.key === "e" ||
+                                                    e.key === "-" ||
+                                                    (e.key.length === 1 &&
+                                                      !/[0-9]/.test(e.key))
+                                                  ) {
+                                                    e.preventDefault();
+                                                  }
+                                                }}
+                                              />
+                                            </td>
+                                            <td>
+                                              {/* <Input type="text" disabled name="TotalPrice" value={quotationDetails[index].TotalPrice} id={`TotalPrice-${index}`} className="text-end"/> */}
+                                              <Input
+                                                type="text"
+                                                disabled
+                                                name="TotalPrice"
+                                                className="text-end"
+                                                value={new Intl.NumberFormat(
+                                                  "en-US",
+                                                  {
+                                                    style: "decimal",
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  }
+                                                ).format(
+                                                  quotationDetails[index]
+                                                    ?.TotalPrice || 0
+                                                )}
+                                                id={`TotalPrice-${index}`}
 
-                                                />
-
-                                              </td>
-                                            )}
-                                            {access.canViewRate && (
-                                              <td>
-
-                                                <Input
-                                                  type="text"
-                                                  disabled
-                                                  name="ConvertedPrice"
-                                                  value={new Intl.NumberFormat(
-                                                    "en-US",
-                                                    {
-                                                      style: "decimal",
-                                                      minimumFractionDigits: 2,
-                                                      maximumFractionDigits: 2,
-                                                    }
-                                                  ).format(
-                                                    quotationDetails[index]
-                                                      ?.ConvertedPrice || 0
-                                                  )} // Ensure value is defined
-                                                  id={`ConvertedPrice-${index}`}
-                                                  className="text-end"
-                                                />
-
-                                              </td>
-                                            )}
+                                              />
+                                            </td>
+                                            <td>
+                                              <Input
+                                                type="text"
+                                                disabled
+                                                name="ConvertedPrice"
+                                                value={new Intl.NumberFormat(
+                                                  "en-US",
+                                                  {
+                                                    style: "decimal",
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  }
+                                                ).format(
+                                                  quotationDetails[index]
+                                                    ?.ConvertedPrice || 0
+                                                )} // Ensure value is defined
+                                                id={`ConvertedPrice-${index}`}
+                                                className="text-end"
+                                              />
+                                            </td>
                                           </tr>
                                         );
                                       })}

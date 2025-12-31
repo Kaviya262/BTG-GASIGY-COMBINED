@@ -38,22 +38,6 @@ namespace UserPanel.Controllers
             var user = await _userManager.FindByNameAsync(model.Username);
             if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                if (!user.IsActive)  
-                {
-                    return Ok(new ResponseModel()
-                    {
-                        Data = new
-                        {
-                            Token = "",
-                            RefreshToken = "",
-                            Expiration = "",
-                            UserId = "",
-                            IsAdmin = 0
-                        },
-                        Message = "This account has been deactivated",
-                        Status = false
-                    });
-                }
                 var userRoles = await _userManager.GetRolesAsync(user);
 
                 var authClaims = new List<Claim>
@@ -70,10 +54,10 @@ namespace UserPanel.Controllers
                 var token = CreateToken(authClaims);
                 var refreshToken = GenerateRefreshToken();
 
-                _ = int.TryParse(_configuration["JWT:RefreshTokenValidityInMinutes"], out int refreshMinutes);
+                _ = int.TryParse(_configuration["JWT:RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
 
                 user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiryTime = DateTime.Now.AddMinutes(refreshMinutes);
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
 
                 await _userManager.UpdateAsync(user);
 
@@ -131,7 +115,7 @@ namespace UserPanel.Controllers
                     UserId = "",
                     IsAdmin=0
                 },
-                Message = "Login Failure",
+                Message = "Failure",
                 Status = false
             });
         }
@@ -198,66 +182,7 @@ namespace UserPanel.Controllers
 
         [HttpPost]
         [Route("refresh-token")]
-        public async Task<IActionResult> RefreshToken(TokenModel tokenModel)
-        {
-            if (tokenModel == null)
-            {
-                return Ok(new ResponseModel
-                {
-                    Data = null,
-                    Message = "Invalid client request",
-                    Status = false
-                });
-            }
-
-            var principal = GetPrincipalFromExpiredToken(tokenModel.AccessToken);
-            if (principal == null)
-            {
-                return Ok(new ResponseModel
-                {
-                    Data = null,
-                    Message = "Invalid access token",
-                    Status = false
-                });
-            }
-
-            var username = principal.Identity?.Name;
-            var user = await _userManager.FindByNameAsync(username);
-
-            if (user == null ||
-                user.RefreshToken != tokenModel.RefreshToken ||
-                user.RefreshTokenExpiryTime <= DateTime.Now)
-            {
-                return Ok(new ResponseModel
-                {
-                    Data = null,
-                    Message = "Invalid refresh token",
-                    Status = false
-                });
-            }
-
-            var newAccessToken = CreateToken(principal.Claims.ToList());
-            var newRefreshToken = GenerateRefreshToken();
-
-            user.RefreshToken = newRefreshToken;
-            user.RefreshTokenExpiryTime = DateTime.Now.AddMinutes(1);
-            await _userManager.UpdateAsync(user);
-
-            return Ok(new ResponseModel
-            {
-                Data = new
-                {
-                    accessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
-                    refreshToken = newRefreshToken
-                },
-                Message = "Success",
-                Status = true
-            });
-        }
-
-        [HttpPost]
-        [Route("refresh-token1")]
-        public async Task<IActionResult> RefreshToken1(TokenModel tokenModel) 
+        public async Task<IActionResult> RefreshToken(TokenModel tokenModel) 
         {
             if (tokenModel is null)
             {
@@ -358,7 +283,7 @@ namespace UserPanel.Controllers
             
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
             _ = int.TryParse(_configuration["JWT:TokenValidityInMinutes"], out int tokenValidityInMinutes);
-            var data = DateTime.Now.AddMinutes(tokenValidityInMinutes);
+            var data = DateTime.UtcNow.AddDays(tokenValidityInMinutes);
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],

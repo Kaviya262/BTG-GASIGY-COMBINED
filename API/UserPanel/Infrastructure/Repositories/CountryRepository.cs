@@ -1,44 +1,35 @@
-﻿using Application.Master.CountryItem.CreateCountryItem;
-using Application.Master.CountryItem.GetAllCountryItem;
-using Application.Master.CountryItem.GetCountryItemById;
-using Application.Master.CountryItem.UpdateCountryItem;
-using BackEnd.Country;
-using BackEnd.Invoices;
-using Core.Abstractions;
-using Core.Master.Country;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
-using Core.Models;
-using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using MediatR;
-using Microsoft.Extensions.Configuration;
-using MySql.Data.MySqlClient;
-using Mysqlx.Crud;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BackEnd.Invoices;
+using Core.Models;
+using Dapper;
+using MediatR;
 using UserPanel.Infrastructure.Data;
+using Core.Master.Country;
+using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient;
+using BackEnd.Country;
+using Application.Master.CountryItem.UpdateCountryItem;
+using Application.Master.CountryItem.CreateCountryItem;
+using Application.Master.CountryItem.GetCountryItemById;
+using Application.Master.CountryItem.GetAllCountryItem;
+using System.Globalization;
+using Core.Abstractions;
 
 namespace Infrastructure.Repositories
 {
     public class CountryRepository : ICountryRepository
     { //mysql queries
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
 
-        public CountryRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogRepo, IUserTransactionLogRepository transactionLogRepo)
+        public CountryRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogRepo;
-            _transactionLogRepo = transactionLogRepo;
         }
         #region GetAllCountriesAsync
         public async Task<object> GetAllCountriesAsync(int opt, int Id, string countryCode = "", string countryName = "")
@@ -64,20 +55,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CountryRepository),
-                    Method_Function = nameof(GetAllCountriesAsync),
-                    UserId = 0,
-                    ScreenName = "Country",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, Id, countryCode, countryName
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -120,20 +97,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CountryRepository),
-                    Method_Function = nameof(GetCountryByIdAsync),
-                    UserId = 0,
-                    ScreenName = "Country",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, countryId, contCode, contName   
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -178,20 +141,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CountryRepository),
-                    Method_Function = nameof(GetCountryByCodeAsync),
-                    UserId = 0,
-                    ScreenName = "Country",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                       opt, Id, contCode, contName
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -235,20 +184,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CountryRepository),
-                    Method_Function = nameof(GetCountryByNameAsync),
-                    UserId = 0,
-                    ScreenName = "Country",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, Id, contCode, contName
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -271,22 +206,6 @@ namespace Infrastructure.Repositories
                                             SELECT LAST_INSERT_ID();";
 
                 var result = await _connection.ExecuteScalarAsync<int>(query, obj.Header);
-
-                int countryId = result;
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: countryId,
-                    branchId: 0,
-                    orgId: 0,
-                    actionType: "Insert",
-                    actionDescription: "Added new Country",
-                    oldValue: null,
-                    newValue: obj,
-                    tableName: "MasterCountry",
-                    userId: obj.Header.UserId
-                );
-
                 if (result > 0)
                     return new ResponseModel()
                     {
@@ -305,18 +224,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CountryRepository),
-                    Method_Function = nameof(CreateCountryAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "Country",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
-
                 return new ResponseModel()
                 {
                     Data = null,
@@ -324,7 +231,6 @@ namespace Infrastructure.Repositories
                     Status = false
                 };
             }
-
         }
         #endregion
         #region UpdateCountryAsync
@@ -332,7 +238,7 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryAsync<object>($"select * from master_country where CurrencyId = {Obj.Header.CountryId}");
+
                 var query = @"
                     UPDATE master_country 
                     SET 
@@ -351,19 +257,6 @@ namespace Infrastructure.Repositories
                     UserId = Obj.Header.UserId,
                     CountryId = Obj.Header.CountryId
                 });
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: Obj.Header.CountryId,
-                    branchId: 0,
-                    orgId: 0,
-                    actionType: "Update",
-                    actionDescription: "Update Country",
-                    oldValue: null,
-                    newValue: Obj,
-                    tableName: "MasterCountry",
-                    userId: Obj.Header.UserId
-                );
 
                 if (rowsAffected > 0)
                 {
@@ -387,17 +280,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CountryRepository),
-                    Method_Function = nameof(UpdateCountryAsync),
-                    UserId = Obj.Header.UserId,
-                    ScreenName = "Country",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -408,27 +290,6 @@ namespace Infrastructure.Repositories
         }
         #endregion
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Master",
-                ScreenName = "Country",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-            };
 
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 }

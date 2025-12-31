@@ -35,7 +35,7 @@ class SidebarContent extends Component {
         // ---------------------------------------------------------
         // 2. INJECT BANK BOOK ENTRIES INTO FINANCE
         // ---------------------------------------------------------
-
+        
         // Find the Finance module (case-sensitive)
         const financeModule = menuData.menus.find(m => m.moduleName === "Finance");
 

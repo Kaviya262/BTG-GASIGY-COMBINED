@@ -9,7 +9,7 @@ import {
   FormGroup,
   InputGroup, Input,
   ModalHeader,
-  ModalFooter, Label
+  ModalFooter,Label
 } from "reactstrap";
 import Flatpickr from "react-flatpickr";
 import { Button } from "primereact/button";
@@ -28,11 +28,9 @@ import { useHistory } from "react-router-dom";
 import {
   GetAllIRNList,
   GetInvoiceReceiptAll,
-  GetPurchaseRequisitionSupplierList, GetByIdPurchaseOrder, GetPRNoBySupplierAndCurrency
+  GetPurchaseRequisitionSupplierList,GetByIdPurchaseOrder,GetPRNoBySupplierAndCurrency
 } from "common/data/mastersapi";
 import PaymentHistory from "./procurements-irn-payment-history";
-import useAccess from "../../../common/access/useAccess";
-
 const renderValueOrDash = value =>
   value !== null && value !== undefined && value !== "" ? value : "-";
 
@@ -74,8 +72,8 @@ const initFilters = () => ({
 
 const getUserDetails = () => {
   if (localStorage.getItem("authUser")) {
-    const obj = JSON.parse(localStorage.getItem("authUser"))
-    return obj;
+      const obj = JSON.parse(localStorage.getItem("authUser"))
+      return obj;
   }
 }
 
@@ -89,12 +87,11 @@ const formatDate = (date) => {
 };
 
 const InvoiceReceipt = () => {
-  const { access, applyAccessUI } = useAccess("Procurement", "IRN");
 
-  const [POdetailVisible, setPODetailVisible] = useState(false);
-  const [selectedPODetail, setSelectedPODetail] = useState({});
+      const [POdetailVisible, setPODetailVisible] = useState(false);
+      const [selectedPODetail, setSelectedPODetail] = useState({});
 
-  const [UserData, setUserData] = useState(null);
+    const [UserData, setUserData] = useState(null);
   const [autoOptions, setAutoOptions] = useState([]);
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const history = useHistory();
@@ -136,39 +133,34 @@ const InvoiceReceipt = () => {
   const loadSuggestions = (e) => { };
   const fetchAllIRN = async () => {
     const userData = getUserDetails();
-    const res = await GetAllIRNList(
+      const res = await GetAllIRNList(
       branchId,
       orgId,
       0,
       0,
       '',
-      '', userData?.u_id
+      '',userData?.u_id
     );
-    if (res.status) {
-      setIRNList(res.data);
-    }
+      if (res.status) {
+          setIRNList(res.data);
+      } 
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
-
+  
+   
   useEffect(() => {
     const loadOptions = async () => {
       let result = [];
-      result = await GetPurchaseRequisitionSupplierList(orgId, branchId, "%");
-      setAutoOptions(
-        (result?.data || []).map(item => ({
-          label: item.SupplierName,
-          value: item.SupplierID,
-        }))
-      );
+        result = await GetPurchaseRequisitionSupplierList(orgId, branchId, "%");
+        setAutoOptions(
+          (result?.data || []).map(item => ({
+            label: item.SupplierName,
+            value: item.SupplierID,
+          }))
+        );
     };
     fetchAllIRN();
     loadOptions();
-  }, []);
+  },[]);
 
   const onGlobalFilterChange = e => {
     const value = e.target.value || "";
@@ -210,7 +202,7 @@ const InvoiceReceipt = () => {
         supplierId,
         irnId,
         from,
-        to, userData?.u_id
+        to,userData?.u_id
       );
 
       if (res?.status) {
@@ -239,7 +231,7 @@ const InvoiceReceipt = () => {
         0,    // supplierId
         0,    // irnId
         "",   // fromDate
-        "", userData?.u_id   // toDate
+        "" ,userData?.u_id   // toDate
       );
 
       if (res?.status) {
@@ -257,16 +249,14 @@ const InvoiceReceipt = () => {
     history.push({ pathname: "/AddInvoiceReceipt/0" });
   };
 
-
+  
   const editRow = (rowData) => {
     // console.log('Edit row:', rowData);
     history.push(`/AddInvoiceReceipt/${rowData.receiptnote_hdr_id}`);
-  };
+};
 
   const actionBodyTemplate = (rowData) => {
-    if (!access?.canEdit) {
-      return null;
-    }
+    debugger
     return (
       <div className="d-flex align-items-center justify-content-center gap-3">
         {rowData.irnstatus === "Saved" ? (
@@ -293,9 +283,9 @@ const InvoiceReceipt = () => {
   // };
 
   const statusBodyTemplate = (rowData) => {
-    const statusShort = rowData.irnstatus === "Saved" ? "S" :
-      rowData.irnstatus === "Generated" ? "IG" :
-        rowData.irnstatus;
+    const statusShort = rowData.irnstatus === "Saved" ? "S" : 
+                        rowData.irnstatus === "Generated" ? "IG" : 
+                        rowData.irnstatus;
     return <Tag value={statusShort} severity={getSeverity(rowData.irnstatus)} />;
   };
 
@@ -309,10 +299,10 @@ const InvoiceReceipt = () => {
   };
 
   const clearFilter = () => {
-    setSelectedFilterType(null);
-    setSelectedAutoItem(null);
-    setFilters(initFilters());
-    setGlobalFilterValue('');
+      setSelectedFilterType(null);
+      setSelectedAutoItem(null);
+      setFilters(initFilters());
+      setGlobalFilterValue('');
   };
 
   const renderHeader = () => {
@@ -344,41 +334,41 @@ const InvoiceReceipt = () => {
     );
   };
   const [detailVisible, setDetailVisible] = useState(false);
-
+ 
   const [selectedDetail, setSelectedDetail] = useState({
-    Details: [
-      {
-        SupplierName: "ABC Traders Pvt Ltd",
-        grnNo: "GRN001",
-        invoiceNo: "INV-1001",
-        invoiceDate: "2025-08-01T00:00:00",
-        dueDate: "2025-08-31T00:00:00",
-        attachments: [
-          { name: "invoice-1001.pdf", url: "/files/invoice-1001.pdf" },
-          { name: "support-doc-1.png", url: "/files/support-doc-1.png" }
-        ]
-      },
-      {
-        SupplierName: "XYZ Supplies Co.",
-        grnNo: "GRN002",
-        invoiceNo: "INV-2002",
-        invoiceDate: "2025-08-05T00:00:00",
-        dueDate: "2025-09-05T00:00:00",
-        attachments: [
-          { name: "invoice-2002.pdf", url: "/files/invoice-2002.pdf" }
-        ]
-      },
-      {
-        SupplierName: "Global Importers",
-        grnNo: "GRN003",
-        invoiceNo: "INV-3003",
-        invoiceDate: "2025-08-10T00:00:00",
-        dueDate: "2025-09-10T00:00:00",
-        attachments: [] // no files uploaded
-      }
-    ]
-  });
-  const [visible, setVisible] = useState(false);
+  Details: [
+    {
+      SupplierName: "ABC Traders Pvt Ltd",
+      grnNo: "GRN001",
+      invoiceNo: "INV-1001",
+      invoiceDate: "2025-08-01T00:00:00",
+      dueDate: "2025-08-31T00:00:00",
+      attachments: [
+        { name: "invoice-1001.pdf", url: "/files/invoice-1001.pdf" },
+        { name: "support-doc-1.png", url: "/files/support-doc-1.png" }
+      ]
+    },
+    {
+      SupplierName: "XYZ Supplies Co.",
+      grnNo: "GRN002",
+      invoiceNo: "INV-2002",
+      invoiceDate: "2025-08-05T00:00:00",
+      dueDate: "2025-09-05T00:00:00",
+      attachments: [
+        { name: "invoice-2002.pdf", url: "/files/invoice-2002.pdf" }
+      ]
+    },
+    {
+      SupplierName: "Global Importers",
+      grnNo: "GRN003",
+      invoiceNo: "INV-3003",
+      invoiceDate: "2025-08-10T00:00:00",
+      dueDate: "2025-09-10T00:00:00",
+      attachments: [] // no files uploaded
+    }
+  ]
+});
+const [visible, setVisible] = useState(false);
   const [attachments, setAttachments] = useState([]);
 
   // Mock API or data fetch for attachments
@@ -393,83 +383,69 @@ const InvoiceReceipt = () => {
   };
 
   const handleShowDetails = async (row) => {
-    setDetailVisible(true);
+      setDetailVisible(true);
   };
-
+  
   const actionclaimBodyTemplate = (rowData) => {
-    return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
-      onClick={() => handleShowDetails(rowData)}>{rowData.receipt_no}</span>;
+      return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+          onClick={() => handleShowDetails(rowData)}>{rowData.receipt_no}</span>;
   };
-  const handleShowPODetails = async (row) => {
-    const res = await GetByIdPurchaseOrder(row.poid, orgId, branchId);
-    const supplier_id = res?.data?.Header?.supplierid;
-    const currency_id = res?.data?.Header?.currencyid;
-    // const prList = await GetCommonProcurementPRNoList(supplier_id,orgId,branchId);
-    const prList = await GetPRNoBySupplierAndCurrency(supplier_id, currency_id, orgId, branchId);
-    if (res.status) {
-      let requisition = res.data.Requisition || [];
+ const handleShowPODetails = async (row) => {
+        const res = await GetByIdPurchaseOrder(row.poid, orgId, branchId);
+        const supplier_id = res?.data?.Header?.supplierid;
+        const currency_id = res?.data?.Header?.currencyid;
+        // const prList = await GetCommonProcurementPRNoList(supplier_id,orgId,branchId);
+        const prList = await GetPRNoBySupplierAndCurrency(supplier_id, currency_id, orgId, branchId);
+        if (res.status) {
+            let requisition = res.data.Requisition || [];
 
-      if (prList?.data?.length > 0) {
-        requisition = requisition.map((r) => {
-          const pr = prList?.data?.find((p) => p.prid === r.prid);
-          return {
-            ...r,
-            PR_NUMBER: pr ? pr.pr_number : "NA",
-            PRDisplay: pr ? pr.pr_number : "NA",
-          };
-        });
-      } else {
-        requisition = requisition.map((r) => ({
-          ...r,
-          PR_NUMBER: "NA",
-          PRDisplay: "NA",
-        }));
-      }
+            if (prList?.data?.length > 0) {
+                requisition = requisition.map((r) => {
+                    const pr = prList?.data?.find((p) => p.prid === r.prid);
+                    return {
+                        ...r,
+                        PR_NUMBER: pr ? pr.pr_number : "NA",
+                        PRDisplay: pr ? pr.pr_number : "NA",
+                    };
+                });
+            } else {
+                requisition = requisition.map((r) => ({
+                    ...r,
+                    PR_NUMBER: "NA",
+                    PRDisplay: "NA",
+                }));
+            }
 
-      // Collect unique PR numbers for header concat
-      let headerPRNumbers = [
-        ...new Set(requisition.map((r) => r.prnumber).filter(Boolean)),
-      ].join(", ");
+            // Collect unique PR numbers for header concat
+            let headerPRNumbers = [
+                ...new Set(requisition.map((r) => r.prnumber).filter(Boolean)),
+            ].join(", ");
 
-      if (!headerPRNumbers) headerPRNumbers = "NA";
+            if (!headerPRNumbers) headerPRNumbers = "NA";
 
-      setSelectedPODetail({
-        ...res.data,
-        Header: {
-          ...res.data.Header,
-          PRConcat: headerPRNumbers, // header field with PR numbers
-        },
-        Details: requisition, // requisition rows are the detail lines
-      });
+            setSelectedPODetail({
+                ...res.data,
+                Header: {
+                    ...res.data.Header,
+                    PRConcat: headerPRNumbers, // header field with PR numbers
+                },
+                Details: requisition, // requisition rows are the detail lines
+            });
 
-      setPODetailVisible(true);
+            setPODetailVisible(true);
 
-      // if you later add attachments for PO
-      // setPreviewUrl(res.data.Header.filepath || "");
-      // setFileName(res.data.Header.filename || "");
-    } else {
-      Swal.fire("Error", "Data is not available", "error");
-    }
-  };
-
-  // const actionIRNBodyTemplate = (rowData) => {
-  //   return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
-  //     onClick={() => handleShowPODetails(rowData)}>{rowData.receipt_no}</span>;
-  // };
+            // if you later add attachments for PO
+            // setPreviewUrl(res.data.Header.filepath || "");
+            // setFileName(res.data.Header.filename || "");
+        } else {
+            Swal.fire("Error", "Data is not available", "error");
+        }
+    };
+  
   const actionIRNBodyTemplate = (rowData) => {
-    return access?.canViewDetails ? (
-      <span
-        style={{ cursor: "pointer", color: "blue" }}
-        className="btn-rounded btn btn-link"
-        onClick={() => handleShowPODetails(rowData)}
-      >
-        {rowData.receipt_no}
-      </span>
-    ) : (
-      <span>{rowData.receipt_no}</span>
-    );
-  };
-
+    return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+        onClick={() => handleShowPODetails(rowData)}>{rowData.receipt_no}</span>;
+};
   const [showModal, setShowModal] = useState(false);
   const [selectedRowFiles, setSelectedRowFiles] = useState([]);
 
@@ -482,37 +458,26 @@ const InvoiceReceipt = () => {
   };
 
 
-  const attachmentTemplate = (rowData) => {
-    return (
-      <Button className="btn btn-success " onClick={() => openAttachments(rowData)}>
-        <i className="fa fa-paperclip label-icon font-size-14 align-middle me-2"></i> Attachments
-      </Button>
-    );
-  };
+const attachmentTemplate = (rowData) => {
+  return (
+    <Button className="btn btn-success "  onClick={() => openAttachments(rowData)}>
+      <i className="fa fa-paperclip label-icon font-size-14 align-middle me-2"></i> Attachments
+    </Button>
+  );
+};
 
-  const paymentTemplate = (rowData) => {
-    if (!access?.canViewDetails) {
-      return null;
-    }
-    return (
-      <span title="View Remarks" style={{ cursor: 'pointer' }}
+const paymentTemplate = (rowData) => {
+  return (
+    <span   title="View Remarks" style={{ cursor: 'pointer' }} 
         onClick={() => {
-          setSelectedIrn(rowData.supplier_id);
-          setPaymentVisible(true);
+          setSelectedIrn(rowData.supplier_id);  
+          setPaymentVisible(true);        
         }}
       >
-        <i className="mdi mdi-eye font-size-26 me-2" style={{ fontSize: '1.5rem', color: '#17a2b8' }}></i>
-      </span>
-    );
-  };
-
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
+              <i className="mdi mdi-eye font-size-26 me-2" style={{ fontSize: '1.5rem', color: '#17a2b8' }}></i>
+            </span>
+  );
+};
 
   return (
     <div className="page-content">
@@ -613,16 +578,17 @@ const InvoiceReceipt = () => {
                 </div>
               )}
 
-              <div className={`col-12 ${selectedFilterType?.value === 1
-                ? 'col-lg-5' // Supplier uses col-lg-4
-                : selectedFilterType?.value === 2
-                  ? 'col-lg-3' // Due Date uses col-lg-6
-                  : 'col-lg-9' // Default (nothing selected)
+              <div className={`col-12 ${
+                  selectedFilterType?.value === 1
+                    ? 'col-lg-5' // Supplier uses col-lg-4
+                    : selectedFilterType?.value === 2
+                    ? 'col-lg-3' // Due Date uses col-lg-6
+                    : 'col-lg-9' // Default (nothing selected)
                 } d-flex justify-content-end flex-wrap gap-2`}
-              >
+                >
                 <button type="button" className="btn btn-info" onClick={searchData}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                 <button type="button" className="btn btn-danger" onClick={cancelFilter}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-                <button type="button" className="btn btn-success" onClick={linkAddInvoice} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                <button type="button" className="btn btn-success" onClick={linkAddInvoice}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
               </div>
             </div>
           </Card>
@@ -636,7 +602,7 @@ const InvoiceReceipt = () => {
                 value={IRNList}
                 paginator
                 header={renderHeader()}
-                rows={access.records || 10}
+                rows={20}
                 dataKey="receiptnote_hdr_id"
                 filters={filters}
                 globalFilterFields={[
@@ -649,7 +615,7 @@ const InvoiceReceipt = () => {
                   "grnno",
                   "grndate",
                   "filename",
-                  , 'createddate', 'totalamount', 'createdbyName'
+                  ,'createddate','totalamount','createdbyName'
                 ]}
                 emptyMessage="No IRN found."
                 onFilter={(e) => setFilters(e.filters)}
@@ -658,15 +624,15 @@ const InvoiceReceipt = () => {
                 {/* <Column field="receipt_no" header="IRN No." filter filterPlaceholder="Search by IRN No" 
                 style={{ width: "10%" }} /> */}
 
-                <Column
-                  field="receipt_no"
-                  header="IRN No."
-                  filter
-                  filterPlaceholder="Search by IRN No"
-                  className="text-left"
-                  style={{ width: "10%" }}
-                  body={actionIRNBodyTemplate}
-                />
+                   <Column
+                                                        field="receipt_no"
+                                                        header="IRN No."
+                                                        filter
+                                                        filterPlaceholder="Search by IRN No"
+                                                        className="text-left"
+                                                        style={{ width: "10%" }}
+                                                        body={actionIRNBodyTemplate}
+                                                    />
                 <Column field="receipt_Date" header="IRN Date" filter filterPlaceholder="Search by Date" style={{ width: "10%" }} />
                 <Column field="suppliername" header="Supplier" filter filterPlaceholder="Search by Supplier" style={{ width: "20%" }} />
                 <Column field="invoice_dt" header="Inv Date" filter filterPlaceholder="Search by Inv Date" style={{ width: "12%" }} />
@@ -680,8 +646,7 @@ const InvoiceReceipt = () => {
                     className="text-left"
                     style={{ width: "10%" }}
                 /> */}
-                {access.canViewRate && (
-                  <Column
+                   <Column
                     field="totalamount"
                     header="Total Amt"
                     filter
@@ -690,21 +655,20 @@ const InvoiceReceipt = () => {
 
                     body={(rowData) =>
                       rowData.totalamount?.toLocaleString('en-US', {
-                        style: 'decimal',
-                        minimumFractionDigits: 2
+                          style: 'decimal',
+                          minimumFractionDigits: 2
                       })
-                    }
+                  }
                     style={{ width: "10%" }}
-                  />
-                )}
-                <Column
-                  field="createdbyName"
-                  header="Created By"
-                  filter
-                  filterPlaceholder="Search by created by"
-                  className="text-left"
                 />
-                <Column field="irnstatus" header="Status" className="text-center" body={statusBodyTemplate} />
+                <Column
+                    field="createdbyName"
+                    header="Created By"
+                    filter
+                    filterPlaceholder="Search by created by"
+                    className="text-left"
+                />
+                <Column field="irnstatus" header="Status" className="text-center"  body={statusBodyTemplate} /> 
                 <Column header="Action" body={actionBodyTemplate} showFilterMatchMode={false} className="text-center" style={{ width: "100px" }} />
                 <Column className="text-center" body={paymentTemplate} header="Payment History" />
               </DataTable>
@@ -713,228 +677,214 @@ const InvoiceReceipt = () => {
           </Col>
         </Row>
       </Container>
-      <Modal isOpen={detailVisible} toggle={() => setDetailVisible(false)} size="xl">
+       <Modal isOpen={detailVisible} toggle={() => setDetailVisible(false)} size="xl">
         <ModalHeader toggle={() => setDetailVisible(false)}>Invoice Receipt Note Details</ModalHeader>
         <ModalBody>
-          {selectedDetail && (
-            <>
-              <DataTable value={selectedDetail?.Details || []}>
-                {/* Serial No. */}
-                <Column
-                  header="S.No"
-                  body={(_, { rowIndex }) => rowIndex + 1}
-                />
+            {selectedDetail && (
+                <>
+                  <DataTable value={selectedDetail?.Details || []}>
+                    {/* Serial No. */}
+                    <Column 
+                      header="S.No" 
+                      body={(_, { rowIndex }) => rowIndex + 1} 
+                    />
 
-                {/* Supplier */}
-                <Column
-                  field="SupplierName"
-                  header="Supplier"
-                />
+                    {/* Supplier */}
+                    <Column 
+                      field="SupplierName" 
+                      header="Supplier" 
+                    />
 
-                {/* GRN No. */}
-                <Column
-                  field="grnNo"
-                  header="GRN No."
-                />
+                    {/* GRN No. */}
+                    <Column 
+                      field="grnNo" 
+                      header="GRN No." 
+                    />
 
-                {/* Invoice No. */}
-                <Column
-                  field="invoiceNo"
-                  header="Invoice No."
-                />
+                    {/* Invoice No. */}
+                    <Column 
+                      field="invoiceNo" 
+                      header="Invoice No." 
+                    />
 
-                {/* Invoice Date */}
-                <Column
-                  field="invoiceDate"
-                  header="Invoice Date"
-                  body={(row) => row.invoiceDate ? row.invoiceDate.split("T")[0] : ""}
-                />
+                    {/* Invoice Date */}
+                    <Column 
+                      field="invoiceDate" 
+                      header="Invoice Date" 
+                      body={(row) => row.invoiceDate ? row.invoiceDate.split("T")[0] : ""} 
+                    />
 
-                {/* Due Date */}
-                <Column
-                  field="dueDate"
-                  header="Due Date"
-                  body={(row) => row.dueDate ? row.dueDate.split("T")[0] : ""}
-                />
+                    {/* Due Date */}
+                    <Column 
+                      field="dueDate" 
+                      header="Due Date" 
+                      body={(row) => row.dueDate ? row.dueDate.split("T")[0] : ""} 
+                    />
 
-                {/* Upload Invoice */}
-                <Column body={attachmentTemplate} header="Attachments" />
+                    {/* Upload Invoice */}
+                    <Column body={attachmentTemplate} header="Attachments" />
 
-
-              </DataTable>
-            </>
-          )}
+                 
+                  </DataTable>                
+                </>
+            )}
         </ModalBody>
 
         <ModalFooter>
-          <button type="button" className="btn btn-danger" onClick={() => setDetailVisible(false)}>
-            <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Close
-          </button>
+            <button type="button" className="btn btn-danger" onClick={() => setDetailVisible(false)}>
+                <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Close
+            </button>
         </ModalFooter>
-      </Modal>
-      <Modal isOpen={showModal} toggle={toggleModal}>
-        <ModalHeader toggle={toggleModal}>Attachments</ModalHeader>
-        <ModalBody>
-          {selectedRowFiles.length > 0 ? (
-            <DataTable value={selectedRowFiles} responsiveLayout="scroll">
-              <Column
-                header="#"
-                body={(_, { rowIndex }) => rowIndex + 1}
-                style={{ width: "50px" }}
-              />
-              <Column
-                header="Attachment"
-                body={(row) => (
-                  <a href={row.url} target="_blank" rel="noopener noreferrer">
-                    {row.name}
-                  </a>
-                )}
-              />
-            </DataTable>
-          ) : (
-            <p>No files uploaded.</p>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="secondary" onClick={toggleModal}>
-            Close
-          </Button>
-        </ModalFooter>
-      </Modal>
-      <Modal isOpen={paymentVisible} toggle={() => setPaymentVisible(false)} size="xl">
-        <ModalHeader toggle={() => setPaymentVisible(false)}>
-          Payment History
-        </ModalHeader>
-        <ModalBody>
-          {selectedIrn && (
-            <PaymentHistory irnId={selectedIrn} />
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={() => setPaymentVisible(false)}
-          >
-            <i className="bx bx-x label-icon font-size-16 align-middle me-2"></i> Close
-          </button>
-        </ModalFooter>
-      </Modal>
+    </Modal>
+    <Modal isOpen={showModal} toggle={toggleModal}>
+      <ModalHeader toggle={toggleModal}>Attachments</ModalHeader>
+      <ModalBody>
+        {selectedRowFiles.length > 0 ? (
+          <DataTable value={selectedRowFiles} responsiveLayout="scroll">
+            <Column
+              header="#"
+              body={(_, { rowIndex }) => rowIndex + 1}
+              style={{ width: "50px" }}
+            />
+            <Column
+              header="Attachment"
+              body={(row) => (
+                <a href={row.url} target="_blank" rel="noopener noreferrer">
+                  {row.name}
+                </a>
+              )}
+            />
+          </DataTable>
+        ) : (
+          <p>No files uploaded.</p>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button color="secondary" onClick={toggleModal}>
+          Close
+        </Button>
+      </ModalFooter>
+    </Modal>
+    <Modal isOpen={paymentVisible} toggle={() => setPaymentVisible(false)} size="xl">
+      <ModalHeader toggle={() => setPaymentVisible(false)}>
+        Payment History
+      </ModalHeader>
+      <ModalBody>
+        {selectedIrn && (
+          <PaymentHistory irnId={selectedIrn} />
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <button
+          type="button"
+          className="btn btn-danger"
+          onClick={() => setPaymentVisible(false)}
+        >
+          <i className="bx bx-x label-icon font-size-16 align-middle me-2"></i> Close
+        </button>
+      </ModalFooter>
+    </Modal>
 
 
-      <Modal isOpen={POdetailVisible} toggle={() => setPODetailVisible(false)} size="xl">
-        <ModalHeader toggle={() => setPODetailVisible(false)}>Purchase Order Details</ModalHeader>
-        <ModalBody>
-          {selectedPODetail && (
-            <>
-              {/* PO Header Section */}
-              <Row form>
-                {[
-                  ["PO No.", selectedPODetail.Header?.pono],
-                  ["PO Date", formatDate(selectedPODetail.Header?.podate)],
-                  ["Supplier", selectedPODetail.Header?.suppliername],
-                  ["Currency", selectedPODetail.Header?.currencycode],
-                  ["PR No.", selectedPODetail.Header?.PRConcat], // concat of all PRs
-                ].map(([label, val], i) => (
-                  <Col md="4" key={i} className="form-group row ">
-                    <Label className="col-sm-5 col-form-label bold">{label}</Label>
-                    <Col sm="7" className="mt-2">: {val}</Col>
-                  </Col>
-                ))}
-              </Row>
+    <Modal isOpen={POdetailVisible} toggle={() => setPODetailVisible(false)} size="xl">
+                <ModalHeader toggle={() => setPODetailVisible(false)}>Purchase Order Details</ModalHeader>
+                <ModalBody>
+                    {selectedPODetail && (
+                        <>
+                            {/* PO Header Section */}
+                            <Row form>
+                                {[
+                                    ["PO No.", selectedPODetail.Header?.pono],
+                                    ["PO Date", formatDate(selectedPODetail.Header?.podate)],
+                                    ["Supplier", selectedPODetail.Header?.suppliername],
+                                    ["Currency", selectedPODetail.Header?.currencycode],
+                                    ["PR No.", selectedPODetail.Header?.PRConcat], // concat of all PRs
+                                ].map(([label, val], i) => (
+                                    <Col md="4" key={i} className="form-group row ">
+                                        <Label className="col-sm-5 col-form-label bold">{label}</Label>
+                                        <Col sm="7" className="mt-2">: {val}</Col>
+                                    </Col>
+                                ))}
+                            </Row>
 
-              <hr />
+                            <hr />
 
-              <DataTable value={selectedPODetail.Requisition}>
-                <Column header="#" body={(_, { rowIndex }) => rowIndex + 1} />
-                <Column field="prnumber" header="PR No." />
-                <Column field="groupname" header="Item Group" />
-                <Column field="itemname" header="Item Name" />
+                            <DataTable value={selectedPODetail.Requisition}>
+                                <Column header="#" body={(_, { rowIndex }) => rowIndex + 1} />
+                                <Column field="prnumber" header="PR No." />
+                                <Column field="groupname" header="Item Group" />
+                                <Column field="itemname" header="Item Name" />
 
 
-                <Column
-                  field="qty"
-                  header="Qty"
-                  body={(rowData) =>
-                    rowData.qty?.toLocaleString("en-US", { minimumFractionDigits: 3 })
-                  }
-                // footer={selectedDetail.Header?.subtotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                />
-                <Column field="uom" header="UOM" />
-                {access.canViewRate && (
-                  <Column
-                    field="unitprice"
-                    header="Unit Price"
-                    body={(rowData) =>
-                      rowData.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    }
-                    footer={selectedPODetail.Header?.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  />
-                )}
-                {access.canViewRate && (
+                                <Column
+                                    field="qty"
+                                    header="Qty"
+                                    body={(rowData) =>
+                                        rowData.qty?.toLocaleString("en-US", { minimumFractionDigits: 3 })
+                                    }
+                                // footer={selectedDetail.Header?.subtotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
+                                <Column field="uom" header="UOM" />
+                                <Column
+                                    field="unitprice"
+                                    header="Unit Price"
+                                    body={(rowData) =>
+                                        rowData.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedPODetail.Header?.unitprice?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                  <Column
-                    field="discountvalue"
-                    header="Discount"
-                    body={(rowData) =>
-                      rowData.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    }
-                    footer={selectedPODetail.Header?.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  />
-                )}
-                {access.canViewRate && (
+                                <Column
+                                    field="discountvalue"
+                                    header="Discount"
+                                    body={(rowData) =>
+                                        rowData.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedPODetail.Header?.discountvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                  <Column field="taxperc" header="Tax %" />
-                )}
-                {access.canViewRate && (
+                                <Column field="taxperc" header="Tax %" />
 
-                  <Column
-                    field="taxvalue"
-                    header="Tax Amt"
-                    body={(rowData) =>
-                      rowData.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    }
-                    footer={selectedPODetail.Header?.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  />
-                )}
-                {access.canViewRate && (
+                                <Column
+                                    field="taxvalue"
+                                    header="Tax Amt"
+                                    body={(rowData) =>
+                                        rowData.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedPODetail.Header?.taxvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                  <Column field="vatperc" header="VAT %" />
-                )}
-                {access.canViewRate && (
+                                <Column field="vatperc" header="VAT %" />
 
-                  <Column
-                    field="vatvalue"
-                    header="VAT Amt"
-                    body={(rowData) =>
-                      rowData.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    }
-                    footer={selectedPODetail.Header?.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  />
-                )}
-                {access.canViewRate && (
+                                <Column
+                                    field="vatvalue"
+                                    header="VAT Amt"
+                                    body={(rowData) =>
+                                        rowData.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={selectedPODetail.Header?.vatvalue?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                />
 
-                  <Column
-                    field="nettotal"
-                    header="Total Amt"
-                    body={(rowData) =>
-                      rowData.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    }
-                    footer={<b>{selectedPODetail.Header?.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</b>}
-                  />
-                )}
-              </DataTable>
+                                <Column
+                                    field="nettotal"
+                                    header="Total Amt"
+                                    body={(rowData) =>
+                                        rowData.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                                    }
+                                    footer={<b>{selectedPODetail.Header?.nettotal?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</b>}
+                                />
+                            </DataTable>
 
-            </>
-          )}
-        </ModalBody>
+                        </>
+                    )}
+                </ModalBody>
 
-        <ModalFooter>
-          <button type="button" className="btn btn-danger" onClick={() => setPODetailVisible(false)}>
-            <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Close
-          </button>
-        </ModalFooter>
-      </Modal>
+                <ModalFooter>
+                    <button type="button" className="btn btn-danger" onClick={() => setPODetailVisible(false)}>
+                        <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Close
+                    </button>
+                </ModalFooter>
+            </Modal>
     </div>
   );
 };

@@ -87,6 +87,7 @@ namespace Core.Procurement.InvoiceReceipt
 
     public class InvoiceReceiptEntry
     {
+        public Int32 ModeOfPaymentId { get; set; }
         public int receiptnote_hdr_id { get; set; }
         public string grnid { get; set; }
         public int poid { get; set; }

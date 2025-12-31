@@ -9,21 +9,11 @@ import { toast } from 'react-toastify';
 import { useLocation } from "react-router-dom";
 import Select from 'react-select';
 import { GetContactName, GetSalesPerson, SaveTab1, SaveTab2, SaveTab3, SaveTab1Doc, GetDepartment, SaveTab1GetById, SaveTab2GetById, SaveTab3GetById, fetchTab1CutomerList, fetchTab2ContactList, fetchTab3AddressList, toggleChangeContactStatus, toggleChangeAddressStatus } from "../../../src/common/data/mastersapi";
-import useAccess from "../../common/access/useAccess";
 
 const Addcontacts = () => {
 
     const location = useLocation();
-    const { access, applyAccessUI } = useAccess("Masters", "Customers");
-        
-             useEffect(() => {
-                if (!access.loading) {
-                    applyAccessUI();
-                }
-            }, [access, applyAccessUI]);
-
     const [contactName, setContactName] = useState([]);
-    const [customerReviewFile, setCustomerReviewFile] = useState(null);
     const contactData = location.state?.contactData;
     const existEmails = location.state?.emaillist || [];
     const [submitAction, setSubmitAction] = useState("save");
@@ -38,7 +28,6 @@ const Addcontacts = () => {
             setActiveTab(tab);
         }
     };
-    const [customerReviewPath, setCustomerReviewPath] = useState(null);
     const [isAddressEditing, setIsAddressEditing] = useState(false);
     const [file, setFile] = React.useState();
     const [customerDetails, setCustomerDetails] = useState([]);
@@ -141,13 +130,6 @@ const Addcontacts = () => {
         }
     }, [location.state]);
 
-
-    useEffect(() => {
-        if (initialValues.CustomerReviewFormPath) {
-            setCustomerReviewPath(initialValues.CustomerReviewFormPath);
-        }
-    }, [initialValues.CustomerReviewFormPath]);
-
     const loadCustomerDetail = async () => {
         if (!contactData?.Id) return;
         debugger
@@ -174,13 +156,12 @@ const Addcontacts = () => {
                     city: result.CityId?.toString() || "",
                     zone: result.ZoneId?.toString() || "",
                     poNumber: result.PoNumber,
-                    file: result.LegalDocumentPath || "",
-                    CustomerReviewFormPath: result.CustomerReviewFormPath || "",
+                    file: result.LegalDocumentPath,
                     CreditLimitinIDR: result.CreditLimitinIDR,
+                    file: result.LegalDocumentPath,
                 });
                 setFileupload(result.LegalDocumentPath);
                 setCustomerId(contactData.Id);
-                setCustomerReviewPath(result.CustomerReviewFormPath || "");
             }
         } catch (err) {
             console.error("Failed to load customer details:", err);
@@ -322,136 +303,138 @@ const Addcontacts = () => {
         }
     }, []);
 
-    const [fileupload, setFileupload] = useState(null); // Legal Document file
-    const [legalPreviewUrl, setLegalPreviewUrl] = useState(null); // Legal Document preview
-    const [reviewPreviewUrl, setReviewPreviewUrl] = useState(null); // Review Form preview
+    const [fileupload, setFileupload] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
+
         if (!file) {
             setFileupload(null);
-            setLegalPreviewUrl(null);
+            setPreviewUrl(null);
             return;
         }
+
         const allowedTypes = [
             "application/pdf",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "application/vnd.ms-excel",
             "text/csv",
         ];
+
         if (!allowedTypes.includes(file.type)) {
             toast.error("Please select a valid PDF, Excel (.xls, .xlsx), or CSV file.");
             setFileupload(null);
-            setLegalPreviewUrl(null);
+            setPreviewUrl(null);
             return;
         }
+
         setFileupload(file);
+
         if (file.type === "application/pdf") {
             const url = URL.createObjectURL(file);
-            setLegalPreviewUrl(url);
+            setPreviewUrl(url);
         } else {
-            setLegalPreviewUrl(null);
+            setPreviewUrl(null);
         }
     };
 
     useEffect(() => {
+        debugger
+        console.log("ExistEmails", existEmails);
+        console.log("contactData", contactData);
         return () => {
-            if (legalPreviewUrl) {
-                URL.revokeObjectURL(legalPreviewUrl);
-            }
-            if (reviewPreviewUrl) {
-                URL.revokeObjectURL(reviewPreviewUrl);
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
             }
         };
-    }, [legalPreviewUrl, reviewPreviewUrl]);
+    }, [previewUrl]);
 
-   const handleSubmitTab1 = async (values, { setSubmitting, resetForm }) => {
-    debugger;
-    try {
-        const payload = {
-            customer: {
-                Id: values.id || 0,
-                CustomerName: values.contactname,
-                Email: values.email,
-                SalesPersonId: values.btgcontactname,
-                CountryId: values.country,
-                Cc_Email: values.ccemail,
-                Remarks: values.remarks,
-                PhoneNumber: values.phoneno,
-                Fax: values.faxno,
-                UserId: values.UserId || 1,
-                UserIP: values.UserIP || "",
-                IsActive: true,
-                OrgId: 1,
-                BranchId: 1,
-                BusinessFormId: values.businessForm,
-                BusinessFieldId: values.businessField,
-                CityId: values.city,
-                ZoneId: values.zone,
-                PoNumber: !!values.poNumber,
-                CustomerReviewFormPath: customerReviewFile ? customerReviewFile.name : "",
-                CreditLimitinIDR:
-                    values.CreditLimitinIDR === ""
-                        ? null
-                        : Number(values.CreditLimitinIDR),
-            },
-            tabId: 1,
-            customerAddresses: [],
-            customerContacts: [],
-        };
+    const handleSubmitTab1 = async (values, { setSubmitting, resetForm }) => {
+        // if (!fileupload) {
+        //     toast.error("Please upload a file before submitting.");
+        //     setSubmitting(false);
+        //     return;
+        // }
+        debugger
+        try {
+            const payload = {
+                customer: {
+                    Id: values.id || 0,
+                    CustomerName: values.contactname,
+                    Email: values.email,
+                    SalesPersonId: values.btgcontactname,
+                    CountryId: values.country,
+                    Cc_Email: values.ccemail,
+                    Remarks: values.remarks,
+                    PhoneNumber: values.phoneno,
+                    Fax: values.faxno,
+                    UserId: values.UserId,
+                    UserIP: values.UserIP,
+                    IsActive: true,
+                    OrgId: 1,
+                    BranchId: 1,
+                    BusinessFormId: values.businessForm,
+                    BusinessFieldId: values.businessField,
+                    CityId: values.city,
+                    ZoneId: values.zone,
+                    PoNumber: !!values.poNumber,
+                    CreditLimitinIDR: values.CreditLimitinIDR === "" ? null : Number(values.CreditLimitinIDR),
+                },
+                tabId: 1,
+                customerAddresses: [],
+                customerContacts: [],
+            };
 
-        const response = await SaveTab1(payload);
+            const response = await SaveTab1(payload);
 
-        if (response?.statusCode === 0) {
-            const newCustomerId = response?.data?.customerId;
+            if (response.statusCode === 0) {
+                const newCustomerId = response.data?.customerId;
+                if (newCustomerId) {
+                    setNewCustomerId(newCustomerId);
+                    debugger
+                    if (fileupload instanceof File) {
+                        const formData = new FormData();
+                        formData.append("file", fileupload);
+                        formData.append("customerId", newCustomerId);
+                        formData.append("branchId", 1);
+                        formData.append("userId", 1);
 
-            if (!newCustomerId) {
-                toast.error("Customer ID not returned.");
-                return;
-            }
-
-            setNewCustomerId(newCustomerId);
-
-            if (fileupload instanceof File || customerReviewFile instanceof File) {
-                const uploadResponse = await SaveTab1Doc(
-                    newCustomerId,
-                    fileupload || null,
-                    customerReviewFile || null,
-                    1, // BranchId
-                    1  // UserId
-                );
-
-                if (!uploadResponse || uploadResponse.status !== 200) {
-                    toast.error("Document upload failed.");
-                    return;
+                        const uploadResponse = await SaveTab1Doc(newCustomerId, fileupload, 1, 1);
+                        if (uploadResponse.status === 200) {
+                            toast.success(values.Id && values.Id !== 0 ? "Customer updated successfully." : "Customer created successfully.");
+                            toggleTab(2);
+                            loadTab2list(newCustomerId);
+                            await loadDepartments();
+                            resetForm();
+                            return;
+                        } else {
+                            toast.error(uploadResponse.message || "Document upload failed.");
+                        }
+                    } else {
+                        toast.success(values.id && values.id !== 0 ? "Customer updated successfully." : "Customer created successfully.");
+                        toggleTab(2);
+                        loadTab2list(newCustomerId);
+                        await loadDepartments();
+                        resetForm();
+                        return;
+                    }
                 }
+            } else {
+                toast.error(response.message || "Submission failed");
             }
-
-            toast.success(
-                values.id && values.id !== 0
-                    ? "Customer updated successfully."
-                    : "Customer created successfully."
-            );
-
-            toggleTab(2);
-            loadTab2list(newCustomerId);
-            await loadDepartments();
-            resetForm();
-        } else {
-            toast.error(response?.message || "Submission failed");
+        } catch (error) {
+            console.error("Submission error:", error);
+            const errorToastId = "unexpected-error";
+            if (!toast.isActive(errorToastId)) {
+                toast.error("An unexpected error occurred.", {
+                    toastId: errorToastId
+                });
+            }
+        } finally {
+            setSubmitting(false);
         }
-    } catch (error) {
-        console.error("Submission error:", error);
-        const errorToastId = "unexpected-error";
-        if (!toast.isActive(errorToastId)) {
-            toast.error("An unexpected error occurred.", { toastId: errorToastId });
-        }
-    } finally {
-        setSubmitting(false);
-    }
-};
-
-
+    };
     // useEffect(() => {
     //     if (newCustomerId) {
     //         loadTab2list(newCustomerId);
@@ -508,16 +491,12 @@ const Addcontacts = () => {
             setaddressDetails([]);
         }
     };
-    
-   const loadCustomerDetails = async () => {
-    if (!contactData?.Id) return;
-
-    try {
+    const loadCustomerDetails = async (contactData) => {
+        debugger
         const result = await fetchTab1CutomerList(contactData.Id);
-
         if (result) {
             setCustomerDetails(result);
-
+            debugger
             setInitialValues({
                 id: result.Id?.toString() || "",
                 contactId: result.ContactId?.toString() || "",
@@ -535,26 +514,14 @@ const Addcontacts = () => {
                 city: result.CityId?.toString() || "",
                 zone: result.ZoneId?.toString() || "",
                 poNumber: result.PoNumber,
+                file: result.LegalDocumentPath,
                 CreditLimitinIDR: result.CreditLimitinIDR,
-
-
-                file: result.LegalDocumentPath || "",
-                CustomerReviewFormPath: result.CustomerReviewFormPath || ""
+                file: result.LegalDocumentPath,
             });
-
-
-            setFileupload(result.LegalDocumentPath || null);
-
-            setCustomerReviewPath(result.CustomerReviewFormPath || null);
-
+            setFileupload(result.LegalDocumentPath);
             setCustomerId(contactData.Id);
         }
-    } catch (err) {
-        console.error("Failed to load customer details:", err);
-        toast.error("Error loading customer details");
-    }
-};
-
+    };
     const validationSchema2 = Yup.object({
         contactname: Yup.string()
             .required('Contact Name is required')
@@ -762,7 +729,7 @@ const Addcontacts = () => {
 
     const handleCancelFile = () => {
         setFileupload(null);
-        setLegalPreviewUrl(null);
+        setPreviewUrl(null);
         const input = document.getElementById('legalDocument');
         if (input) input.value = '';
     };
@@ -1161,7 +1128,7 @@ const Addcontacts = () => {
                                                                     <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>
                                                                     Cancel
                                                                 </button>
-                                                                <button type="submit" data-access="save" className="btn btn-info fa-pull-right">
+                                                                <button type="submit" className="btn btn-info fa-pull-right">
                                                                     <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>
                                                                     Save
                                                                 </button>
@@ -1373,88 +1340,48 @@ const Addcontacts = () => {
                                                                     />
                                                                 </FormGroup>
                                                                 <FormGroup>
+                                                                    <Label htmlFor="" className="form-label">
+                                                                        Customer Order Review Form
+                                                                    </Label>
 
-    <Label className="form-label">
-        Customer Order Review Form
-    </Label>
+                                                                    <input
+                                                                        type="file"
+                                                                        className="form-control"
+                                                                        accept=".pdf,.xls,.xlsx,.csv"
+                                                                    />
 
-    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <input
-            type="file"
-            className="form-control"
-            accept=".pdf"
-            onChange={(e) => {
-                setCustomerReviewFile(e.target.files[0]);
-                if (e.target.files[0]) {
-                    setReviewPreviewUrl(URL.createObjectURL(e.target.files[0]));
-                } else {
-                    setReviewPreviewUrl(null);
-                }
-            }}
-            style={{ maxWidth: 220 }}
-        />
-        {customerReviewFile && (
-            <button className="btn  btn-outline-danger " type="button" onClick={() => {
-                setCustomerReviewFile(null);
-                setCustomerReviewPath(null);
-                setReviewPreviewUrl(null);
-                const input = document.querySelector('input[type="file"].form-control[accept=".pdf"]');
-                if (input) input.value = '';
-            }}>Remove</button>
-        )}
-    </div>
+                                                                    <small className="form-text text-muted">
+                                                                        Accepted formats: PDF
+                                                                    </small>
+                                                                    {/* {file && file.length > 0 && (
+                                                                        <div style={{ color: "green" }}>
+                                                                            Selected file: <strong>{file}</strong>
+                                                                        </div>
+                                                                    )}
+                                                                    {fileupload && typeof fileupload === "object" && (
+                                                                        <div className="mt-2 text-success">
+                                                                            Selected file: <strong>{fileupload.name}</strong>
+                                                                        </div>
+                                                                    )}
+                                                                    {typeof fileupload === "string" && (
+                                                                        <div className="mt-2 text-info">
+                                                                            Existing file: <strong>{fileupload.split(/[\\/]/).pop()}</strong>
+                                                                        </div>
+                                                                    )} */}
 
-    <small className="form-text text-muted">
-        Accepted formats: PDF
-    </small>
-
-
-
-    {customerReviewPath && typeof customerReviewPath === "string" && (
-        <div className="mt-2 text-info">
-            Existing file: {" "}
-            <strong>{customerReviewPath.split(/[\\/]/).pop()}</strong>
-            {(() => {
-                // Try to create a relative or absolute URL for the file
-                let fileUrl = customerReviewPath;
-                // If the path is absolute (Windows), you may need to serve it from your backend
-                // Here, just replace backslashes with slashes for browser compatibility
-                if (/^[A-Za-z]:\\\\/.test(fileUrl)) {
-                    fileUrl = fileUrl.replace(/\\\\/g, "/");
-                }
-                // If you have a download API endpoint, use it here instead
-                // Example: fileUrl = `/api/download?path=${encodeURIComponent(customerReviewPath)}`;
-                return (
-                    <>
-                        {" "}
-                        <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{marginLeft: 8}}>
-                        </a>
-                    </>
-                );
-            })()}
-        </div>
-    )}
-
-
-    {customerReviewFile instanceof File && (
-        <div className="mt-2 text-success">
-            Selected file: <strong>{customerReviewFile.name}</strong>
-        </div>
-    )}
-    {/* PDF Preview for Review Form */}
-    {reviewPreviewUrl && (
-        <div className="mt-3">
-            <Label>PDF Preview:</Label>
-            <iframe
-                src={reviewPreviewUrl}
-                width="100%"
-                height="400px"
-                title="PDF Preview"
-            ></iframe>
-        </div>
-    )}
-</FormGroup>
-
+                                                                    {/* PDF Preview */}
+                                                                    {/* {previewUrl && (
+                                                                        <div className="mt-3">
+                                                                            <Label>PDF Preview:</Label>
+                                                                            <iframe
+                                                                                src={previewUrl}
+                                                                                width="100%"
+                                                                                height="400px"
+                                                                                title="PDF Preview"
+                                                                            ></iframe>
+                                                                        </div>
+                                                                    )} */}
+                                                                </FormGroup>
                                                             </Col>
 
                                                             <Col xl="4">
@@ -1521,7 +1448,11 @@ const Addcontacts = () => {
                                                                     <small className="form-text text-muted">
                                                                         Accepted formats: PDF
                                                                     </small>
-            
+                                                                    {file && file.length > 0 && (
+                                                                        <div style={{ color: "green" }}>
+                                                                            Selected file: <strong>{file}</strong>
+                                                                        </div>
+                                                                    )}
                                                                     {fileupload && typeof fileupload === "object" && (
                                                                         <div className="mt-2 text-success">
                                                                             Selected file: <strong>{fileupload.name}</strong>
@@ -1544,12 +1475,12 @@ const Addcontacts = () => {
                                                                             </button>
                                                                         </div>
                                                                     )}
-                                                                    {/* PDF Preview for Legal Document */}
-                                                                    {legalPreviewUrl && (
+                                                                    {/* PDF Preview */}
+                                                                    {previewUrl && (
                                                                         <div className="mt-3">
                                                                             <Label>PDF Preview:</Label>
                                                                             <iframe
-                                                                                src={legalPreviewUrl}
+                                                                                src={previewUrl}
                                                                                 width="100%"
                                                                                 height="400px"
                                                                                 title="PDF Preview"
@@ -1772,7 +1703,6 @@ const Addcontacts = () => {
                                                                 <div className="d-flex flex-wrap justify-content-md-end justify-content-start gap-2">
                                                                     <button
                                                                         type="submit"
-                                                                        data-access="save"
                                                                         className="btn btn-info"
                                                                         onClick={() => setAddressSubmitAction(isaddressEditing ? "update" : "save")}
                                                                     >

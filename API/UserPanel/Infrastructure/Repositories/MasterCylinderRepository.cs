@@ -1,13 +1,9 @@
-﻿using BackEnd.Master;
+﻿using System.Data;
+using BackEnd.Master;
 using Core.Abstractions;
 using Core.Master.Cylinder;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using Newtonsoft.Json;
-using System.Data;
 using UserPanel.Infrastructure.Data;
 
 namespace Infrastructure.Repositories
@@ -83,13 +79,9 @@ namespace Infrastructure.Repositories
         }
 
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
-        public MasterCylinderRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public MasterCylinderRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
         public async Task<object> AddAsync(MasterCylinder item)
@@ -102,7 +94,7 @@ namespace Infrastructure.Repositories
 
                 if (item.Cylinderid > 0)
                 {
-                    var oldvalue = await _connection.QueryAsync<object>($"select * from master_cylinder where CylinderId = {item.Cylinderid}");
+
                     result = await _connection.ExecuteAsync(SQLQuery.updateMasterCylinder, item);
 
                     if (result == 0)
@@ -110,19 +102,6 @@ namespace Infrastructure.Repositories
                         response = new ResponseModel() { Message = "Update MasterCylinder failed, 0 row affected", Status = false };
                         return response;
                     }
-
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: item.Cylinderid,
-                        branchId: item.BranchId,
-                        orgId: item.OrgId,
-                        actionType: "Update",
-                        actionDescription: "Update Cylinder",
-                        oldValue: null,
-                        newValue: item,
-                        tableName: "MasterCylinder",
-                        userId: item.UserId
-                    );
 
                     response = new ResponseModel() { Message = "Updated Successfully", Status = true };
                     return response;
@@ -138,19 +117,6 @@ namespace Infrastructure.Repositories
                         return response;
                     }
 
-                    var newId = await _connection.ExecuteScalarAsync<int>(SQLQuery.GetLastInsertedIdSql);
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: newId,
-                        branchId: item.BranchId,
-                        orgId: item.OrgId,
-                        actionType: "Insert",
-                        actionDescription: "Added new Cylinder",
-                        oldValue: null,
-                        newValue: item,
-                        tableName: "MasterCylinder",
-                        userId: item.UserId
-                    );
                     response = new ResponseModel() { Message = "Saved Successfully", Status = true };
                     return response;
                 }
@@ -158,17 +124,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCylinderRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = item.UserId,
-                    ScreenName = "Cylinder",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel()
                 {
                     Message = "Something went wrong - " + ex.Message + " - " + ex.InnerException?.Message,
@@ -194,20 +149,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCylinderRepository),
-                    Method_Function = nameof(GetByID),
-                    UserId = 0,
-                    ScreenName = "Cylinder",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        id
-                    })
-                });
                 return new ResponseModel()
                 {
                     Message = "Something went wrong - " + ex.Message + " - " + ex.InnerException?.Message,
@@ -218,49 +159,10 @@ namespace Infrastructure.Repositories
 
         public async Task<object> GetAllAsync(string name, string from_date, string to_date)
         {
-            try
-            {
-                var param = GetDynamicParameters(1, name, from_date, to_date);
+            var param = GetDynamicParameters(1, name, from_date, to_date);
 
-                var result = await _connection.QueryAsync<dynamic>(
-                    MasterCylinderMaster.MasterCylinderProcedure,
-                    param,
-                    commandType: CommandType.StoredProcedure
-                );
-
-                return new ResponseModel
-                {
-                    Status = true,
-                    Data = result
-                };
-            }
-            catch (Exception ex)
-            {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCylinderRepository),
-                    Method_Function = nameof(GetAllAsync),
-                    UserId = 0,
-                    ScreenName = "Cylinder",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        name,
-                        from_date,
-                        to_date
-                    })
-                });
-
-                return new ResponseModel
-                {
-                    Message = $"Something went wrong - {ex.Message}",
-                    Status = false
-                };
-            }
+            return await Helper.QueryProcedure(_connection, MasterCylinderMaster.MasterCylinderProcedure, param);
         }
-
 
         public async Task<object> UpdateAsync(MasterCylinder item)
         {
@@ -269,7 +171,6 @@ namespace Infrastructure.Repositories
             try
             {
                 var result = 0;
-                var oldvalue = await _connection.QueryAsync<object>($"select * from master_cylinder where CylinderId = {item.Cylinderid}");
 
                 result = await _connection.ExecuteAsync(SQLQuery.updateMasterCylinder, item);
                 if (result == 0)
@@ -278,35 +179,11 @@ namespace Infrastructure.Repositories
                     return response;
                 }
 
-                // Log transaction
-                await LogTransactionAsync(
-                    id: item.Cylinderid,
-                    branchId: item.BranchId,
-                    orgId: item.OrgId,
-                    actionType: "Update",
-                    actionDescription: "Update Cylinder",
-                    oldValue: oldvalue,
-                    newValue: item,
-                    tableName: "MasterCylinder",
-                    userId: item.UserId
-                );
-
                 response = new ResponseModel() { Message = "Updated Successfully", Status = true };
                 return response;
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCylinderRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = item.UserId,
-                    ScreenName = "Cylinder",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel()
                 {
                     Message = "Something went wrong - " + ex.Message + " - " + ex.InnerException?.Message,
@@ -335,17 +212,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCylinderRepository),
-                    Method_Function = nameof(ToogleStatus),
-                    UserId = item.UserId,
-                    ScreenName = "Cylinder",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel()
                 {
                     Message = "Something went wrong - " + ex.Message + " - " + ex.InnerException?.Message,
@@ -353,29 +219,6 @@ namespace Infrastructure.Repositories
                 };
 
             }
-        }
-
-        private async Task LogTransactionAsync(int id, int? branchId, int? orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Master",
-                ScreenName = "Cylinder",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
         }
 
     }

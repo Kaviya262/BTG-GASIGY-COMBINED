@@ -14,18 +14,16 @@ import {
     GetAllProjects, SaveProject
 } from "../../../src/common/data/mastersapi";
 import { isDisabled } from "@testing-library/user-event/dist/utils";
-import useAccess from "../../common/access/useAccess";
 const initFilters = () => ({
 
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     projectid: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
     projectcode: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     projectname: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    projectaddress: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    projectaddress: {operator: FilterOperator.AND, constraints:[{value:null, matchMode:FilterMatchMode.STARTS_WITH}]},
 
 });
 const ManageProjects = () => {
-    const { access, applyAccessUI } = useAccess("Masters", "Projects");
     const history = useHistory();
 
     const [project, setProject] = useState([]);
@@ -51,12 +49,6 @@ const ManageProjects = () => {
     const toggleModal = () => {
         setIsModalOpen(!isModalOpen);
     };
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         debugger
@@ -106,9 +98,8 @@ const ManageProjects = () => {
                     );
                     return !existCode;
                 }),
-        projectaddress: Yup.string()
-            .required("Project Address is required")
-            .max(50, "Project Address must be at most 50 Characters"),
+                projectaddress: Yup.string()
+                .required("Project Address is required"),
     });
 
     const getProject = async (projectCode, projectName) => {
@@ -137,7 +128,7 @@ const ManageProjects = () => {
                 });
                 setSwitchStates(initialSwitch);
             }
-            else {
+            else{
                 setFilteredProjects([]);
             }
         }
@@ -213,9 +204,6 @@ const ManageProjects = () => {
     const actionBodyTemplate = (rowData) => {
 
         console.log(selectedRow, "rowData :", rowData);
-        if (!access?.canEdit) {
-            return null;
-        }
         if (rowData.isactive == 1) {
             return (
                 <div className="actions">
@@ -223,7 +211,7 @@ const ManageProjects = () => {
                         editRow(rowData);
                         console.log("onClick :", rowData);
                     }}
-
+ 
                         title={"Edit"}>
                         <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                     </span>
@@ -233,7 +221,7 @@ const ManageProjects = () => {
         else {
             return (
                 <div className="actions">
-
+ 
                     <span
                         style={{
                             cursor: 'not-allowed',
@@ -248,7 +236,7 @@ const ManageProjects = () => {
                 </div>
             )
         }
-
+ 
     };
 
     const handleSubmit = async (values, { resetForm }) => {
@@ -256,18 +244,18 @@ const ManageProjects = () => {
         try {
             setIsSubmitting(true);
             const payload = {
-                command: selectedRow?.projectid ? "Update" : "Create",
-                Project: {
+                command : selectedRow?.projectid? "Update":"Create",
+                Project : {
                     projectid: values.projectid,
                     projectcode: values.projectcode,
                     projectname: values.projectname,
-                    projectaddress: values.projectaddress,
+                    projectaddress : values.projectaddress,
                     isactive: values.projectid ? Boolean(selectedRow?.isactive) : true,
                     userid: 1,
                     createdip: "127.0.0.1",
                     modifiedip: "127.0.0.1",
-                    branchid: 1,
-                    orgid: 1,
+                    branchid:1,
+                    orgid:1,
                 }
             };
             const response = await SaveProject(payload);
@@ -296,17 +284,17 @@ const ManageProjects = () => {
 
             const newStatus = !selectedRow.isactive;
             const payload = {
-                Project: {
+                Project :{
                     projectid: selectedRow.projectid,
                     projectcode: selectedRow.projectcode,
                     projectname: selectedRow.projectname,
-                    projectaddress: selectedRow.projectaddress,
-                    isactive: newStatus,
+                    projectaddress : selectedRow.projectaddress,
+                    isactive: newStatus,                    
                     userid: 1,
-                    createdip: "127.0.0.1",
-                    modifiedip: "127.0.0.1",
-                    orgid: 1,
-                    branchid: 1,
+                    createdip:"127.0.0.1",
+                    modifiedip:"127.0.0.1",
+                    orgid:1,
+                    branchid:1,
                 }
             };
             const response = await SaveProject(payload);
@@ -315,7 +303,7 @@ const ManageProjects = () => {
                 setSwitchStates(prevStates => ({
                     ...prevStates, [selectedRow.projectcode]: newStatus === 1,
                 }));
-                setSuccessmsg(`Project Status Is ${newStatus === true ? "Activated" : "DeActivated"} Successfully!`);
+                setSuccessmsg(`Project Status Is ${newStatus === 1 ? "Activated" : "DeActivated"} Successfully!`);
                 getProject(projectCode, projectName);
             }
             else {
@@ -349,15 +337,6 @@ const ManageProjects = () => {
             </div>
         );
     };
-
-    if (!access.loading && !access.canView) {
-        debugger;
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
 
     return (
         <React.Fragment>
@@ -393,7 +372,7 @@ const ManageProjects = () => {
                                     <button type="button" className="btn btn-info" onClick={handleSearch} > <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={handleSearchCancel}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
 
-                                    <button type="button" className="btn btn-success" onClick={handleNew} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={handleNew}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -401,9 +380,9 @@ const ManageProjects = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable value={filteredProjects} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="projectid"
-                                    filters={filters} globalFilterFields={["projectcode", "projectname"]} header={header}
-                                    emptyMessage="No Project found." onFilter={(e) => setFilters(e.filters)}>
+                                <DataTable value={filteredProjects} paginator showGridlines rows={10} loading={loading} dataKey="projectid" 
+                                filters={filters} globalFilterFields={["projectcode", "projectname"]} header={header} 
+                                emptyMessage="No Project found." onFilter={(e) => setFilters(e.filters)}>
                                     <Column field="projectcode" header="Project Code" filter filterPlaceholder="Search by Code" />
                                     <Column field="projectname" header="Project Name" filter filterPlaceholder="Search by Name" />
                                     <Column field="projectaddress" header="Project Address" filter filterPlaceholder="Search by Address" />
@@ -434,8 +413,8 @@ const ManageProjects = () => {
                                                 userid: 1
                                             }}
                                             validationSchema={validationSchema}
-                                            onSubmit={handleSubmit}
-                                            context={{ project }}>
+                                            onSubmit={handleSubmit} 
+                                            context = {{project}}>
                                             {({ errors, touched }) => (
                                                 <Form>
                                                     <Row>
@@ -457,7 +436,7 @@ const ManageProjects = () => {
                                                             </FormGroup>
                                                         </Col>
                                                     </Row>
-                                                    <Row>
+                                                      <Row>
                                                         <Col md="12">
                                                             <FormGroup>
                                                                 <Label htmlFor="ProjectAddress" className="required-label">Project Address</Label>
@@ -469,12 +448,10 @@ const ManageProjects = () => {
 
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 text-end button-items">
-                                                            {access.canSave && (
-                                                                <Button type="submit" className="btn btn-info">
-                                                                    <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
-                                                                    {selectedRow?.projectid && selectedRow.projectid > 0 ? "Update" : "Save"}
-                                                                </Button>
-                                                            )}
+                                                            <Button type="submit" className="btn btn-info">
+                                                                <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
+                                                                {selectedRow?.projectid && selectedRow.projectid > 0 ? "Update" : "Save"}
+                                                            </Button>
                                                             <Button type="button" className="btn btn-danger" onClick={toggleModal}>
                                                                 <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel
                                                             </Button>

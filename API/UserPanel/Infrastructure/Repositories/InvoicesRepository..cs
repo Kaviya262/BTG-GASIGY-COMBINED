@@ -1,22 +1,18 @@
-﻿using BackEnd.Invoices;
-using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
-using Core.Models;
-using Core.OrderMng.Invoices;
-using Core.OrderMng.Quotation;
-using Core.OrderMng.SaleOrder;
-using Dapper;
-using DocumentFormat.OpenXml.Spreadsheet;
-using MediatR;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
+using BackEnd.Invoices;
+using Core.Abstractions;
+using Core.Models;
+using Core.OrderMng.Invoices;
+using Core.OrderMng.Quotation;
+using Core.OrderMng.SaleOrder;
+using Dapper;
+using MediatR;
 using UserPanel.Infrastructure.Data;
 
 
@@ -24,16 +20,12 @@ namespace Infrastructure.Repositories
 {
     public class InvoicesRepository : IInvoicesRepository
     {
-        private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
 
+        private readonly IDbConnection _connection;
         string IPAddress = "";
-        public InvoicesRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public InvoicesRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
 
@@ -76,26 +68,15 @@ namespace Infrastructure.Repositories
             VALUES (@SalesInvoiceNbr, @CustomerId, now(), @TotalAmount, @TotalQty, @IsSubmitted, @OrgId, @BranchId,  @UserId, NOW(),@ismanual, @CalculatedPrice);
         ";
 
-                    await _connection.ExecuteAsync(headerSql, Obj.Header);               
 
-                const string getLastInsertedIdSql = "SELECT LAST_INSERT_ID();";
+                    await _connection.ExecuteAsync(headerSql, Obj.Header);
+
+
+                    const string getLastInsertedIdSql = "SELECT LAST_INSERT_ID();";
                     var insertedHeaderId = await _connection.QuerySingleAsync<int>(getLastInsertedIdSql);
 
-                // Log transaction
-                await LogTransactionAsync(
-                    id: insertedHeaderId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added new sales Invoice",
-                    oldValue: null,
-                    newValue: Obj.Header,
-                    tableName: "tbl_salesinvoices_header",
-                    userId: Obj.Header.UserId
-                );
 
-
-                if (Obj.Header.ismanual == 0)
+                    if (Obj.Header.ismanual == 0)
                     {
 
                         foreach (var row in Obj.DODetail)
@@ -110,22 +91,7 @@ namespace Infrastructure.Repositories
             ";
 
                             Result = await _connection.ExecuteAsync(deliveryOrderSql, row);
-
-                        int invoicepackdetLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: invoicepackdetLastId,
-                            branchId: Obj.Header.BranchId,
-                            orgId: Obj.Header.OrgId,
-                            actionType: "Insert",
-                            actionDescription: "Added new Invoice packing Details",
-                            oldValue: null,
-                            newValue: row,
-                            tableName: "tbl_salesinvoices_packingdetail",
-                            userId: Obj.Header.UserId
-                        );
-                    }
+                        }
 
 
                         foreach (var row in Obj.Details)
@@ -146,20 +112,7 @@ namespace Infrastructure.Repositories
                              SELECT LAST_INSERT_ID();";
 
                             Result = await _connection.ExecuteAsync(detailSql, row);
-                        int invoiceDetailsLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: invoiceDetailsLastId,
-                            branchId: Obj.Header.BranchId,
-                            orgId: Obj.Header.OrgId,
-                            actionType: "Insert",
-                            actionDescription: "Added new Invoice dtails",
-                            oldValue: null,
-                            newValue: row,
-                            tableName: "tbl_salesinvoices_details",
-                            userId: Obj.Header.UserId
-                        );
-                    }
+                        }
                     }
                     else
                     {
@@ -179,23 +132,10 @@ namespace Infrastructure.Repositories
                              SELECT LAST_INSERT_ID();";
 
                             Result = await _connection.ExecuteAsync(detailSql, row);
-
-                        int salesInvoiceDetailsLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: salesInvoiceDetailsLastId,
-                            branchId: Obj.Header.BranchId,
-                            orgId: Obj.Header.OrgId,
-                            actionType: "Insert",
-                            actionDescription: "Added new Sales Invoice Details",
-                            oldValue: null,
-                            newValue: Obj.Header,
-                            tableName: "tbl_salesinvoices_details",
-                            userId: Obj.Header.UserId
-                        );
+                        }
                     }
-                    }
+
+
 
 
                     int BranchId = Obj.Header.BranchId;
@@ -242,19 +182,9 @@ namespace Infrastructure.Repositories
                         }
                     }
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoicesRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = 0,
-                    ScreenName = "Invoices",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -262,12 +192,16 @@ namespace Infrastructure.Repositories
                     Status = false
                 };
             }
+
+
+
         }
 
         public async Task<object> UpdateAsync(InvoiceItemMain Obj)
         {
             try
             {
+
                 var currentInvoiceNbr = await _connection.ExecuteScalarAsync<string>(
              "SELECT SalesInvoiceNbr FROM tbl_salesinvoices_header WHERE Id = @Id",
              new { Id = Obj.Header.Id }
@@ -297,8 +231,7 @@ namespace Infrastructure.Repositories
 
                 int Result = 0;
 
-                var oldHeader = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_salesinvoices_header WHERE id = @Id", new { Id = Obj.Header.Id }
-        );
+
                 const string headerSql = @"
         UPDATE tbl_salesinvoices_header
         SET 
@@ -319,18 +252,6 @@ CalculatedPrice = @CalculatedPrice
 
                 await _connection.ExecuteAsync(headerSql, Obj.Header);
 
-                await LogTransactionAsync(
-    id: Obj.Header.Id,
-    branchId: Obj.Header.BranchId,
-    orgId: Obj.Header.OrgId,
-    actionType: "Update",
-    actionDescription: "Updated Sales Invoice Header",
-    oldValue: oldHeader,
-    newValue: Obj.Header,
-    tableName: "tbl_salesinvoices_header",
-    userId: Obj.Header.UserId
-);
-
                 int HeaderId = Obj.Header.Id;
 
                 if (Obj.Header.ismanual == 0)
@@ -345,24 +266,11 @@ CalculatedPrice = @CalculatedPrice
 
                     foreach (var row in Obj.DODetail)
                     {
-                        var oldDoDetails = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_salesinvoices_packingdetail WHERE SalesInvoicesId = @SalesInvoicesId", new { SalesInvoicesId = row.SalesInvoicesId });
-
                         row.SalesInvoicesId = HeaderId;
                         await _connection.ExecuteAsync(updateDeliveryOrderSql, row);
-
-                        await LogTransactionAsync(
-                            id: row.SalesInvoicesId,
-                            branchId: Obj.Header.BranchId,
-                            orgId: Obj.Header.OrgId,
-                            actionType: "Update",
-                            actionDescription: "Updated Invoice Packing Details",
-                            oldValue: oldDoDetails,
-                            newValue: row,
-                            tableName: "tbl_salesinvoices_packingdetail",
-                            userId: Obj.Header.UserId
-                        );
                     }
                 }
+
 
                 const string deleteDetailsSql = @"
         UPDATE tbl_salesinvoices_details
@@ -370,7 +278,10 @@ CalculatedPrice = @CalculatedPrice
         WHERE salesinvoicesheaderid = @SalesInvoicesId;
         ";
 
+
+
                 await _connection.ExecuteAsync(deleteDetailsSql, new { SalesInvoicesId = HeaderId });
+
 
                 string detailSql = "";
                 if (Obj.Header.ismanual == 0)
@@ -408,23 +319,9 @@ CalculatedPrice = @CalculatedPrice
                     if (row.Id == 0)
                     {
                         await _connection.ExecuteAsync(detailSql, row);
-                        int invoiceDetailsLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: invoiceDetailsLastId,
-                            branchId: Obj.Header.BranchId,
-                            orgId: Obj.Header.OrgId,
-                            actionType: "Insert",
-                            actionDescription: "Added new Invoice Details",
-                            oldValue: null,
-                            newValue: Obj.Header,
-                            tableName: "tbl_salesinvoices_details",
-                            userId: Obj.Header.UserId
-                        );
                     }
                     else
                     {
-                        var olddetails = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_salesinvoices_details WHERE id = @Id", new { Id = row.Id });
                         //string updatesql = @"update tbl_salesinvoices_details set isactive=1 where id=" + row.Id + ";";
                         string updatesql = @"
 UPDATE tbl_salesinvoices_details
@@ -448,18 +345,6 @@ SET
 WHERE Id = @Id;
 ";
                         await _connection.ExecuteAsync(updatesql, row);
-
-                        await LogTransactionAsync(
-                    id: row.Id,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Update",
-                    actionDescription: "Updated Invoice Details",
-                    oldValue: olddetails,
-                    newValue: Obj.Details,
-                    tableName: "tbl_salesinvoices_details",
-                    userId: Obj.Header.UserId
-                );
                     }
                 }
 
@@ -483,19 +368,8 @@ WHERE Id = @Id;
                     };
                 }
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoicesRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = 0,
-                    ScreenName = "Invoices",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -534,19 +408,9 @@ WHERE Id = @Id;
 
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoicesRepository),
-                    Method_Function = nameof(GetAllAsync),
-                    UserId = 0,
-                    ScreenName = "Invoices",
-                    RequestData_Payload = JsonSerializer.Serialize(new { customerid, from_date, to_date, BranchId, typeid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -624,19 +488,9 @@ WHERE Id = @Id;
 
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoicesRepository),
-                    Method_Function = nameof(GetByIdAsync),
-                    UserId = 0,
-                    ScreenName = "Invoices",
-                    RequestData_Payload = JsonSerializer.Serialize(new { Invoicesid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -675,19 +529,9 @@ WHERE Id = @Id;
 
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(InvoicesRepository),
-                    Method_Function = nameof(GetBySiNoAsync),
-                    UserId = 0,
-                    ScreenName = "Invoices",
-                    RequestData_Payload = JsonSerializer.Serialize(new { unit, typeid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -695,30 +539,8 @@ WHERE Id = @Id;
                     Status = false
                 };
             }
-        }
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Sales",
-                ScreenName = "Sales Invoice",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 2
-            };
 
-            await _transactionLogRepo.LogTransactionAsync(log);
         }
     }
 }

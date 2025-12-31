@@ -11,8 +11,7 @@ namespace Core.OrderMngMaster.Customer
 {
     public interface IMasterCustomerRepository
     {
-        Task<ResponseModel> UploadDO(int Id, string legalDocPath, string customerReviewFormPath, int userId, int branchId);
-
+        Task<ResponseModel> UploadDO(int Id, string Path, int userId, int branchId);
         Task<object> AddAsync(MasterCustomerModel item);
         Task<object> GetByID(int customerld, int tabld, int branchid);
         Task<object> GetAllAsync(int tabld, int customerld, int contactid, int branchid, int userId,int addressId,CancellationToken cancellationToken);

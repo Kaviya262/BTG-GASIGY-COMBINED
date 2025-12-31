@@ -1,20 +1,12 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import ReactToPrint from 'react-to-print';
 import SQPrint from './SQPrint'; // ✅ adjust path
-import { GetSQ } from "../../../common/data/mastersapi";
-import useAccess from "../../../common/access/useAccess";
+import { GetSQ }  from "../../../common/data/mastersapi";
 
-const SQPrintColumn = ({ sqid}) => {
+const SQPrintColumn = ({ sqid }) => {
     const printRef = useRef();
     const [printData, setPrintData] = useState(null);
     const [loading, setLoading] = useState(false);
-    // const { access, applyAccessUI } = useAccess("Sales", "Quotations");
-
-    // useEffect(() => {
-    //     if (!access.loading) {
-    //         applyAccessUI();
-    //     }
-    // }, [access, applyAccessUI]);
 
     const handlePrint = async () => {
         setLoading(true);
@@ -64,8 +56,8 @@ const SQPrintColumn = ({ sqid}) => {
 
     return (
         <>
-            <button className="btn btn-success" onClick={handlePrint} disabled={loading} data-access="print">
-
+            <button className="btn btn-success" onClick={handlePrint} disabled={loading}>
+            
 
                 <i className="bx bx-printer "></i>
                 {/* {loading ? "Loading..." :""} */}

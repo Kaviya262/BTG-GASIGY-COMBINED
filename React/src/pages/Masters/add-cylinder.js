@@ -12,7 +12,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import { saveOrUpdateCylinder, cylinderSizeList, getchGasList, GetFilteredCylinders } from "../../../src/common/data/mastersapi";
 import { useHistory, useLocation } from "react-router-dom";
 import { useDispatch } from 'react-redux';
-import useAccess from "../../common/access/useAccess";
 
 
 const SyncGasDescription = ({ GasCodeList }) => {
@@ -29,13 +28,6 @@ const SyncGasDescription = ({ GasCodeList }) => {
 };
 
 const AddCylinder = ({ props }) => {
-     const { access, applyAccessUI } = useAccess("Masters", "Customers");
-            
-                 useEffect(() => {
-                    if (!access.loading) {
-                        applyAccessUI();
-                    }
-                }, [access, applyAccessUI]);
     const [existingCylinders, setExistingCylinders] = useState([]);
     const history = useHistory();
     const location = useLocation();
@@ -931,7 +923,7 @@ const AddCylinder = ({ props }) => {
                                             </Row>
 
                                             <div className="d-flex justify-content-end mt-4">
-                                                <button type="submit" data-access="save" className="btn btn-info me-2">
+                                                <button type="submit" className="btn btn-info me-2">
                                                     {cylinderData ? "Update" : "Save"}
                                                 </button>
                                                 <button type="button" className="btn btn-danger me-2" onClick={handleCancel}>

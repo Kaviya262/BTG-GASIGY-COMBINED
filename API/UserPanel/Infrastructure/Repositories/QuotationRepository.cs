@@ -1,39 +1,34 @@
-﻿using BackEnd.Quotation;
-using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
-using Core.Models;
-using Core.OrderMng.Quotation;
-using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Infrastructure.Repositories;
-using Mysqlx.Crud;
-using MySqlX.XDevAPI.Common;
-using Newtonsoft.Json;
-using Org.BouncyCastle.Bcpg;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Transactions;
+
+
+using Dapper;
+using System.Data;
 using UserPanel.Infrastructure.Data;
+using System.Transactions;
+using MySqlX.XDevAPI.Common;
+using Core.Models;
+using Org.BouncyCastle.Bcpg;
+using BackEnd.Quotation;
+using Core.OrderMng.Quotation;
+using Infrastructure.Repositories;
+using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Wordprocessing;
+using Mysqlx.Crud;
+using Core.Abstractions;
 
 public class QuotationRepository : IQuotationRepository
 {
 
     private readonly IDbConnection _connection;
     string IPAddress = "";
-    private readonly IErrorLogMasterRepository _errorLogRepo;
-    private readonly IUserTransactionLogRepository _transactionLogRepo;
 
-    public QuotationRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogRepo, IUserTransactionLogRepository userTransactionLogRepository)
+    public QuotationRepository(IUnitOfWorkDB1 unitOfWork)
     {
         _connection = unitOfWork.Connection;
-        _errorLogRepo = errorLogRepo;
-        _transactionLogRepo = userTransactionLogRepository;
     }
     public async Task<object> AddAsync(QuotationItemsMain Obj)
     {
@@ -43,17 +38,6 @@ public class QuotationRepository : IQuotationRepository
             int IsValidated = 0;
             string Message = "";
             Int32 Result = 0;
-            string checkSql = "SELECT count(*) FROM tbl_salesquatation_header WHERE SQ_Nbr = @SQ_Nbr";
-            var isUsed = await _connection.QueryFirstOrDefaultAsync<int>(checkSql, new { SQ_Nbr = Obj.Header.SQ_Nbr });
-            if (isUsed > 0)
-            {
-                return new ResponseModel()
-                {
-                    Data = null,
-                    Message = $"Sales Quototation {Obj.Header.SQ_Nbr} is already Exist. Please Refresh The Page",
-                    Status = false
-                };
-            }
             SharedRepository SR = new SharedRepository(_connection);
 
             var response = await SR.GetSeqNumber(0, Obj.Header.SQ_Nbr, 1, Obj.Header.BranchId, Obj.Header.OrgId);
@@ -87,19 +71,6 @@ public class QuotationRepository : IQuotationRepository
             const string getLastInsertedIdSql = "SELECT LAST_INSERT_ID();";
             var insertedHeaderId = await _connection.QuerySingleAsync<int>(getLastInsertedIdSql);
 
-            // Log transaction
-            await LogTransactionAsync(
-                id: insertedHeaderId,
-                branchId: Obj.Header.BranchId,
-                orgId: Obj.Header.OrgId,
-                actionType: "Insert",
-                actionDescription: "Added new Quatation",
-                oldValue: null,
-                newValue: Obj,
-                tableName: "tbl_salesquatation_header",
-                userId: Obj.Header.UserId
-            );
-
             Result = insertedHeaderId;
             string ContactOperationQuery = "";
 
@@ -114,20 +85,6 @@ public class QuotationRepository : IQuotationRepository
                 {
                     Result = await _connection.ExecuteAsync(ContactOperationQuery);
                 }
-
-                var contactOpLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                await LogTransactionAsync(
-                    id: contactOpLastId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added new contact operation",
-                    oldValue: null,
-                    newValue: Obj.operation,
-                    tableName: "tbl_salesquatation_Cont_Operation",
-                    userId: Obj.Header.UserId
-                );
             }
             foreach (var row in Obj.Details)
             {
@@ -139,55 +96,16 @@ public class QuotationRepository : IQuotationRepository
                 VALUES 
                 ( @SQ_ID  , @GasCodeId, @GasDescription, @Volume, @Po_No, @Pressure, @Qty, @UOM, @CurrencyId, @UnitPrice,  @TotalPrice, @ConvertedPrice, @ConvertedCurrencyId, 1,@Exchangerate, 0);";
                 Result = await _connection.ExecuteAsync(detailsql, row);
-
-                var detailLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                await LogTransactionAsync(
-                    id: detailLastId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added new quotation detail",
-                    oldValue: null,
-                    newValue: row,
-                    tableName: "tbl_salesquatation_detail",
-                    userId: Obj.Header.UserId
-                );
             }
 
 
             int BranchId = Obj.Header.BranchId;
             var UpdateSeq = "update master_documentnumber set Doc_Number=Doc_Number+1 where Doc_Type=1 and unit=" + BranchId;
             Result = await _connection.ExecuteAsync(UpdateSeq, BranchId);
-
-            var docNo = await _connection.QuerySingleAsync<int>("SELECT Doc_Number FROM master_documentnumber WHERE Doc_Type = 1 AND unit = @Unit", new { Unit = BranchId });
-            await LogTransactionAsync(
-    id: docNo,
-    branchId: Obj.Header.BranchId,
-    orgId: Obj.Header.OrgId,
-    actionType: "Update",
-    actionDescription: "Updated document sequence number",
-    oldValue: null,
-    newValue: new { Doc_Number = docNo + 1 },
-    tableName: "master_documentnumber",
-    userId: Obj.Header.UserId
-);
             if (Obj.Header.IsSubmit == 1)
             {
                 string RateUpdate = "update master_gascode as a inner join tbl_salesquatation_detail as b on a.id = b.gascodeid and b.isactive = 1 inner join tbl_salesquatation_header as c on c.id = b.sq_id and c.isactive = 1 and ifnull(c.IsSubmitted,0)= 1 set a.LastUpdatedPrice = b.unitprice where b.sq_id = " + insertedHeaderId + ";";
                 Result = await _connection.ExecuteAsync(RateUpdate);
-
-                await LogTransactionAsync(
-    id: insertedHeaderId,
-    branchId: Obj.Header.BranchId,
-    orgId: Obj.Header.OrgId,
-    actionType: "Update",
-    actionDescription: "Updated gas last updated price",
-    oldValue: null,
-    newValue: new { SQ_ID = insertedHeaderId },
-    tableName: "master_gascode",
-    userId: Obj.Header.UserId
-);
             }
             if (Result == 0)
             {
@@ -223,17 +141,6 @@ public class QuotationRepository : IQuotationRepository
         catch (Exception Ex)
         {
             //Logger.Instance.Error("Exception:", Ex);
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(AddAsync),
-                UserId = Obj.Header.UserId,
-                ScreenName = "Quotation",
-                RequestData_Payload = JsonConvert.SerializeObject(Obj)
-            });
             return new ResponseModel()
             {
                 Data = null,
@@ -277,35 +184,11 @@ public class QuotationRepository : IQuotationRepository
                         if (row.Id > 0)
                         {
                             await _connection.ExecuteAsync(priceSql, row);
-
-                            await LogTransactionAsync(
-                            id: row.Id,
-                            branchId: obj.Header.BranchId,
-                            orgId: obj.Header.OrgId,
-                            actionType: "Update",
-                            actionDescription: "Updated quotation price",
-                            oldValue: null,
-                            newValue: row,
-                            tableName: "tbl_salesquatation_detail",
-                            userId: obj.Header.UserId
-                        );
                         }
 
                     }
                     string RateUpdate = "update master_gascode as a inner join tbl_salesquatation_detail as b on a.id = b.gascodeid and b.isactive = 1 inner join tbl_salesquatation_header as c on c.id = b.sq_id and c.isactive = 1 and ifnull(c.IsSubmitted,0)= 1 set a.LastUpdatedPrice = b.unitprice where b.sq_id = " + obj.Header.Id + ";";
                     var Results_data = await _connection.ExecuteAsync(RateUpdate);
-
-                    await LogTransactionAsync(
-                    id: obj.Header.Id,
-                    branchId: obj.Header.BranchId,
-                    orgId: obj.Header.OrgId,
-                    actionType: "Update",
-                    actionDescription: "Updated gas last updated price",
-                    oldValue: null,
-                    newValue: new { SQ_ID = obj.Header.Id },
-                    tableName: "master_gascode",
-                    userId: obj.Header.UserId
-                );
                     return new ResponseModel()
                     {
                         Data = null,
@@ -326,10 +209,7 @@ public class QuotationRepository : IQuotationRepository
             }
             else
             {
-                var oldHeader = await _connection.QueryFirstOrDefaultAsync<object>(
-                "SELECT * FROM tbl_salesquatation_header WHERE Id = @Id",
-                new { Id = obj.Header.Id }
-            );
+
 
                 Int32 Result = 0;
                 const string headerSql = @"
@@ -381,18 +261,6 @@ IsSavedByDSO =@IsSavedByDSO,
 
                 await _connection.ExecuteAsync(headerSql, obj.Header);
 
-                await LogTransactionAsync(
-                id: obj.Header.Id,
-                branchId: obj.Header.BranchId,
-                orgId: obj.Header.OrgId,
-                actionType: "Update",
-                actionDescription: "Updated Quotation Header",
-                oldValue: oldHeader,
-                newValue: obj.Header,
-                tableName: "tbl_salesquatation_header",
-                userId: obj.Header.UserId
-            );
-
 
                 int HeaderId = obj.Header.Id;
                 var UpdateSeq = "update tbl_salesquatation_detail set isactive=0 where sq_id=" + HeaderId + ";update tbl_salesquatation_Cont_Operation set isactive=0 where SQ_ID=" + HeaderId + ";";
@@ -417,30 +285,6 @@ IsSavedByDSO =@IsSavedByDSO,
                     if (obj.operation.Count > 0)
                     {
                         Result = await _connection.ExecuteAsync(ContactOperationQuery);
-
-                        foreach (var row in obj.operation)
-                        {
-                            object oldOperation = null;
-                            if (row.Id > 0)
-                            {
-                                oldOperation = await _connection.QueryFirstOrDefaultAsync<object>(
-                                    "SELECT * FROM tbl_salesquatation_Cont_Operation WHERE Id = @Id",
-                                    new { Id = row.Id }
-                                );
-                            }
-
-                            await LogTransactionAsync(
-                                id: row.Id,
-                                branchId: HeaderId,
-                                orgId: obj.Header.OrgId,
-                                actionType: row.Id == 0 ? "Insert" : "Update",
-                                actionDescription: row.Id == 0 ? "Inserted Quotation Contact Operation" : "Updated Quotation Contact Operation",
-                                oldValue: oldOperation,
-                                newValue: row,
-                                tableName: "tbl_salesquatation_Cont_Operation",
-                                userId: obj.Header.UserId
-                            );
-                        }
                     }
                 }
 
@@ -479,42 +323,12 @@ IsSavedByDSO =@IsSavedByDSO,
                     //row.SQ_ID = header.Id;
                     if (row.Id > 0)
                     {
-                        var oldDetail = await _connection.QueryFirstOrDefaultAsync<object>(
-                        "SELECT * FROM tbl_salesquatation_detail WHERE Id = @Id",
-                        new { Id = row.Id }
-                    );
                         await _connection.ExecuteAsync(detailSql, row);
-
-                        await LogTransactionAsync(
-                        id: row.Id,
-                        branchId: HeaderId,
-                        orgId: obj.Header.OrgId,
-                        actionType: "Update",
-                        actionDescription: "Updated Quotation Detail",
-                        oldValue: oldDetail,
-                        newValue: row,
-                        tableName: "tbl_salesquatation_detail",
-                        userId: obj.Header.UserId
-                    );
                     }
                     else if (row.Id == 0)
                     {
                         row.SQ_ID = HeaderId;
                         await _connection.ExecuteAsync(Insertsql, row);
-
-                        var detailLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                        await LogTransactionAsync(
-                        id: detailLastId, 
-                        branchId: HeaderId,
-                        orgId: obj.Header.OrgId,
-                        actionType: "Insert",
-                        actionDescription: "Inserted Quotation Detail",
-                        oldValue: null,
-                        newValue: row,
-                        tableName: "tbl_salesquatation_detail",
-                        userId: obj.Header.UserId
-                    );
                     }
                 }
 
@@ -564,17 +378,6 @@ IsSavedByDSO =@IsSavedByDSO,
         catch (Exception Ex)
         {
             //  Logger.Instance.Error("Exception:", Ex);
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(UpdateAsync),
-                UserId = obj.Header.UserId,
-                ScreenName = "Quotation",
-                RequestData_Payload = JsonConvert.SerializeObject(obj)
-            });
             return new ResponseModel()
             {
                 Data = null,
@@ -625,20 +428,6 @@ IsSavedByDSO =@IsSavedByDSO,
         }
         catch (Exception Ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(GetAllAsync),
-                UserId = 0,
-                ScreenName = "Quotation",                 
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    sys_sqnbr, from_date, to_date, BranchId
-                })
-            });
 
             return new ResponseModel()
             {
@@ -690,20 +479,7 @@ IsSavedByDSO =@IsSavedByDSO,
         }
         catch (Exception Ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(GetByIdAsync),
-                UserId = 0,
-                ScreenName = "Quotation",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    Id
-                })
-            });
+
             return new ResponseModel()
             {
                 Data = null,
@@ -712,6 +488,11 @@ IsSavedByDSO =@IsSavedByDSO,
             };
         }
     }
+
+
+
+
+
 
 
     public async Task<object> GetBySqNoAsync(int unit)
@@ -733,6 +514,8 @@ IsSavedByDSO =@IsSavedByDSO,
 
             var data = await _connection.QueryFirstOrDefaultAsync(Quotation.QuotationProcedure, param: param, commandType: CommandType.StoredProcedure);
 
+
+
             return new ResponseModel()
             {
                 Data = data,
@@ -744,20 +527,7 @@ IsSavedByDSO =@IsSavedByDSO,
         }
         catch (Exception Ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(GetBySqNoAsync),
-                UserId = 0,
-                ScreenName = "Quotation",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    unit
-                })
-            });
+
             return new ResponseModel()
             {
                 Data = null,
@@ -765,6 +535,10 @@ IsSavedByDSO =@IsSavedByDSO,
                 Status = false
             };
         }
+
+
+
+
     }
     public async Task<object> CopyAsync(int Id)
     {
@@ -806,20 +580,6 @@ IsSavedByDSO =@IsSavedByDSO,
         catch (Exception Ex)
         {
 
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(CopyAsync),
-                UserId = 0,
-                ScreenName = "Quotation",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    Id
-                })
-            });
             return new ResponseModel()
             {
                 Data = null,
@@ -833,7 +593,6 @@ IsSavedByDSO =@IsSavedByDSO,
     {
         try
         {
-            var oldvalue = await _connection.QueryAsync<object>($"select * from tbl_salesquatation_header where id = {Id}");
             string Message = "";
             var param = new DynamicParameters();
             param.Add("@Opt", IsActive == 0 ? 5 : 6);
@@ -851,20 +610,6 @@ IsSavedByDSO =@IsSavedByDSO,
 
 
             var Response = await _connection.QueryFirstOrDefaultAsync<int>(Quotation.QuotationProcedure, param: param, commandType: CommandType.StoredProcedure);
-
-            var newHeader = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_salesquatation_header WHERE id = @Id", new { Id });
-
-            await LogTransactionAsync(
-               id: Id,
-               branchId: 1,
-               orgId: 1,
-               actionType: "Update",
-               actionDescription: "Updated Quotation Header",
-               oldValue: oldvalue,
-               newValue: newHeader,
-               tableName: "tbl_salesquatation_header",
-               userId: userid
-           );
             if (IsActive == 0)
             {
                 if (Response == 1)
@@ -908,20 +653,7 @@ IsSavedByDSO =@IsSavedByDSO,
         }
         catch (Exception Ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(DeleteAsync),
-                UserId = 0,
-                ScreenName = "Quotation",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    Id, IsActive, userid
-                })
-            });
+
             return new ResponseModel()
             {
                 Data = null,
@@ -950,21 +682,8 @@ IsSavedByDSO =@IsSavedByDSO,
 
 
             var Response = await _connection.QueryFirstOrDefaultAsync<int>(Quotation.QuotationProcedure, param: param, commandType: CommandType.StoredProcedure);
-
-            // Log transaction
-            await LogTransactionAsync(
-                id: Response,
-                branchId: BranchId,
-                orgId: OrgId,
-                actionType: "Insert",
-                actionDescription: "Added new Customer",
-                oldValue: null,
-                newValue: new { CustomerName = CustomerName, OrgId = OrgId, BranchId = BranchId, CreatedBy = userid },
-                tableName: "tbl_salesquatation_header",
-                userId: userid
-            );
-
-            if (Response > 0)
+            
+                if (Response > 0)
                 {
                     Message = "Customer created successfully";
                 }
@@ -983,20 +702,7 @@ IsSavedByDSO =@IsSavedByDSO,
         }
         catch (Exception Ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = Ex.Message,
-                ErrorType = Ex.GetType().Name,
-                StackTrace = Ex.StackTrace,
-                Source = nameof(QuotationRepository),
-                Method_Function = nameof(Createcustomer),
-                UserId = 0,
-                ScreenName = "Quotation",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    CustomerName, OrgId, BranchId, userid
-                })
-            });
+
             return new ResponseModel()
             {
                 Data = null,
@@ -1005,28 +711,35 @@ IsSavedByDSO =@IsSavedByDSO,
             };
         }
     }
-
-    private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-    {
-        var log = new UserTransactionLogModel
-        {
-            TransactionId = id.ToString(),
-            ModuleId = 1,
-            ScreenId = 1,
-            ModuleName = "Sales",
-            ScreenName = "Quatation",
-            UserId = userId,
-            ActionType = actionType,
-            ActionDescription = actionDescription,
-            TableName = tableName,
-            OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-            NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-            CreatedBy = userId ?? 0,
-            OrgId = orgId,
-            BranchId = branchId,
-            DbLog = 2
-        };
-
-        await _transactionLogRepo.LogTransactionAsync(log);
-    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -52,7 +52,6 @@ import { getCustomers } from "store/actions";
 
 // Other Pages/Components
 import AnotherPageComponent from "../Quotation/add-quotation";
-import useAccess from "../../../common/access/useAccess";
 
 export const handleSalesOrderSubmit = async ({
     actionType,
@@ -163,7 +162,6 @@ export const handleSalesOrderSubmit = async ({
 const animatedComponents = makeAnimated();
 
 const EditDirectSalesForm = forwardRef((props, ref) => {
-    const { access, applyAccessUI } = useAccess("Sales", "Orders");
     const {
         soData,
         handleSelectChange,
@@ -282,13 +280,6 @@ const EditDirectSalesForm = forwardRef((props, ref) => {
             return obj;
         }
     }
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
     useEffect(() => {
         debugger
         const loadIsadmindetails = async () => {
@@ -1572,17 +1563,15 @@ const EditDirectSalesForm = forwardRef((props, ref) => {
                                                                                       isSearchable={isSearchable}
                                                                                   /> */}
 
-                                                                                {access.canSave && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="btn btn-info fa-pull-right"
-                                                                                        onClick={e => setIsModalOpen3(true)}
-                                                                                        disabled={sqbasicinfo.IsWithCustomer}
-                                                                                        data-access="save"
-                                                                                    >
-                                                                                        <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
-                                                                                    </button>
-                                                                                )}
+
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="btn btn-info fa-pull-right"
+                                                                                    onClick={e => setIsModalOpen3(true)}
+                                                                                    disabled={sqbasicinfo.IsWithCustomer}
+                                                                                >
+                                                                                    <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
+                                                                                </button>
 
                                                                             </div>
                                                                         </FormGroup>
@@ -1908,12 +1897,9 @@ const EditDirectSalesForm = forwardRef((props, ref) => {
                                                                     <thead style={{ backgroundColor: "#3e90e2" }}>
                                                                         <tr>
                                                                             <th className="text-center" style={{ width: "2%" }}>
-                                                                                {access.canNew && (
-                                                                                    <span style={{ cursor: "pointer", alignItems: "center" }} onClick={handleAddItem}>
-                                                                                        <i className="mdi mdi-plus" />
-                                                                                    </span>
-                                                                                )}
-                                                                            </th>
+                                                                                <span style={{ cursor: "pointer", alignItems: "center" }} onClick={handleAddItem}>
+                                                                                    <i className="mdi mdi-plus" />
+                                                                                </span></th>
                                                                             <th className="text-center required-label" style={{ width: "12%" }}>Gas Code</th>
                                                                             <th className="text-center" style={{ width: "8%" }}>Gas Details</th>
                                                                             <th className="text-center" style={{ width: "8%" }}>PO Number</th>
@@ -1929,11 +1915,9 @@ const EditDirectSalesForm = forwardRef((props, ref) => {
                                                                             return (
                                                                                 <tr key={item.GasCodeId || index}>
                                                                                     <td>
-                                                                                        {access.canDelete && (
-                                                                                            <span color="danger" className="btn-sm" onClick={() => openModal(index)} title="Delete" data-access="delete">
-                                                                                                <i className="mdi mdi-trash-can-outline label-icon align-middle" title="Delete" />
-                                                                                            </span>
-                                                                                        )}
+                                                                                        <span color="danger" className="btn-sm" onClick={() => openModal(index)} title="Delete">
+                                                                                            <i className="mdi mdi-trash-can-outline label-icon align-middle" title="Delete" />
+                                                                                        </span>
                                                                                     </td>
                                                                                     <td>
                                                                                         <Select

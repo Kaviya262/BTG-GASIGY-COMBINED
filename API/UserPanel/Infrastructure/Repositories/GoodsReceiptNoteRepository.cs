@@ -3,21 +3,17 @@ using BackEnd.Procurement.PurchaseOrder;
 using BackEnd.Procurement.PurchaseRequitision;
 using BackEnd.Shared;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.Procurement.GoodsReceiptNote;
 using Core.Procurement.PurchaseOrder;
 using Core.Procurement.PurchaseRequisition;
 using Dapper;
-using Org.BouncyCastle.Asn1.Pkcs;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
@@ -25,14 +21,10 @@ namespace Infrastructure.Repositories
     public class GoodsReceiptNoteRepository : IGoodsReceiptNoteRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
         string IPAddress = "";
-        public GoodsReceiptNoteRepository(IUnitOfWorkDB2 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public GoodsReceiptNoteRepository(IUnitOfWorkDB2 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
         public async Task<object> GetByGRNNoSeqAsync(int branchid, int orgid)
         {
@@ -58,19 +50,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetByGRNNoSeqAsync),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -104,19 +86,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetPOSupplierListAsync),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, grnid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -150,19 +122,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetPOListAsync),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { supplierid, branchid, orgid, grnid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -199,19 +161,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetPoItemList),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { poId, orgId, branchId, grnid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -245,19 +197,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetAllGRNAsync),
-                    UserId = userid,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { supplierid, grnid, branchid, orgid, userid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -319,19 +261,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetGoodsReceiptNoteByIdAsync),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { grnid, branchid, orgid })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -370,19 +302,9 @@ namespace Infrastructure.Repositories
 
 
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetSeqNumber),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { id, text, type, unit, orgid })
-                });
+
                 return new SharedModelWithResponse()
                 {
                     Data = null,
@@ -435,28 +357,6 @@ namespace Infrastructure.Repositories
                     Obj.Header.grnno = data.grnno;
                 }
 
-                foreach (var detail in Obj.Details)
-                {
-                    var existPOnos = @"SELECT COUNT(*) FROM tbl_purchaseorder_requisitions 
-                                       WHERE itemid=@itemid AND poid=@poid AND (bal_grn_rec_Qty < @grnQty OR bal_grn_rec_Qty=0)";
-                    int count = await _connection.QuerySingleAsync<int>(existPOnos,
-                        new
-                        {
-                            poid = detail.poid,
-                            grnqty = detail.grnqty,
-                            itemid = detail.itemid
-                        });
-                    
-                    if (count > 0)
-                    {
-                        return new ResponseModel()
-                        {
-                            Data = null,
-                            Status = false,
-                            Message = $"Please try another PO number or refresh the page to load the latest balance quantity...",
-                        };
-                    }
-                }
 
                 const string headerSql = @"
                       INSERT INTO `tbl_grn_header`(`grnno`,`grndate`,`grnvalue`,`supplierid`,
@@ -469,19 +369,6 @@ namespace Infrastructure.Repositories
 
                 // Get newly inserted POID
                 var grnid = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: grnid,
-                    branchId: Obj.Header.branchid,
-                    orgId: Obj.Header.orgid,
-                    actionType: "Insert",
-                    actionDescription: "Added new Grn header",
-                    oldValue: null,
-                    newValue: Obj.Header,
-                    tableName: "tbl_grn_header",
-                    userId: Obj.Header.userid
-                );
 
 
                 var pridToPodidMap = new Dictionary<int, int>();
@@ -518,20 +405,7 @@ namespace Infrastructure.Repositories
                         poid = detail.poid
                     });
 
-                    int insertDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
 
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertDetailsId,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Insert",
-                        actionDescription: "Added new Grn Details",
-                        oldValue: null,
-                        newValue: Obj.Details,
-                        tableName: "tbl_grn_detail",
-                        userId: Obj.Header.userid
-                    );
                 }
 
 
@@ -572,23 +446,13 @@ namespace Infrastructure.Repositories
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = Obj.Header.userid,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
-                    Message = $"Something went wrong{ex.Message}",
+                    Message = "Something went wrong" + Ex.Message,
                     Status = false
                 };
             }
@@ -598,26 +462,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>(@"SELECT grnid,grnno,grndate,grnvalue,supplierid,isactive,createdip,modifiedip,branchid,orgid,isSubmitted,DATE_FORMAT(createddt,'%Y-%m-%d %H:%i:%s') AS createddt,
-        DATE_FORMAT(modifieddt,'%Y-%m-%d %H:%i:%s') AS modifieddt FROM tbl_grn_header WHERE grnid = @grnid", new { grnid = Obj.Header.grnid });
-
-
-                var oldDetails = new List<object>();
-                foreach (var d in Obj.Details)
-                {
-                    if (d.grndid > 0)
-                    {
-                        var oldDetailvalue = await _connection.QueryFirstOrDefaultAsync<object>(@"SELECT grndid,grnid,itemid,uomid,dono,dodate,poqty,alreadyrecqty,balanceqty,grnqty,containerno,costperqty,
-                        amount,porid,isactive,createdip,modifiedip,poid,DATE_FORMAT(createddt,'%Y-%m-%d %H:%i:%s') AS createddt,DATE_FORMAT(modifieddt,'%Y-%m-%d %H:%i:%s') AS modifieddt
-     FROM tbl_grn_detail WHERE grndid = @grndid", new { grndid = d.grndid });
-
-                        oldDetails.Add(oldDetailvalue);
-                    }
-                    else
-                    {
-                        oldDetails.Add(null);
-                    }
-                }
                 // 1. Update Header
                 const string headerSql = @"
                                      UPDATE `tbl_grn_header` 
@@ -637,17 +481,7 @@ namespace Infrastructure.Repositories
 
                 await _connection.ExecuteAsync(headerSql, Obj.Header);
 
-                await LogTransactionAsync(
-                    id: Obj.Header.grnid,
-                    branchId: Obj.Header.branchid,
-                    orgId: Obj.Header.orgid,
-                    actionType: "Update",
-                    actionDescription: "Updated Grn Header",
-                    oldValue: oldvalue,
-                    newValue: Obj.Header,
-                    tableName: "tbl_grn_header",
-                    userId: Obj.Header.userid
-                );
+
 
                 var UpdateSoquot = "update tbl_grn_detail set isactive=0 where grnid =" + Obj.Header.grnid;
  
@@ -669,45 +503,11 @@ namespace Infrastructure.Repositories
                     `grnQty`,`containerno`,`costperqty`,`amount`,`porid`,`isactive`,`createdby`,`createddt`,`createdip`,`branchid`,`orgid`,`poid`)
                     VALUES(@grnid,@itemid,@uomid,@dono,@dodate,@poqty,@alreadyrecqty,@balanceqty,@grnqty,@containerno,@costperqty,@amount,
                     @porid,1,@userid,Now(),'',@branchid,@orgid,@poid);";
-
-                        await _connection.ExecuteAsync(updateDetailSql, new
-                        {
-                            grndid = detail.grndid,
-                            itemid = detail.itemid,
-                            uomid = detail.uomid,
-                            dono = detail.dono,
-                            dodate = detail.dodate,
-                            poqty = detail.poqty,
-                            alreadyrecqty = detail.alreadyrecqty,
-                            balanceqty = detail.balanceqty,
-                            grnQty = detail.grnqty,
-                            containerno = detail.containerno,
-                            costperqty = detail.costperqty,
-                            amount = detail.amount,
-                            porid = detail.porid,
-                            userid = Obj.Header.userid,
-                            branchid = Obj.Header.branchid,
-                            orgid = Obj.Header.orgid,
-                            poid = detail.poid,
-                            grnid = detail.grnid
-                        });
-
-                        int newDetailId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                        await LogTransactionAsync(
-                            id: newDetailId,
-                            branchId: Obj.Header.branchid,
-                            orgId: Obj.Header.orgid,
-                            actionType: "Insert",
-                            actionDescription: "Inserted GRN Detail",
-                            oldValue: null,
-                            newValue: detail,
-                            tableName: "tbl_grn_detail",
-                            userId: Obj.Header.userid
-                        );
                     }
                     else
                     {
+
+
                         updateDetailSql = @"
                                        UPDATE `tbl_grn_detail`
                                        SET 
@@ -731,41 +531,28 @@ namespace Infrastructure.Repositories
                                        poid = @poid,
                                        isactive=1 
                                        WHERE grndid = @grndid;";
-
-                        await _connection.ExecuteAsync(updateDetailSql, new
-                        {
-                            grndid = detail.grndid,
-                            itemid = detail.itemid,
-                            uomid = detail.uomid,
-                            dono = detail.dono,
-                            dodate = detail.dodate,
-                            poqty = detail.poqty,
-                            alreadyrecqty = detail.alreadyrecqty,
-                            balanceqty = detail.balanceqty,
-                            grnQty = detail.grnqty,
-                            containerno = detail.containerno,
-                            costperqty = detail.costperqty,
-                            amount = detail.amount,
-                            porid = detail.porid,
-                            userid = Obj.Header.userid,
-                            branchid = Obj.Header.branchid,
-                            orgid = Obj.Header.orgid,
-                            poid = detail.poid,
-                            grnid = detail.grnid
-                        });
-
-                        await LogTransactionAsync(
-                            id: detail.grndid,
-                            branchId: Obj.Header.branchid,
-                            orgId: Obj.Header.orgid,
-                            actionType: "Update",
-                            actionDescription: "Updated Grn Details",
-                            oldValue: oldDetails,
-                            newValue: Obj.Details,
-                            tableName: "tbl_grn_detail",
-                            userId: Obj.Header.userid
-                        );
                     }
+                    await _connection.ExecuteAsync(updateDetailSql, new
+                    {
+                        grndid = detail.grndid,              
+                        itemid = detail.itemid,
+                        uomid = detail.uomid,
+                        dono = detail.dono,
+                        dodate = detail.dodate,
+                        poqty = detail.poqty,
+                        alreadyrecqty = detail.alreadyrecqty,
+                        balanceqty = detail.balanceqty,
+                        grnQty = detail.grnqty,
+                        containerno = detail.containerno,
+                        costperqty = detail.costperqty,
+                        amount = detail.amount,
+                        porid = detail.porid,
+                        userid = Obj.Header.userid,
+                        branchid = Obj.Header.branchid,
+                        orgid = Obj.Header.orgid,
+                        poid = detail.poid,
+                        grnid=detail.grnid
+                    });
                 }
 
                 var updateSeq = " call proc_update_po_bal(" + Obj.Header.grnid + ") ";
@@ -784,21 +571,10 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = Obj.Header.userid,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(Obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
-                    Message = $"Something went wrong: {ex.Message}",
+                    Message = "Something went wrong: " + ex.Message,
                     Status = false
                 };
             }
@@ -828,19 +604,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetGrnSupplierAutocomplete),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, suppliername })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -874,19 +640,9 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(GoodsReceiptNoteRepository),
-                    Method_Function = nameof(GetGrnNoAutoComplete),
-                    UserId = 0,
-                    ScreenName = "GoodsReceiptNote",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, grnno })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -894,30 +650,6 @@ namespace Infrastructure.Repositories
                     Status = false
                 };
             }
-        }
-
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Procurement",
-                ScreenName = "GRN",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 3
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
         }
     }
 }

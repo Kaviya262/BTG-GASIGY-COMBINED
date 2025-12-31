@@ -17,18 +17,9 @@ const initFilters = () => ({
     DepartmentCode: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
     DepartmentName: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
 });
-import useAccess from "../../common/access/useAccess";
 
 const ManageDepartment = () => {
     const history = useHistory();
-    const { access, applyAccessUI } = useAccess("Masters", "Departments");
-    const canViewDetails = !access.loading && access.canViewDetails;
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
     const [department, setDepartment] = useState([]);
     const [filteredDepart, setFilteredDepart] = useState([]);
     const [departCode, setDepartCode] = useState("");
@@ -126,7 +117,7 @@ const ManageDepartment = () => {
                 setSwitchStates(initialSwitch);
             }
             else {
-                setFilteredDepart([]);
+            setFilteredDepart([]);
             }
         }
         catch (error) {
@@ -178,9 +169,6 @@ const ManageDepartment = () => {
     };
 
     const actionBodyTemplate = (rowData) => {
-        if (!access?.canEdit) {
-            return null;
-        }
         debugger
         console.log(selectedRow, "rowData :", rowData);
         if (rowData.IsActive == 1) {
@@ -328,14 +316,6 @@ const ManageDepartment = () => {
         );
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -371,8 +351,8 @@ const ManageDepartment = () => {
                                         <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={handleSearchCancel}>
                                         <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-
-                                    <button type="button" className="btn btn-success" onClick={handleNew} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                
+                                    <button type="button" className="btn btn-success" onClick={handleNew}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -380,7 +360,7 @@ const ManageDepartment = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable value={filteredDepart} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="DepartmentCode" filters={filters} globalFilterFields={["DepartmentCode", "DepartmentName"]} header={header} emptyMessage="No Department found." onFilter={(e) => setFilters(e.filters)}>
+                                <DataTable value={filteredDepart} paginator showGridlines rows={10} loading={loading} dataKey="DepartmentCode" filters={filters} globalFilterFields={["DepartmentCode", "DepartmentName"]} header={header} emptyMessage="No Department found." onFilter={(e) => setFilters(e.filters)}>
                                     <Column field="DepartmentCode" header="Department Code" filter filterPlaceholder="Search by Code" />
                                     <Column field="DepartmentName" header="Department Name" filter filterPlaceholder="Search by Name" />
                                     <Column field="Actionstatus" header="Active" showFilterMatchModes={false} body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }} />
@@ -440,7 +420,7 @@ const ManageDepartment = () => {
 
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 text-end button-items">
-                                                            <Button type="submit" data-access="save" className="btn btn-info" disabled={isSubmitting}>
+                                                            <Button type="submit" className="btn btn-info" disabled={isSubmitting}>
                                                                 <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
                                                                 {isSubmitting
                                                                     ? selectedRow?.DepartmentId && selectedRow.DepartmentId > 0 ? "Updating..." : "Saving..."

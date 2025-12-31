@@ -1,12 +1,9 @@
-﻿using BackEnd.PaymentMethod;
+﻿using System.Data;
+using BackEnd.PaymentMethod;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
 using Core.Master.PaymentMethod;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Dapper;
-using Newtonsoft.Json;
-using System.Data;
 using UserPanel.Infrastructure.Data;
 using static Core.Master.PaymentMethod.PaymentMethodItem;
 
@@ -15,17 +12,16 @@ namespace Infrastructure.Repositories
     public class PaymentMethodRepository : IPaymentMethodRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
-        public PaymentMethodRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public PaymentMethodRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
         #region GetAllPaymentMethodAsync
         public async Task<object> GetAllPaymentMethodAsync(int opt, int payMid, string paymethodCode)
+
+
+
         {
             try
             {
@@ -48,20 +44,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentMethodRepository),
-                    Method_Function = nameof(GetAllPaymentMethodAsync),
-                    UserId = 0,
-                    ScreenName = "PaymentMethod",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, payMid, paymethodCode
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -105,20 +87,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentMethodRepository),
-                    Method_Function = nameof(GetPaymentMethodByIdAsync),
-                    UserId = 0,
-                    ScreenName = "PaymentMethod",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, Id, payMcode
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -161,20 +129,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentMethodRepository),
-                    Method_Function = nameof(GetPaymentMethodByCodeAsync),
-                    UserId = 0,
-                    ScreenName = "PaymentMethod",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, payMId, PMCode
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -202,19 +156,6 @@ namespace Infrastructure.Repositories
                             ";
 
                 var data = await _connection.ExecuteScalarAsync<int>(insertquery, obj.Header);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: data,
-                    branchId: 1,
-                    orgId: 1,
-                    actionType: "Insert",
-                    actionDescription: "Added new Paymentmethod",
-                    oldValue: null,
-                    newValue: obj,
-                    tableName: "master_paymentmethod",
-                    userId: obj.Header.UserId
-                );
                 if (data > 0)
                 {
                     return new ResponseModel()
@@ -233,17 +174,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentMethodRepository),
-                    Method_Function = nameof(CreatePaymentMethodAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "PaymentMethod",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -260,8 +190,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryAsync<object>($"select * from master_paymentmethod where id = {obj.Header.PaymentMethodId}");
-
                 var updatequery = @"
             UPDATE master_paymentmethod
             SET
@@ -275,19 +203,6 @@ namespace Infrastructure.Repositories
         ";
 
                 var rowsAffected = await _connection.ExecuteAsync(updatequery, obj.Header);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: obj.Header.PaymentMethodId,
-                    branchId: 1,
-                    orgId: 1,
-                    actionType: "Update",
-                    actionDescription: "Update Payment Method",
-                    oldValue: oldvalue,
-                    newValue: obj,
-                    tableName: "master_paymentmethod",
-                    userId: obj.Header.UserId
-                );
 
                 if (rowsAffected > 0)
                 {
@@ -311,17 +226,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentMethodRepository),
-                    Method_Function = nameof(UpdatePaymentMethodAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "PaymentMethod",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -338,28 +242,6 @@ namespace Infrastructure.Repositories
         }
         #endregion
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Master",
-                ScreenName = "Payment Methods",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 
 }

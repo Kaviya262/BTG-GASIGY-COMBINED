@@ -21,7 +21,7 @@ const gastransformData = (data, valueParam, labelParam) => {
         id: item["Id"]
     }));
 };
-export const GetALLInvoices = async (customerid, FromDate, ToDate, branchId, typeid) => {
+export const GetALLInvoices = async (customerid, FromDate, ToDate, branchId,typeid) => {
     try {
         const response = await get(`/Invoices/GetALL?customerid=${customerid}&FromDate=${FromDate}&ToDate=${ToDate}&BranchId=${branchId}&type=${typeid}`);
         if (response?.status) {
@@ -49,7 +49,7 @@ export const GetInvoiceDetails = async (invoicesid) => {
     }
 };
 
-export const GetInvoiceSNo = async (branchId, type) => {
+export const GetInvoiceSNo = async (branchId,type) => {
     try {
         const response = await get(`/Invoices/GetInvoicesSiNo?BranchId=${branchId}&type=${type}`);
         if (response?.status) {
@@ -662,12 +662,12 @@ export const searchReturnOrders = async (filters) => {
 
 //#region GetBarcodeDetailsByPacking
 // API Call Function
-export const GetBarcodePackingList = async ({ packingId, barcode, donoId, uomId }) => {
+export const GetBarcodePackingList = async ({ packingId, barcode, donoId }) => {
     try {
-        console.log("Calling API with:", { packingId, barcode, donoId, uomId });
+        console.log("Calling API with:", { packingId, barcode, donoId });
 
         const response = await get(
-            `/OrderMngMaster/GetBarcodeDetails?Barcode=${barcode}&PackingId=${packingId}&doid=${donoId}&UomId=${uomId}`
+            `/OrderMngMaster/GetBarcodeDetails?Barcode=${barcode}&PackingId=${packingId}&doid=${donoId}`
         );
 
         if (response?.status) {

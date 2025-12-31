@@ -135,7 +135,7 @@ const ManageGl = () => {
 
         history.push("/add-glmaster");
 
-
+         
     };
 
     // Reset filters
@@ -172,7 +172,7 @@ const ManageGl = () => {
             <span
                 onClick={() => {
                     history.push(`/edit-glmaster/${rowData.id}`);
-
+                     
                 }}
 
                 title="Edit"

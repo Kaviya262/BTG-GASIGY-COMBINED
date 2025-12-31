@@ -31,11 +31,10 @@ import {
 } from "../../common/data/mastersapi";
 import nodatafound from "assets/images/no-data.png";
 import { useHistory } from "react-router-dom";
-import useAccess from "../../common/access/useAccess";
 const getUserDetails = () => {
   if (localStorage.getItem("authUser")) {
-    const obj = JSON.parse(localStorage.getItem("authUser"))
-    return obj;
+      const obj = JSON.parse(localStorage.getItem("authUser"))
+      return obj;
   }
 }
 const renderValueOrDash = value =>
@@ -66,8 +65,7 @@ const initFilters = () => ({
 });
 
 const ManageProcurementsGRN = () => {
-  const { access, applyAccessUI } = useAccess("Procurement", "GRN");
-  const [UserData, setUserData] = useState(null);
+      const [UserData, setUserData] = useState(null);
   const history = useHistory();
   const [users, setUsers] = useState([]);
   const [filters, setFilters] = useState(initFilters());
@@ -119,12 +117,6 @@ const ManageProcurementsGRN = () => {
   };
 
   useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
-
-  useEffect(() => {
     fetchGRN();
     const userData = getUserDetails();
     setUserData(userData);
@@ -137,7 +129,7 @@ const ManageProcurementsGRN = () => {
       const orgId = 1;
       const branchId = 1;
       const userData = getUserDetails();
-      const res = await GetAllGRNList(0, 0, orgId, branchId, userData?.u_id);
+      const res = await GetAllGRNList(0, 0, orgId, branchId,userData?.u_id);
       if (res.status) {
         setGRNList(res.data);
       }
@@ -230,7 +222,7 @@ const ManageProcurementsGRN = () => {
   };
 
   const actionBodyTemplate = (rowData) => {
-    if (!access?.canEdit) return null;
+
     return (
       <div className="d-flex align-items-center justify-content-center gap-3">
         {rowData.Status === "Saved" ? (
@@ -353,13 +345,13 @@ const ManageProcurementsGRN = () => {
 
       if (filterType === 1) {
         // Search by Supplier
-        result = await GetAllGRNList(filterValue, 0, branchId, orgId, UserData?.u_id);
+        result = await GetAllGRNList(filterValue, 0, branchId, orgId,UserData?.u_id);
       } else if (filterType === 2) {
         // Search by PO No
-        result = await GetAllGRNList(0, filterValue, branchId, orgId, UserData?.u_id);
+        result = await GetAllGRNList(0, filterValue, branchId, orgId,UserData?.u_id);
       } else {
         // Default – load all
-        result = await GetAllGRNList(0, 0, branchId, orgId, UserData?.u_id);
+        result = await GetAllGRNList(0, 0, branchId, orgId,UserData?.u_id);
       }
 
       setGRNList(Array.isArray(result.data) ? result.data : []);
@@ -371,7 +363,7 @@ const ManageProcurementsGRN = () => {
   const cancelFilter = async () => {
     setSelectedFilterType(null);
     setSelectedAutoItem(null);
-    const res = await GetAllGRNList(0, 0, orgId, branchId, UserData?.u_id);
+    const res = await GetAllGRNList(0, 0, orgId, branchId,UserData?.u_id);
     if (res.status) {
       setGRNList(res.data);
     }
@@ -404,34 +396,10 @@ const ManageProcurementsGRN = () => {
     }
   };
 
-  // const actionclaimBodyTemplate = (rowData) => {
-  //   return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
-  //     onClick={() => handleShowDetails(rowData)}>{rowData.grnno}</span>;
-  // };
-
   const actionclaimBodyTemplate = (rowData) => {
-    if (!access?.canViewDetails) {
-      return <span>{rowData.grnno}</span>;
-    }
-    return (
-      <span
-        style={{ cursor: "pointer", color: "blue" }}
-        className="btn-rounded btn btn-link"
-        onClick={() => handleShowDetails(rowData)}
-      >
-        {rowData.grnno}
-      </span>
-    );
+    return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+      onClick={() => handleShowDetails(rowData)}>{rowData.grnno}</span>;
   };
-
-
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
 
   return (
     <div className="page-content">
@@ -510,7 +478,7 @@ const ManageProcurementsGRN = () => {
               <div className={`col-12 ${selectedFilterType ? 'col-lg-5' : 'col-lg-9'} d-flex justify-content-end flex-wrap gap-2`} >
                 <button type="button" className="btn btn-info" onClick={searchData}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                 <button type="button" className="btn btn-danger" onClick={cancelFilter}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-                <button type="button" className="btn btn-success" onClick={linkAddGRN} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                <button type="button" className="btn btn-success" onClick={linkAddGRN}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
               </div>
             </div>
           </Card>
@@ -523,11 +491,11 @@ const ManageProcurementsGRN = () => {
               <DataTable
                 value={gRNList}
                 paginator
-                rows={access.records || 10}
+                rows={20}
                 loading={loading}
                 dataKey="id"
                 filters={filters}
-                globalFilterFields={["grnno", "grndate", "suppliername", 'CreatedDate', 'createdbyName', "grnvalue", "Status"]}
+                globalFilterFields={["grnno", "grndate", "suppliername",'CreatedDate','createdbyName', "grnvalue", "Status"]}
                 sortField="grnDate"
                 header={renderHeader()}
                 emptyMessage={
@@ -560,20 +528,20 @@ const ManageProcurementsGRN = () => {
                   className="text-left"
                   filter
                 />
-                <Column
-                  field="CreatedDate"
-                  header="Created Date"
-                  filter
-                  filterPlaceholder="Search by created date"
-                  className="text-left"
-                />
-                <Column
-                  field="createdbyName"
-                  header="Created By"
-                  filter
-                  filterPlaceholder="Search by created by"
-                  className="text-left"
-                />
+                  <Column
+                      field="CreatedDate"
+                      header="Created Date"
+                      filter
+                      filterPlaceholder="Search by created date"
+                      className="text-left"
+                  />
+                  <Column
+                      field="createdbyName"
+                      header="Created By"
+                      filter
+                      filterPlaceholder="Search by created by"
+                      className="text-left"
+                  />
                 {/* 
                 <Column
                   field="grnvalue"
@@ -679,10 +647,10 @@ const ManageProcurementsGRN = () => {
                 <Column header="#" body={(_, { rowIndex }) => rowIndex + 1} />
                 <Column field="pono" header="PO No." />
                 <Column field="itemDescription" header="Item Description" />
-
+              
                 <Column field="dono" header="DO No." />
                 <Column field="dodate" header="DO Date" body={(row) => row.dodate?.split("T")[0]} />
-
+              
                 <Column field="poqty" header="PO Qty" body={(row) => parseFloat(row.poqty || 0).toLocaleString("en-US")} />
                 <Column field="UOM" header="UOM" />
                 <Column field="alreadyrecqty" header="Recd Qty" body={(row) => parseFloat(row.alreadyrecqty || 0).toLocaleString("en-US")} />

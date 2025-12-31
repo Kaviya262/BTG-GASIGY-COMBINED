@@ -20,12 +20,10 @@ import {
 } from "../../../common/data/mastersapi";
 import { AutoComplete } from "primereact/autocomplete";
 import { toast } from "react-toastify";
-import useAccess from "../../../common/access/useAccess";
 
 const animatedComponents = makeAnimated();
 
 const AddPo = () => {
-    const { access, applyAccessUI } = useAccess("Sales", "Production Order");
     const history = useHistory();
     const { id: PO_ID } = useParams();
     const isEditMode = !!PO_ID;
@@ -74,12 +72,6 @@ const AddPo = () => {
     const [barcodeData, setBarcodeData] = useState("");
     const [isFetched, setIsFetched] = useState(false);
 
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         // Ensure dependencies are available before fetching production order details
@@ -577,11 +569,11 @@ const AddPo = () => {
                                                     <Col md="4">
                                                         <div className="justify-content-end text-end" >
                                                             <div className="button-items" style={{ marginRight: "12px" }}>
-                                                                <button type="button" className="btn btn-info" onClick={(e) => openpopup(e, 0)} disabled={isSubmitting} data-access="save" >
+                                                                <button type="button" className="btn btn-info" onClick={(e) => openpopup(e, 0)} disabled={isSubmitting} >
                                                                     <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>
                                                                     {isEditMode ? "Save" : "Save"}
                                                                 </button>
-                                                                <button type="button" className="btn btn-success" onClick={(e) => openpopup(e, 1)} disabled={isSubmitting} data-access="post" >
+                                                                <button type="button" className="btn btn-success" onClick={(e) => openpopup(e, 1)} disabled={isSubmitting} >
                                                                     <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
                                                                 </button>
                                                                 <button type="button" className="btn btn-danger" onClick={handleCancel} disabled={isSubmitting}>

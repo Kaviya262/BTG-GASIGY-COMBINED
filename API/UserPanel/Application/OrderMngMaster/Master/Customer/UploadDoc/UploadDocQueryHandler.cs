@@ -16,18 +16,12 @@ namespace Application.PackingAndDO.UploadPackingAndDO
         {
             _repository = repository;
         }
-
         public async Task<ResponseModel> Handle(UploadDocQuery query, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _repository.UploadDO(
-                    query.Id,
-                    query.LegalPath,
-                    query.ReviewPath,
-                    query.UserId,
-                    query.BranchId
-                );
+
+                var result = await _repository.UploadDO(query.Id, query.Path, query.UserId, query.BranchId);
 
                 return result;
             }
@@ -41,5 +35,12 @@ namespace Application.PackingAndDO.UploadPackingAndDO
                 };
             }
         }
+
+
+
+
+
     }
+
+
 }

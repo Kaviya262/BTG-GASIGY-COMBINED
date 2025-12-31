@@ -7,7 +7,6 @@ using Application.Master.DepartmentItem.GetDepartmentItemById;
 using Application.PackingAndDO.UploadPackingAndDO;
 using Core.Models;
 using MediatR;
-using Core.OrderMngMaster.Customerdoc;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Bcpg;
 
@@ -31,67 +30,40 @@ namespace UserPanel.Controllers.Master
             return Ok(result);
         }
 
-
         [HttpPost("Upload-doc")]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadDO([FromForm] UploadCustomerDoc model)
+        public async Task<IActionResult> UploadDO(IFormFile file, [FromForm] int CustomerId, [FromForm] int BranchId, [FromForm] int UserId)
         {
-            if (model.CustomerId <= 0)
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            if (CustomerId == 0)
+            {
                 return BadRequest("CustomerId is required.");
-
-            if (model.BranchId <= 0 || model.UserId <= 0)
-                return BadRequest("BranchId and UserId are required.");
-
-            var files = Request.Form.Files;
-
-            if (files == null || files.Count == 0)
-                return BadRequest("At least one file is required.");
+            }
 
             try
             {
-                var baseDir = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "UploadedFiles",
-                    "CustomerDoc",
-                    model.CustomerId.ToString()
-                );
-
-                if (!Directory.Exists(baseDir))
-                    Directory.CreateDirectory(baseDir);
-
-                foreach (var file in files)
+                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles", "CustomerDoc", CustomerId.ToString());
+                if (!Directory.Exists(uploadDir))
                 {
-                    var filePath = Path.Combine(baseDir, file.FileName);
-
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    await file.CopyToAsync(stream);
-
-                    // match frontend FormData keys
-                    if (file.Name == "legalFile")
-                        model.LegalDocumentPath = filePath;
-
-                    if (file.Name == "customerReviewFile")
-                        model.CustomerReviewFormPath = filePath;
+                    Directory.CreateDirectory(uploadDir);
                 }
-
-                if (model.LegalDocumentPath == null &&
-                    model.CustomerReviewFormPath == null)
-                    return BadRequest("At least one file is required.");
-
-                await _mediator.Send(new UploadDocQuery
+                var filePath = Path.Combine(uploadDir, file.FileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    Id = model.CustomerId,
-                    LegalPath = model.LegalDocumentPath,
-                    ReviewPath = model.CustomerReviewFormPath,
-                    UserId = model.UserId,
-                    BranchId = model.BranchId
+                    await file.CopyToAsync(stream);
+                }
+                var result = await _mediator.Send(new UploadDocQuery
+                {
+                    Id = CustomerId,
+                    Path = filePath,
+                    UserId = UserId,
+                    BranchId = BranchId
                 });
 
-                return Ok(new ResponseModel
-                {
-                    Status = true,
-                    Message = "Files uploaded successfully"
-                });
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -102,9 +74,6 @@ namespace UserPanel.Controllers.Master
                 });
             }
         }
-
-
-
 
         [HttpGet("get-list-tab")]
         public async Task<IActionResult> GetListALL([FromQuery] int tabId, [FromQuery] int customerId, [FromQuery] int contactId, [FromQuery] int addressId)

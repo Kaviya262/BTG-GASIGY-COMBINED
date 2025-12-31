@@ -1,11 +1,9 @@
-﻿using System.Text.Json;
-using BackEnd.Procurement.InvoiceReceipt;
+﻿using BackEnd.Procurement.InvoiceReceipt;
 using BackEnd.Procurement.PurchaseRequitision;
 using Core.Abstractions;
 using Core.Models;
 using Core.Procurement.InvoiceReceipt;
 using Dapper;
-using Core.Master.ErrorLog;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -19,12 +17,10 @@ namespace Infrastructure.Repositories
     public class IRNListRepository : IIRNListRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
         string IPAddress = "";
-        public IRNListRepository(IUnitOfWorkDB2 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository)
+        public IRNListRepository(IUnitOfWorkDB2 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
         public async Task<object> GetAllIRNL(int branchid, int orgid, int supplierid,string fromdate,string todate,int irnid,int userid)
         {
@@ -51,19 +47,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(IRNListRepository),
-                    Method_Function = nameof(GetAllIRNL),
-                    UserId = userid,
-                    ScreenName = "IRNList",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, supplierid, fromdate, todate, irnid, userid })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -98,19 +83,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(IRNListRepository),
-                    Method_Function = nameof(GetAllSupplierIRNList),
-                    UserId = 0,
-                    ScreenName = "IRNList",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -169,19 +143,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(IRNListRepository),
-                    Method_Function = nameof(getIRNById),
-                    UserId = 0,
-                    ScreenName = "IRNList",
-                    RequestData_Payload = JsonSerializer.Serialize(new { irnid, branchid, orgid })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -219,19 +182,8 @@ namespace Infrastructure.Repositories
                     Status = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(IRNListRepository),
-                    Method_Function = nameof(GetPaymentHistory),
-                    UserId = 0,
-                    ScreenName = "IRNList",
-                    RequestData_Payload = JsonSerializer.Serialize(new { branchid, orgid, supplierid, fromdate, todate })
-                });
                 return new ResponseModel()
                 {
                     Data = null,

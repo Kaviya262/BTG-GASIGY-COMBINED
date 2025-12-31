@@ -33,7 +33,6 @@ import {
     GetPRNoBySupplierAndCurrency
 } from "common/data/mastersapi";
 import Swal from 'sweetalert2';
-import useAccess from "../../common/access/useAccess";
 
 const initialValues = {
     prNo: [],
@@ -89,7 +88,6 @@ const validationSchema = Yup.object({
 
 
 const ProcurementsAddPurchaseOrder = () => {
-    const { access, applyAccessUI } = useAccess("Procurement", "Purchase Order");
     const isFirstRender = useRef(true);
     const history = useHistory();
     const [isClearable, setIsClearable] = useState(true);
@@ -145,12 +143,6 @@ const ProcurementsAddPurchaseOrder = () => {
             setCylinderTableData([]);
         }
     };
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
 
@@ -683,13 +675,7 @@ const ProcurementsAddPurchaseOrder = () => {
                 // setTimeout(() => {
                 history.push("/procurementspurchase-order");
                 // }, 1000);
-            }
-            else if (response?.message == 'Duplicate PRNo... Please, Select SomeOther PRNo!!') {
-                debugger
-                toast.error(response.message);
-                setIsSubmitting(false);
-            }
-            else {
+            } else {
                 toast.error("Failed to save purchase order: " + response.message);
                 setIsSubmitting(false);
             }
@@ -698,8 +684,8 @@ const ProcurementsAddPurchaseOrder = () => {
             toast.error("Error submitting purchase order: " + error.message);
             setIsSubmitting(false);
         } finally {
-            if (typeof setIsSubmitting === 'function') {
-                setIsSubmitting(false);
+            if (typeof setSubmitting === 'function') {
+                setSubmitting(false);
             }
         }
     };
@@ -916,44 +902,42 @@ const ProcurementsAddPurchaseOrder = () => {
                                                         </div>
                                                         <div className="col-12 col-lg-4 col-md-4 col-sm-4 button-items">
                                                             <button type="button" className="btn btn-danger fa-pull-right" onClick={handleCancel} disabled={isPostButtonDisabled || isSubmitting}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Close</button>
-                                                            {access.canPost && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-success fa-pull-right"
-                                                                    // onClick={async () => {
-                                                                    //     setTouched(markAllTouched(values), true);
-                                                                    //     const validationErrors = await validateForm();
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-success fa-pull-right"
+                                                                // onClick={async () => {
+                                                                //     setTouched(markAllTouched(values), true);
+                                                                //     const validationErrors = await validateForm();
 
-                                                                    //     if (Object.keys(validationErrors).length === 0) {
-                                                                    //         handleSubmit(values, 1); // Post
-                                                                    //     }
-                                                                    // }}
-                                                                    onClick={async () => {
-                                                                        setTouched(markAllTouched(values));
-                                                                        const errors = await validateForm();
+                                                                //     if (Object.keys(validationErrors).length === 0) {
+                                                                //         handleSubmit(values, 1); // Post
+                                                                //     }
+                                                                // }}
+                                                                onClick={async () => {
+                                                                    setTouched(markAllTouched(values));
+                                                                    const errors = await validateForm();
 
-                                                                        if (Object.keys(errors).length > 0) {
-                                                                            // toast.error("Please fix all errors before posting.");
-                                                                            return;
-                                                                        }
-                                                                        const result = await Swal.fire({
-                                                                            title: "Are you sure you want to Post?",
-                                                                            text: "This will post the Purchase Order.",
-                                                                            icon: "warning",
-                                                                            showCancelButton: true,
-                                                                            confirmButtonText: "Post",
-                                                                            cancelButtonText: "Cancel"
-                                                                        });
+                                                                    if (Object.keys(errors).length > 0) {
+                                                                        // toast.error("Please fix all errors before posting.");
+                                                                        return;
+                                                                    }
+                                                                    const result = await Swal.fire({
+                                                                        title: "Are you sure you want to Post?",
+                                                                        text: "This will post the Purchase Order.",
+                                                                        icon: "warning",
+                                                                        showCancelButton: true,
+                                                                        confirmButtonText: "Post",
+                                                                        cancelButtonText: "Cancel"
+                                                                    });
 
-                                                                        if (result.isConfirmed) {
-                                                                            handleSubmit(values, 1);
-                                                                        }
-                                                                    }}
-                                                                    disabled={isPostButtonDisabled || isSubmitting} // Disable button if already submitted or submitting
-                                                                >
-                                                                    <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
-                                                                </button>
-                                                            )}
+                                                                    if (result.isConfirmed) {
+                                                                        handleSubmit(values, 1);
+                                                                    }
+                                                                }}
+                                                                disabled={isPostButtonDisabled || isSubmitting} // Disable button if already submitted or submitting
+                                                            >
+                                                                <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Post
+                                                            </button>
 
                                                             {/* {isEditMode ? (
                                                                 <button
@@ -1083,10 +1067,7 @@ const ProcurementsAddPurchaseOrder = () => {
                                                                                     value: item.prid,
                                                                                     label: item.pr_number,
                                                                                     currencyid: item.currencyid,
-                                                                                    currencyCode: item.currencyCode,
-                                                                                    prtypeid: item.prtypeid,
-                                                                                    prtype: item.prtype
-
+                                                                                    currencyCode: item.currencyCode
                                                                                 }));
                                                                                 setPrNo(prOptions);
 
@@ -1125,57 +1106,85 @@ const ProcurementsAddPurchaseOrder = () => {
                                                                         setFieldTouched("prNo", true);
                                                                         setFieldTouched("__touched.prNo", true);
 
+                                                                        // Normalize selection
                                                                         const selected = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions].filter(Boolean);
-                                                                        if (selected.length === 0) {
-                                                                            setFieldValue("prNo", []);
-                                                                            setFieldValue("items", []);
+                                                                        const isNASelected = selected.some(opt => opt.value === "NA");
+                                                                        const finalSelection = isNASelected
+                                                                            ? [{ label: "NA", value: "NA" }]
+                                                                            : selected.filter(opt => opt.value !== "NA");
+
+                                                                        // Currency validation across multiple PRs
+                                                                        if (finalSelection.length > 1) {
+                                                                            const firstCurrency = finalSelection[0]?.currencyid;
+                                                                            const invalidPR = finalSelection.find(opt => opt.currencyid !== firstCurrency);
+
+                                                                            if (invalidPR) {
+                                                                                await Swal.fire({
+                                                                                    icon: "warning",
+                                                                                    title: "Currency Mismatch",
+                                                                                    text: `PR ${invalidPR.label} has a different currency and cannot be selected.`,
+                                                                                });
+
+                                                                                setFieldValue(
+                                                                                    "prNo",
+                                                                                    finalSelection.filter(opt => opt.currencyid === firstCurrency)
+                                                                                );
+                                                                                return;
+                                                                            }
+                                                                        }
+
+                                                                        // ✅ Update selected PR numbers
+                                                                        setFieldValue("prNo", finalSelection);
+
+                                                                        // Default row template
+                                                                        const defaultRow = {
+                                                                            prNo: null,
+                                                                            itemName: "",
+                                                                            uom: "",
+                                                                            qty: 0,
+                                                                            unitPrice: 0,
+                                                                            discount: 0,
+                                                                            taxPercent: 0,
+                                                                            taxAmount: 0,
+                                                                            amount: 0,
+                                                                            vatPercent: 0,
+                                                                            netTotal: 0,
+                                                                            vatAmount: 0,
+                                                                        };
+
+                                                                        // Handle "NA" selection
+                                                                        if (isNASelected) {
+                                                                            setFieldValue("items", [
+                                                                                {
+                                                                                    prNo: { label: "NA", value: "NA" },
+                                                                                    ...defaultRow,
+                                                                                },
+                                                                            ]);
                                                                             return;
                                                                         }
 
-                                                                        // Extract prtypeid from each selected PR
-                                                                        const selectedTypes = selected.map(pr => pr.prtypeid);
-
-                                                                        // Check if any selected PR is type 3 or 5
-                                                                        const hasSpecialType = selectedTypes.some(type => type === 3 || type === 5);
-                                                                        const hasNormalType = selectedTypes.some(type => type !== 3 && type !== 5);
-
-                                                                        if (hasSpecialType && hasNormalType) {
-                                                                            await Swal.fire({
-                                                                                icon: "warning",
-                                                                                title: "Warning",
-                                                                                text: "You cannot select special PR types with General PRs.",
-                                                                            });
-                                                                            return;
-                                                                        }
-
-                                                                        // Remove this block if you allow mixing 3 and 5 together
-                                                                        // if (hasSpecialType && selected.length > 1) {
-                                                                        //     const uniqueSpecialTypes = [...new Set(selectedTypes)];
-                                                                        //     if (uniqueSpecialTypes.length > 1) {
-                                                                        //         await Swal.fire({
-                                                                        //             icon: "warning",
-                                                                        //             title: "Warning",
-                                                                        //             text: "Mixing different special PR types may not be allowed.",
-                                                                        //         });
-                                                                        //     }
-                                                                        // }
-
-                                                                        // If selection is valid → proceed
-                                                                        setFieldValue("prNo", selected);
-
+                                                                        // 🔹 Otherwise load rows for each selected PR
                                                                         const rows = [];
-                                                                        const branchid = 1;
-                                                                        const orgid = 1;
-
                                                                         try {
-                                                                            for (const pr of selected) {
+                                                                            const branchid = 1;
+                                                                            const orgid = 1;
+
+                                                                            for (const pr of finalSelection) {
                                                                                 const response = await GetPrIdDetails(pr.value, orgid, branchid);
-                                                                                if (response.status && response.data?.Details) {
-                                                                                    const details = response.data.Details.map(detail => ({
+                                                                                const data = response;
+
+                                                                                if (data.status && data.data && Array.isArray(data.data.Details)) {
+                                                                                    const details = data.data.Details.map(detail => ({
                                                                                         PRDId: detail.PRDId,
                                                                                         prNo: pr,
-                                                                                        itemGroupId: { value: detail.ItemGroupId, label: detail.groupname },
-                                                                                        itemName: { value: detail.ItemId, label: detail.itemname },
+                                                                                        itemGroupId: {
+                                                                                            value: detail.ItemGroupId,
+                                                                                            label: detail.groupname
+                                                                                        },
+                                                                                        itemName: {
+                                                                                            value: detail.ItemId,
+                                                                                            label: detail.itemname
+                                                                                        },
                                                                                         uom: getUOMLabelById(detail.UOM),
                                                                                         uom_id: detail.UOM,
                                                                                         qty: detail.Qty,
@@ -1189,13 +1198,15 @@ const ProcurementsAddPurchaseOrder = () => {
                                                                                         vatAmount: detail.VatValue ?? 0,
                                                                                         taxSign: detail.Taxcalctype === 0 ? '+' : '-',
                                                                                     }));
+
                                                                                     rows.push(...details);
                                                                                 }
                                                                             }
-                                                                            setFieldValue("items", rows.length > 0 ? rows : []);
+
+                                                                            // ✅ Set PR items
+                                                                            setFieldValue("items", rows);
                                                                         } catch (error) {
-                                                                            console.error("Error loading PR details:", error);
-                                                                            toast.error("Failed to load PR items");
+                                                                            console.error("Error fetching PR items:", error);
                                                                             setFieldValue("items", []);
                                                                         }
                                                                     }}
@@ -1335,29 +1346,14 @@ const ProcurementsAddPurchaseOrder = () => {
 
                                                                     <th className="text-center" style={{ width: "6%" }}>Qty</th>
                                                                     <th className="text-center" style={{ width: "6%" }}>UOM</th>
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "6%" }}>Unit Price</th>
-
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "6%" }}>Discount</th>
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "6%" }}>Tax %</th>
-                                                                    )}
+                                                                    <th className="text-center" style={{ width: "6%" }}>Unit Price</th>
+                                                                    <th className="text-center" style={{ width: "6%" }}>Discount</th>
+                                                                    <th className="text-center" style={{ width: "6%" }}>Tax %</th>
                                                                     {/* <th className="text-center" style={{ width: "6%" }}>Tax (+/-)</th> */}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "6%" }}>Tax Amt</th>
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "6%" }}>VAT %</th>
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "6%" }}>VAT Amt</th>
-                                                                    )}
-                                                                    {access.canViewRate && (
-                                                                        <th className="text-center" style={{ width: "8%" }}>Total Amt</th>
-                                                                    )}
+                                                                    <th className="text-center" style={{ width: "6%" }}>Tax Amt</th>
+                                                                    <th className="text-center" style={{ width: "6%" }}>VAT %</th>
+                                                                    <th className="text-center" style={{ width: "6%" }}>VAT Amt</th>
+                                                                    <th className="text-center" style={{ width: "8%" }}>Total Amt</th>
                                                                 </tr>
                                                             </thead>
                                                             <FieldArray name="items">
@@ -1382,6 +1378,8 @@ const ProcurementsAddPurchaseOrder = () => {
                                                                                         {item.itemName?.label || "-"}
                                                                                     </td>
 
+
+
                                                                                     {/* Qty */}
                                                                                     <td className="text-center align-middle">
                                                                                         {(item.qty || 0).toLocaleString()}
@@ -1391,32 +1389,26 @@ const ProcurementsAddPurchaseOrder = () => {
                                                                                         {item.uom?.label || item.uom || "-"}
                                                                                     </td>
                                                                                     {/* Unit Price */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            {parseFloat(item.unitPrice)?.toLocaleString('en-US', {
-                                                                                                style: 'decimal',
-                                                                                                minimumFractionDigits: 2
-                                                                                            }) || "0.00"}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        {parseFloat(item.unitPrice)?.toLocaleString('en-US', {
+                                                                                            style: 'decimal',
+                                                                                            minimumFractionDigits: 2
+                                                                                        }) || "0.00"}
+                                                                                    </td>
 
                                                                                     {/* Discount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            {/* {item.discount || "0.00"} */}
-                                                                                            {parseFloat(item.discount || 0).toLocaleString("en-US", {
-                                                                                                style: "decimal",
-                                                                                                minimumFractionDigits: 2,
-                                                                                            })}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        {/* {item.discount || "0.00"} */}
+                                                                                        {parseFloat(item.discount || 0).toLocaleString("en-US", {
+                                                                                            style: "decimal",
+                                                                                            minimumFractionDigits: 2,
+                                                                                        })}
+                                                                                    </td>
 
                                                                                     {/* Tax % */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            {item.taxPercent || "0"}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        {item.taxPercent || "0"}
+                                                                                    </td>
 
                                                                                     {/* Tax Sign */}
                                                                                     {/* <td className="text-center align-middle">
@@ -1424,131 +1416,113 @@ const ProcurementsAddPurchaseOrder = () => {
                                                                                     </td> */}
 
                                                                                     {/* Tax Amount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            {parseFloat(item.taxAmount)?.toLocaleString('en-US', {
-                                                                                                style: 'decimal',
-                                                                                                minimumFractionDigits: 2
-                                                                                            }) || "0.00"}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        {parseFloat(item.taxAmount)?.toLocaleString('en-US', {
+                                                                                            style: 'decimal',
+                                                                                            minimumFractionDigits: 2
+                                                                                        }) || "0.00"}
+                                                                                    </td>
 
                                                                                     {/* VAT % */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            {item.vatPercent || "0"}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        {item.vatPercent || "0"}
+                                                                                    </td>
 
                                                                                     {/* VAT Amount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            {parseFloat(item.vatAmount)?.toLocaleString('en-US', {
-                                                                                                style: 'decimal',
-                                                                                                minimumFractionDigits: 2
-                                                                                            }) || "0.00"}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        {parseFloat(item.vatAmount)?.toLocaleString('en-US', {
+                                                                                            style: 'decimal',
+                                                                                            minimumFractionDigits: 2
+                                                                                        }) || "0.00"}
+                                                                                    </td>
 
                                                                                     {/* Total Amount */}
-                                                                                    {access.canViewRate && (
-                                                                                        <td className="text-end align-middle">
-                                                                                            {parseFloat(item.netTotal)?.toLocaleString('en-US', {
-                                                                                                style: 'decimal',
-                                                                                                minimumFractionDigits: 2
-                                                                                            }) || "0.00"}
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td className="text-end align-middle">
+                                                                                        {parseFloat(item.netTotal)?.toLocaleString('en-US', {
+                                                                                            style: 'decimal',
+                                                                                            minimumFractionDigits: 2
+                                                                                        }) || "0.00"}
+                                                                                    </td>
                                                                                 </tr>
                                                                             ))}
                                                                         </tbody>
 
                                                                         <tfoot>
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={8} rowSpan={5}>
-                                                                                    </td>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>Sub Total</strong>
-                                                                                    </td>
-                                                                                    {/* <td className="align-middle text-end">SGD</td> */}
-                                                                                    <td className="align-middle text-end">
-                                                                                        {Array.isArray(values?.prNo) && values.prNo.length > 0
-                                                                                            ? values.prNo[0].currencyCode
-                                                                                            : "—"}
-                                                                                    </td>
+                                                                            <tr>
+                                                                                <td colSpan={8} rowSpan={5}>
+                                                                                </td>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>Sub Total</strong>
+                                                                                </td>
+                                                                                {/* <td className="align-middle text-end">SGD</td> */}
+                                                                                <td className="align-middle text-end">
+                                                                                    {Array.isArray(values?.prNo) && values.prNo.length > 0
+                                                                                        ? values.prNo[0].currencyCode
+                                                                                        : "—"}
+                                                                                </td>
 
-                                                                                    <td className="align-middle text-end">{parseFloat(values.subTotal)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>Discount</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">
-                                                                                        {Array.isArray(values?.prNo) && values.prNo.length > 0
-                                                                                            ? values.prNo[0].currencyCode
-                                                                                            : "—"}
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.discountValue)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        {/* <strong>Tax (+/-)</strong> */}
-                                                                                        <strong>Tax</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">
-                                                                                        {Array.isArray(values?.prNo) && values.prNo.length > 0
-                                                                                            ? values.prNo[0].currencyCode
-                                                                                            : "—"}
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.taxValue)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>VAT</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">
-                                                                                        {Array.isArray(values?.prNo) && values.prNo.length > 0
-                                                                                            ? values.prNo[0].currencyCode
-                                                                                            : "—"}
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.vatValue)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <tr>
-                                                                                    <td colSpan={2} className="align-middle text-end">
-                                                                                        <strong>Net Total</strong>
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">
-                                                                                        {Array.isArray(values?.prNo) && values.prNo.length > 0
-                                                                                            ? values.prNo[0].currencyCode
-                                                                                            : "—"}
-                                                                                    </td>
-                                                                                    <td className="align-middle text-end">{parseFloat(values.netTotal)?.toLocaleString('en-US', {
-                                                                                        style: 'decimal',
-                                                                                        minimumFractionDigits: 2
-                                                                                    })}</td>
-                                                                                </tr>
-                                                                            )}
+                                                                                <td className="align-middle text-end">{parseFloat(values.subTotal)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>Discount</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">
+                                                                                    {Array.isArray(values?.prNo) && values.prNo.length > 0
+                                                                                        ? values.prNo[0].currencyCode
+                                                                                        : "—"}
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.discountValue)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    {/* <strong>Tax (+/-)</strong> */}
+                                                                                    <strong>Tax</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">
+                                                                                    {Array.isArray(values?.prNo) && values.prNo.length > 0
+                                                                                        ? values.prNo[0].currencyCode
+                                                                                        : "—"}
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.taxValue)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>VAT</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">
+                                                                                    {Array.isArray(values?.prNo) && values.prNo.length > 0
+                                                                                        ? values.prNo[0].currencyCode
+                                                                                        : "—"}
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.vatValue)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colSpan={2} className="align-middle text-end">
+                                                                                    <strong>Net Total</strong>
+                                                                                </td>
+                                                                                <td className="align-middle text-end">
+                                                                                    {Array.isArray(values?.prNo) && values.prNo.length > 0
+                                                                                        ? values.prNo[0].currencyCode
+                                                                                        : "—"}
+                                                                                </td>
+                                                                                <td className="align-middle text-end">{parseFloat(values.netTotal)?.toLocaleString('en-US', {
+                                                                                    style: 'decimal',
+                                                                                    minimumFractionDigits: 2
+                                                                                })}</td>
+                                                                            </tr>
                                                                         </tfoot>
                                                                     </>
                                                                 )}

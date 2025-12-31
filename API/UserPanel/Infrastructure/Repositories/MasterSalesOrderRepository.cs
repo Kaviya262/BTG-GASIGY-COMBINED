@@ -1,27 +1,20 @@
-﻿using BackEnd.Shared;
+﻿using System.Data;
+using BackEnd.Shared;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.OrderMng.Distribution.MasterSalesOrders;
 using Core.OrderMng.PackingAndDO;
 using Dapper;
-using Newtonsoft.Json;
-using System.Data;
 
 namespace Infrastructure.Repositories
 {
     public class MasterSalesOrderRepository : IMasterSalesOrderRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
 
-        public MasterSalesOrderRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public MasterSalesOrderRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
         public async Task<object> GetAll(int? searchBy, int? customerId, int? gasCodeId, int? branchId)
@@ -52,20 +45,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterSalesOrderRepository),
-                    Method_Function = nameof(GetAll),
-                    UserId = 0,
-                    ScreenName = "Sale Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        searchBy, customerId, gasCodeId, branchId
-                    })
-                });
+
                 return new ResponseModel
                 {
                     Data = null,
@@ -417,19 +397,6 @@ namespace Infrastructure.Repositories
                 const string getLastInsertedIdSql = "SELECT LAST_INSERT_ID();";
                 var insertedHeaderId = await _connection.QuerySingleAsync<int>(getLastInsertedIdSql);
 
-                // Log transaction
-                await LogTransactionAsync(
-                    id: insertedHeaderId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added new Master Sale Order",
-                    oldValue: null,
-                    newValue: Obj,
-                    tableName: "tbl_packing_header",
-                    userId: Obj.Header.UserId
-                );
-
                 string customersql = "";
                 foreach (var row in Obj.Customers)
                 {
@@ -439,20 +406,6 @@ namespace Infrastructure.Repositories
                                       VALUES ({row.PackingId},{row.CustomerId},1,{Obj.Header.UserId},now(),'','{row.CustomerName ?? ""}'); ";
                 }
                 Result = await _connection.ExecuteAsync(customersql);
-
-                int custLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                await LogTransactionAsync(
-            id: custLastId,
-            branchId: Obj.Header.BranchId,
-            orgId: Obj.Header.OrgId,
-            actionType: "Insert",
-            actionDescription: "Inserted Packing Customer Detail",
-            oldValue: null,
-            newValue: Obj.Customers,
-            tableName: "tbl_packing_customerdetail",
-            userId: Obj.Header.UserId
-        );
 
                 string PackingSOsql = "";
                 if (Obj.SODtl != null)
@@ -479,19 +432,6 @@ namespace Infrastructure.Repositories
                     }
                     if (!string.IsNullOrEmpty(PackingSOsql))
                         await _connection.ExecuteAsync(PackingSOsql);
-
-                    int soLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    await LogTransactionAsync(
-                id: soLastId,
-                branchId: Obj.Header.BranchId,
-                orgId: Obj.Header.OrgId,
-                actionType: "Insert",
-                actionDescription: "Inserted Packing SO Detail",
-                oldValue: null,
-                newValue: Obj.SODtl,
-                tableName: "tbl_packing_sodetail",
-                userId: Obj.Header.UserId
-            );
                 }
 
                 string PackingGassql = "";
@@ -516,19 +456,6 @@ namespace Infrastructure.Repositories
                     }
                     if (!string.IsNullOrEmpty(PackingGassql))
                         Result = await _connection.ExecuteAsync(PackingGassql);
-                    int gasLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                    await LogTransactionAsync(
-                id: gasLastId,
-                branchId: Obj.Header.BranchId,
-                orgId: Obj.Header.OrgId,
-                actionType: "Insert",
-                actionDescription: "Inserted Packing Gas Detail",
-                oldValue: null,
-                newValue: Obj.GasDtl,
-                tableName: "tbl_packing_gasdetail",
-                userId: Obj.Header.UserId
-            );
                 }
 
                 Result = insertedHeaderId;
@@ -610,7 +537,7 @@ SELECT
     {SqlOrZeroDecimal(row.So_Issued_Qty)},
     {SqlOrZeroDecimal(row.Balance_Qty)},
     1,
-    {row.uomid},
+    2,
     (SELECT id FROM tbl_packing_gasdetail 
      WHERE packingid = {row.packerheaderid} 
        AND customerid = a.customerid 
@@ -650,20 +577,6 @@ WHERE a.packingid = {row.packerheaderid}
 
                 // Execute the combined SQL:
                 Result = await _connection.ExecuteAsync(sqdetailsql);
-
-                int detailsLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                await LogTransactionAsync(
-            id: detailsLastId,
-            branchId: Obj.Header.BranchId,
-            orgId: Obj.Header.OrgId,
-            actionType: "Insert",
-            actionDescription: "Inserted Packing Details",
-            oldValue: null,
-            newValue: Obj.Details,
-            tableName: "tbl_packing_details",
-            userId: Obj.Header.UserId
-        );
 
                 if (Obj.Header.IsSubmitted == 1 && Obj.Details != null)
                 {
@@ -740,17 +653,6 @@ WHERE a.packingid = {row.packerheaderid}
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(MasterSalesOrderRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = Obj.Header.UserId,
-                    ScreenName = "Sale Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
                 //Logger.Instance.Error("Exception:", Ex);
                 return new ResponseModel()
                 {
@@ -807,24 +709,9 @@ WHERE a.packingid = {row.packerheaderid}
                     //var UpdateSeq = $"update master_documentnumber set Doc_Number=Doc_Number+1 where Doc_Type=6 and unit={BranchId};";
                     //Result = await _connection.ExecuteAsync(UpdateSeq, BranchId);
                     //Result = 1;
-
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: Obj.Header.id,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Insert",
-                        actionDescription: "Added new Quatation",
-                        oldValue: null,
-                        newValue: Obj,
-                        tableName: "tbl_salesquatation_header",
-                        userId: Obj.Header.UserId
-                    );
                 }
                 else
                 {
-                    var oldvalue = await _connection.QueryAsync<object>($"select * from tbl_packing_header where id = {Obj.Header.id}");
-
                     const string updateHeaderSql = @"
                 UPDATE tbl_packing_header SET
                     RackId = @RackId,
@@ -847,17 +734,6 @@ WHERE a.packingid = {row.packerheaderid}
                     //var UpdateSeq = $"update master_documentnumber set Doc_Number=Doc_Number+1 where Doc_Type=6 and unit={BranchId};";
                     //Result = await _connection.ExecuteAsync(UpdateSeq, BranchId);
                     //Result = 1;
-                    await LogTransactionAsync(
-id: Obj.Header.id,
-branchId: Obj.Header.BranchId,
-orgId: Obj.Header.OrgId,
-actionType: "Update",
-actionDescription: "Updated packing Header",
-oldValue: oldvalue,
-newValue: Obj.Header,
-tableName: "tbl_packing_header",
-userId: Obj.Header.UserId
-);
                 }
 
                 // 🔁 Upsert Customer Details
@@ -879,23 +755,9 @@ userId: Obj.Header.UserId
                             UserId = Obj.Header.UserId,
                             customer.CustomerName
                         });
-                        int customerdetailId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                        await LogTransactionAsync(
-                    id: customerdetailId,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added Customer Detail",
-                    oldValue: null,
-                    newValue: customer,
-                    tableName: "tbl_packing_customerdetail",
-                    userId: Obj.Header.UserId
-                );
                     }
                     else
                     {
-                        var oldCustomer = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_packing_customerdetail WHERE id = @Id", new { customer.id });
                         const string updateCustomerSql = @"
                     UPDATE tbl_packing_customerdetail SET
                         customername = @CustomerName,
@@ -904,18 +766,6 @@ userId: Obj.Header.UserId
                         LastModifiedIP = '1.1.1.1'
                     WHERE id = @id;";
                         await _connection.ExecuteAsync(updateCustomerSql, new { customer.CustomerName, customer.id });
-
-                        await LogTransactionAsync(
-                    id: customer.id,
-                    branchId: Obj.Header.BranchId,
-                    orgId: Obj.Header.OrgId,
-                    actionType: "Update",
-                    actionDescription: "Updated Customer Detail",
-                    oldValue: oldCustomer,
-                    newValue: customer,
-                    tableName: "tbl_packing_customerdetail",
-                    userId: Obj.Header.UserId
-                );
                     }
                 }
 
@@ -943,24 +793,9 @@ userId: Obj.Header.UserId
                                 UserId = Obj.Header.UserId,
                                 sodetail.SoNum
                             });
-
-                            int sodetailId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                            await LogTransactionAsync(
-                        id: sodetailId,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Insert",
-                        actionDescription: "Added Sales Order Detail",
-                        oldValue: null,
-                        newValue: sodetail,
-                        tableName: "tbl_packing_sodetail",
-                        userId: Obj.Header.UserId
-                    );
                         }
                         else
                         {
-                            var oldSODtl = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_packing_sodetail WHERE id = @Id", new { sodetail.id });
                             const string updateSODtlSql = @"
                         UPDATE tbl_packing_sodetail SET
                             SoNum = @SoNum,
@@ -969,18 +804,6 @@ userId: Obj.Header.UserId
                             LastModifiedIP = '1.1.1.1'
                         WHERE id = @id;";
                             await _connection.ExecuteAsync(updateSODtlSql, new { sodetail.SoNum, sodetail.id });
-
-                            await LogTransactionAsync(
-                        id: sodetail.id,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Update",
-                        actionDescription: "Updated Sales Order Detail",
-                        oldValue: oldSODtl,
-                        newValue: sodetail,
-                        tableName: "tbl_packing_sodetail",
-                        userId: Obj.Header.UserId
-                    );
                         }
                     }
                 }
@@ -1011,23 +834,9 @@ userId: Obj.Header.UserId
                                 gas.GasCode,
                                 gas.GasId
                             });
-
-                            int gasLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                            await LogTransactionAsync(
-                        id: gasLastId,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Insert",
-                        actionDescription: "Added Gas Detail",
-                        oldValue: null,
-                        newValue: gas,
-                        tableName: "tbl_packing_gasdetail",
-                        userId: Obj.Header.UserId
-                    );
                         }
                         else
                         {
-                            var oldGas = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_packing_gasdetail WHERE id = @Id", new { gas.id });
                             const string updateGasSql = @"
                         UPDATE tbl_packing_gasdetail SET
                             GasName = @GasName,
@@ -1037,18 +846,6 @@ userId: Obj.Header.UserId
                             LastModifiedIP = '1.1.1.1'
                         WHERE id = @id;";
                             await _connection.ExecuteAsync(updateGasSql, gas);
-
-                            await LogTransactionAsync(
-                        id: gas.id,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Update",
-                        actionDescription: "Updated Gas Detail",
-                        oldValue: oldGas,
-                        newValue: gas,
-                        tableName: "tbl_packing_gasdetail",
-                        userId: Obj.Header.UserId
-                    );
                         }
                     }
                 }
@@ -1108,7 +905,7 @@ SELECT
     @So_Issued_Qty,
     @Balance_Qty,
     1,
-    @uomid,
+    2,
     g.id AS packing_gas_detailid,
     @SeqTime,
     @DriverId,
@@ -1129,25 +926,9 @@ WHERE a.packingid = @packerheaderid
 ";
                             await _connection.ExecuteAsync(insertDetailsSql, row);
 
-                            int packingdetailLastId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                            await LogTransactionAsync(
-                        id: packingdetailLastId,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Insert",
-                        actionDescription: "Added Packing Detail",
-                        oldValue: null,
-                        newValue: row,
-                        tableName: "tbl_packing_details",
-                        userId: Obj.Header.UserId
-                    );
-
                         }
                         else
                         {
-                            var oldDetail = await _connection.QueryFirstOrDefaultAsync<object>("SELECT * FROM tbl_packing_details WHERE id = @Id", new { row.id });
-
                             const string updateDetailsSql = @"
                         UPDATE tbl_packing_details SET
                             SQID = @SQID,
@@ -1184,18 +965,6 @@ WHERE a.packingid = @packerheaderid
                             IsQtyMatched =@IsQtyMatched
                         WHERE id = @id;";
                             await _connection.ExecuteAsync(updateDetailsSql, row);
-
-                            await LogTransactionAsync(
-                        id: row.id,
-                        branchId: Obj.Header.BranchId,
-                        orgId: Obj.Header.OrgId,
-                        actionType: "Update",
-                        actionDescription: "Updated Packing Detail",
-                        oldValue: oldDetail,
-                        newValue: row,
-                        tableName: "tbl_packing_details",
-                        userId: Obj.Header.UserId
-                    );
                         }
                     }
                 }
@@ -1246,17 +1015,6 @@ WHERE a.packingid = @packerheaderid
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterSalesOrderRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = Obj.Header.UserId,
-                    ScreenName = "Sale Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1299,20 +1057,6 @@ WHERE a.packingid = @packerheaderid
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(MasterSalesOrderRepository),
-                    Method_Function = nameof(GetSeqNumberOrder),
-                    UserId = 0,
-                    ScreenName = "Sale Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        id, text, type, unit, orgid, isSubmitted
-                    })
-                });
                 return new SharedModelWithResponse()
                 {
                     Data = null,
@@ -1320,30 +1064,6 @@ WHERE a.packingid = @packerheaderid
                     Status = false
                 };
             }
-        }
-
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Sales",
-                ScreenName = "Master Sale Order",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 2
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
         }
 
     }

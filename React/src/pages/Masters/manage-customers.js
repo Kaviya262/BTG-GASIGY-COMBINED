@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo  } from "react";
 import {
   Card,
   CardBody,
@@ -33,11 +33,8 @@ import { Tag } from "primereact/tag";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import Flatpickr from "react-flatpickr";
-import { LoadCustomerList, ToggleChangeCustomerStatus, } from "../../../src/common/data/mastersapi";
+import { LoadCustomerList, ToggleChangeCustomerStatus,  } from "../../../src/common/data/mastersapi";
 import { useHistory } from "react-router-dom";
-import useAccess from "../../common/access/useAccess";
-
-
 // Move the initFilters function definition above
 const initFilters = () => ({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -60,15 +57,6 @@ const initFilters = () => ({
 });
 
 const ManageCustomer = () => {
-
-  const { access, applyAccessUI } = useAccess("Masters", "Customers");
-  const canViewDetails = !access.loading && access.canViewDetails;
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
   const history = useHistory();
   const [selectedDate, setSelectedDate] = useState(null);
   const [customers, setCustomers] = useState([]);
@@ -97,7 +85,7 @@ const ManageCustomer = () => {
   const toggleModal2 = () => {
     setIsModalOpen2(!isModalOpen2);
   };
-  const loadCustomerList = async (searchvalue = "") => {
+  const loadCustomerList = async (searchvalue ="") => {
     setLoading(true);
     debugger
     const params = {
@@ -149,12 +137,11 @@ const ManageCustomer = () => {
     setGlobalFilterValue(value);
   };
 
-  const handleSearch = () => {
-    debugger
+  const handleSearch = () =>{ debugger
     loadCustomerList(customerName);
   };
 
-  const handleSearchCancel = () => {
+  const handleSearchCancel =()=>{
     loadCustomerList("");
     setCustomerName("");
   };
@@ -220,41 +207,38 @@ const ManageCustomer = () => {
   };
 
   const actionBodyTemplate = rowData => {
-    if (!access?.canEdit) {
-      return null;
-    }
     if (!rowData.IsActive) {
-      return (
-        <div className="actions">
+            return (
+                <div className="actions">
 
-          <span
-            style={{
-              cursor: 'not-allowed',
-              opacity: 0.5,
-              pointerEvents: 'none'
-            }}
-            title={"Disabled"}>
-            <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-          </span>
-          {/* <span onClick={() => deleteRow(rowData)} title="Delete">
+                    <span
+                        style={{
+                            cursor: 'not-allowed',
+                            opacity: 0.5,
+                            pointerEvents: 'none'
+                        }}
+                        title={"Disabled"}>
+                        <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
+                    </span>
+                    {/* <span onClick={() => deleteRow(rowData)} title="Delete">
                 <i className="mdi mdi-trash-can-outline label-icon" style={{ fontSize: '1.5rem' }}></i> </span> */}
+                </div>
+            )
+        }    
+    else {
+    return (
+      rowData.IsActive && (
+        <div className="actions">
+          <span onClick={() => editRow(rowData)} title="Edit">
+            <i
+              className="mdi mdi-square-edit-outline"
+              style={{ fontSize: "1.5rem" }}
+            ></i>
+          </span>
         </div>
       )
-    }
-    else {
-      return (
-        rowData.IsActive && (
-          <div className="actions">
-            <span onClick={() => editRow(rowData)} title="Edit">
-              <i
-                className="mdi mdi-square-edit-outline"
-                style={{ fontSize: "1.5rem" }}
-              ></i>
-            </span>
-          </div>
-        )
-      );
-    }
+    );
+  }
   };
 
   const onSwitchChange = async () => {
@@ -319,14 +303,6 @@ const ManageCustomer = () => {
     );
   };
 
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
-
   return (
     <React.Fragment>
       <div className="page-content">
@@ -343,9 +319,9 @@ const ManageCustomer = () => {
                       </label>
                     </div>
                     <div className="col-12 col-lg-8 col-md-8 col-sm-8">
-                      <input id="name" type="text" className="form-control"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)} />
+                      <input id="name" type="text" className="form-control" 
+                      value={customerName} 
+                      onChange={(e)=>setCustomerName(e.target.value)}/>
                     </div>
                   </div>
                 </div>
@@ -418,7 +394,6 @@ const ManageCustomer = () => {
                     type="button"
                     className="btn btn-success"
                     onClick={linkAddcustomer}
-                    data-access="new"
                   >
                     <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>
                     New
@@ -433,7 +408,7 @@ const ManageCustomer = () => {
                   value={customers}
                   paginator
                   showGridlines
-                  rows={access.records || 10}
+                  rows={10}
                   loading={loading}
                   dataKey="CustomerCode"
                   filters={filters}

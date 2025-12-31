@@ -19,7 +19,6 @@ import {
 import { AutoComplete } from "primereact/autocomplete";
 import { GetgasCodeData } from "common/data/invoiceapi";
 import Swal from 'sweetalert2';
-import useAccess from "../../common/access/useAccess";
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -30,7 +29,6 @@ const initFilters = () => ({
 });
 
 const ManagePallet = () => {
-    const { access, applyAccessUI } = useAccess("Masters", "Pallet");
     const history = useHistory();
     const [cylinderTableData, setCylinderTableData] = useState([]);
     const [gas, setPallet] = useState([]);
@@ -52,20 +50,14 @@ const ManagePallet = () => {
     const [isDisabled, setIsDisabled] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRtl, setIsRtl] = useState(false);
-    const [selectedGasCode, setselectedGasCode] = useState(null);
-    const [FilterGasList, setFilterGasList] = useState([])
+    const[selectedGasCode,setselectedGasCode]=useState(null);
+    const[FilterGasList,setFilterGasList]=useState([])
     const [pallettypelist, setPalletTypeList] = useState([]);
     const [selectedPalletType, setSelectedPalletType] = useState(null);
 
     useEffect(() => {
         setPallet(getPallet());
     }, []);
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     const getPallet = () => {
         return [
@@ -102,7 +94,7 @@ const ManagePallet = () => {
     const [pallets, setPallets] = useState([]);
 
     useEffect(() => {
-        fetchPallets(0, 0);
+        fetchPallets(0,0);
     }, []);
 
     const fetchPallets = async (gasCodeId = 0, palletTypeId = 0) => {
@@ -172,9 +164,6 @@ const ManagePallet = () => {
     };
 
     const actionBodyTemplate = (rowData) => {
-        if (!access?.canEdit) {
-            return null;
-        }
         return (
             <div className="actions">
                 <span onClick={() => editRow(rowData)} style={{ marginRight: '0.5rem' }} title="Edit">
@@ -226,7 +215,7 @@ const ManagePallet = () => {
         const value = row.IsActive === 1 ? "deactive" : "active";
         setTxtStatus(value);
         setSelectedRow(row);
-        setSelectedRowIndex(index);
+        setSelectedRowIndex(index); 
         setIsModalOpen2(true);
     };
 
@@ -305,22 +294,22 @@ const ManagePallet = () => {
         }
     };
     const handleSearch = () => {
-        fetchPallets(selectedGasCode?.GasCodeId, selectedPalletType);
+        fetchPallets(selectedGasCode?.GasCodeId,selectedPalletType);
     };
 
     const handleCancel = () => {
         setselectedGasCode(null)
         setSelectedPalletType(null)
-        fetchPallets(0, 0);
+        fetchPallets(0,0);
     };
 
     const linkAddpallet = () => {
         history.push("/add-pallet");
     };
 
-    const loadGasLoad = async (ev) => {
-        let FilteredText = ev.query;
-        let _filteredGas = await GetgasCodeData(1, FilteredText);
+    const loadGasLoad =  async (ev) => {
+        let FilteredText=ev.query;
+        let _filteredGas=await GetgasCodeData(1,FilteredText);
         setFilterGasList(Array.isArray(_filteredGas) ? _filteredGas : []);
     };
 
@@ -350,14 +339,6 @@ const ManagePallet = () => {
         setSelectedPalletType(selectedOption?.value || null);
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -374,12 +355,12 @@ const ManagePallet = () => {
                                         <div className="col-12 col-lg-3 col-md-3 col-sm-3">
                                             {/* <input id="code" type="text" className="form-control" /> */}
                                             <AutoComplete field="GasCode" value={selectedGasCode}
-                                                suggestions={FilterGasList}
-                                                completeMethod={loadGasLoad}
-                                                onChange={(e) => { setselectedGasCode(e.value); }}
+                                                suggestions={FilterGasList} 
+                                                completeMethod={loadGasLoad} 
+                                                onChange={(e) =>{ setselectedGasCode(e.value);}}
 
                                                 style={{ width: "100%" }}
-                                            />
+                                                />
                                         </div>
                                         <div className="col-12 col-lg-2 col-md-2 col-sm-3 text-left ms-2">
                                             <label htmlFor="type" className="form-label mb-0">Pallet Type</label>
@@ -397,9 +378,9 @@ const ManagePallet = () => {
                                                 isLoading={isLoading}
                                                 isClearable={isClearable}
                                                 isRtl={isRtl}
-                                                isSearchable={isSearchable}
+                                                isSearchable={isSearchable} 
                                                 onChange={handlePalletChange}
-                                            />
+                                            /> 
                                         </div>
                                         {/* <div className="col-12 col-lg-6 col-md-6 col-sm-6 text-left button-items">
                                             <button type="button" className="btn btn-info me-2" onClick={handleSearch}>
@@ -418,7 +399,7 @@ const ManagePallet = () => {
                                 </div>
                                 <div className="col-12 col-lg-4 text-end button-items">
                                     {/* <button type="button" className="btn btn-success" onClick={toggleModal}> */}
-
+                                   
                                     <button type="button" className="btn btn-info me-2" onClick={handleSearch}>
                                         <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search
                                     </button>
@@ -430,7 +411,7 @@ const ManagePallet = () => {
                                         <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>
                                         Cancel
                                     </button>
-                                    <button type="button" className="btn btn-success me-2" onClick={linkAddpallet} data-access="new">
+                                    <button type="button" className="btn btn-success me-2" onClick={linkAddpallet}>
                                         <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New
                                     </button>
                                 </div>
@@ -445,7 +426,7 @@ const ManagePallet = () => {
                                     value={pallets}
                                     paginator
                                     showGridlines
-                                    rows={access.records || 10}
+                                    rows={10}
                                     loading={loading}
                                     dataKey="PalletId"
                                     filters={filters}
@@ -604,8 +585,7 @@ const ManagePallet = () => {
 
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 text-end button-items">
-
-                                                            <Button type="submit" className="btn btn-info" data-access="save">
+                                                            <Button type="submit" className="btn btn-info">
                                                                 <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Save
                                                             </Button>
                                                             <Button type="button" className="btn btn-danger" onClick={toggleModal}>

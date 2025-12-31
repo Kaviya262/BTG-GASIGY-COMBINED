@@ -23,7 +23,6 @@ import {
 } from "../../../src/common/data/mastersapi";
 import nodatafound from "assets/images/no-data.png";
 import { useHistory } from "react-router-dom";
-import useAccess from "../../common/access/useAccess";
 
 const renderValueOrDash = value =>
   value !== null && value !== undefined && value !== "" ? value : "-";
@@ -57,10 +56,9 @@ const initFilters = () => ({
 });
 
 const ManageUser = () => {
-  const { access, applyAccessUI } = useAccess("Masters", "Users");
   const history = useHistory();
   const [users, setUsers] = useState([]);
-  const [roleDepartment, setRoleDepartment] = useState([]);
+  const [roleDepartment,setRoleDepartment] = useState([]);
   const [filters, setFilters] = useState(initFilters());
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const [userName, setUserName] = useState("");
@@ -79,13 +77,6 @@ const ManageUser = () => {
   const quotefilter = { BranchId: 5 };
 
   useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
-
-
-  useEffect(() => {
     const currentDate = new Date();
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(currentDate.getDate() - 7);
@@ -98,14 +89,14 @@ const ManageUser = () => {
   const formatDate = date => date.toISOString().split("T")[0];
   const today = new Date();
   const sevenDaysAgo = new Date();
-
+  
   sevenDaysAgo.setDate(today.getDate() - 7);
   const fetchUsers = async (from, to, name = "") => {
     try {
       setLoading(true);
       const filter = {
-        FromDate: formatDate(sevenDaysAgo),
-        ToDate: formatDate(new Date()),
+        FromDate: formatDate(sevenDaysAgo), 
+        ToDate: formatDate(new Date()), 
         UserName: name,
         ProdId: selectedProductionNo?.value || 0,
         BranchId: 1,
@@ -115,7 +106,7 @@ const ManageUser = () => {
       if (response?.status) {
         const userData = response.data || [];
         debugger
-
+        
         setRoleDepartment(userData);
         setUsers(userData);
 
@@ -125,7 +116,7 @@ const ManageUser = () => {
         });
         setSwitchStates(initialSwitch);
       }
-      else {
+      else{
         setUsers([]);
       }
     } catch (error) {
@@ -146,11 +137,11 @@ const ManageUser = () => {
 
     setFromDate(oneWeekAgo);
     setToDate(currentDate);
-    setUserName("");
+    setUserName("");   
     fetchUsers(oneWeekAgo, currentDate, "");
   };
 
-  const clearFilter = () => {
+   const clearFilter = () =>{
     const currentDate = new Date();
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(currentDate.getDate() - 7);
@@ -159,22 +150,22 @@ const ManageUser = () => {
     setUserName("");
     setFilters(initFilters());
     setGlobalFilterValue("");
-    fetchUsers(oneWeekAgo, currentDate, "");
+    fetchUsers(oneWeekAgo, currentDate, "");   
   };
 
   const handleStatusUpdate = async () => {
-    debugger
+     debugger
     if (!selectedRow) return;
     const userId = selectedRow.Id;
-    const isActive = selectedRow.IsActive === 0 ? 1 : 0;
+    const isActive = selectedRow.IsActive===0 ? 1 : 0;
 
     const payload = { userId, remark, isActive };
 
     try {
       const response = await UpdateUserStatus(payload);
       if (response?.statusCode === 0) {
-        debugger
-        setSuccessmsg(`User Status ${isActive === 1 ? "activated" : "deactivated"} successfully`);
+        debugger        
+        setSuccessmsg(`User Status ${isActive ===1 ?"activated" : "deactivated" } successfully`);
         setIsModalOpen(false);
         await fetchUsers(fromDate, toDate, userName);
       } else {
@@ -214,58 +205,55 @@ const ManageUser = () => {
     const branchId = rowData.BranchId;
     try {
       const userDetails = await GetUserById(userId, branchId);
-      history.push({ pathname: "/add-user", state: { userData: { ...userDetails, roleName: rowData.RoleName }, allUsers: users } });
+      history.push({ pathname: "/add-user", state: { userData:{ ...userDetails, roleName:rowData.RoleName }, allUsers : users } });
     } catch (err) {
       console.error("Failed to fetch user details:", err);
     }
   };
 
-  const linkAddUser = () => {
-    debugger
+  const linkAddUser = () =>{ 
+    debugger   
     history.push({
-      pathname: "/add-user", state: { allUsers: users }
+      pathname : "/add-user", state :{allUsers : users}
     });
   };
 
-  const actionBodyTemplate = rowData => {
+  const actionBodyTemplate = rowData => { 
     console.log(selectedRow, "rowData :", rowData);
-    if (!access?.canEdit) {
-      return null;
-    }
-    if (rowData.IsActive == 1) {
-      return (
-        <div className="actions">
-          <span onClick={() => {
-            linkEditUser(rowData);
-            console.log("onClick :", rowData);
-          }}
-
-            title={"Edit"}>
-            <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-          </span>
-        </div>
-      )
-    }
-    else {
-      return (
-        <div className="actions">
-
-          <span
-            style={{
-              cursor: 'not-allowed',
-              opacity: 0.5,
-              pointerEvents: 'none'
-            }}
-            title={"Disabled"}>
-            <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-          </span>
-          {/* <span onClick={() => deleteRow(rowData)} title="Delete">
+        if (rowData.IsActive == 1) {
+            return (
+                <div className="actions">
+                    <span onClick={() => {
+                      linkEditUser(rowData);
+                        console.log("onClick :", rowData);
+                    }}
+ 
+                        title={"Edit"}>
+                        <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
+                    </span>
+                </div>
+            )
+        }
+        else { 
+            return (
+                <div className="actions">
+ 
+                    <span
+                        style={{
+                            cursor: 'not-allowed',
+                            opacity: 0.5,
+                            pointerEvents: 'none'
+                        }}
+                        title={"Disabled"}>
+                        <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
+                    </span>
+                    {/* <span onClick={() => deleteRow(rowData)} title="Delete">
                 <i className="mdi mdi-trash-can-outline label-icon" style={{ fontSize: '1.5rem' }}></i> </span> */}
-        </div>
-      )
-    }
-
-  };
+                </div>
+            )
+        }
+ 
+      };
 
   const actionBodyTemplate2 = rowData => {
     debugger
@@ -310,15 +298,7 @@ const ManageUser = () => {
       </div>
     </div>
   );
-
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
-
+ 
 
   return (
     <div className="page-content">
@@ -425,7 +405,6 @@ const ManageUser = () => {
                     type="button"
                     className="btn btn-success"
                     onClick={linkAddUser}
-                    data-access="new"
                   >
                     <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>{" "}
                     New
@@ -443,7 +422,7 @@ const ManageUser = () => {
               <DataTable
                 value={users}
                 paginator
-                rows={access.records || 10}
+                rows={10}
                 loading={loading}
                 dataKey="userId"
                 filters={filters}
@@ -538,12 +517,12 @@ const ManageUser = () => {
                 className="mdi mdi-alert-circle-outline"
                 style={{ fontSize: "9em", color: "orange" }}
               />
-              <h4>Do you want to {txtStatus} this account?</h4>
+              <h4>Do you want to {txtStatus} this account?</h4>              
             </Col>
-          </Row>
+          </Row>         
           <Row className="mt-3">
-            <Col>
-              <FormGroup>
+            <Col>    
+            <FormGroup>
                 <textarea
                   className="form-control"
                   rows="2"
@@ -551,7 +530,7 @@ const ManageUser = () => {
                   value={remark}
                   onChange={e => setRemark(e.target.value)}
                 />
-              </FormGroup>
+              </FormGroup>          
               <div className="text-center mt-3 button-items">
                 <Button
                   className="btn btn-info"

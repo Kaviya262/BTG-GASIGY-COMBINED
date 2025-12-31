@@ -1,10 +1,8 @@
 ﻿using BackEnd.FinanceModule.OverDraft;
 using Core.Abstractions;
 using Core.FinanceModule.OverDraft;
-using Core.Master.ErrorLog;
 using Core.Models;
 using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using Newtonsoft.Json;
 using System.Data;
 
@@ -13,12 +11,10 @@ namespace Infrastructure.Repositories
     public class OverDraftRepository : IOverDraftRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
 
-        public OverDraftRepository(IUnitOfWorkDB3 financeDb, IErrorLogMasterRepository errorLogMasterRepository)
+        public OverDraftRepository(IUnitOfWorkDB3 financeDb)
         {
             _connection = financeDb.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
 
         // 🔹 Add OverDraft
@@ -68,17 +64,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OverDraftRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = obj.Header.userid,
-                    ScreenName = "OverDraft",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -118,17 +103,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OverDraftRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = obj.Header.userid,
-                    ScreenName = "OverDraft",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -168,20 +142,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OverDraftRepository),
-                    Method_Function = nameof(GetListOverDraftAsync),
-                    UserId = 0,
-                    ScreenName = "OverDraft",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        overdraftid, overdrafttype, voucherno, branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -223,20 +183,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OverDraftRepository),
-                    Method_Function = nameof(GetByIdOverDraftAsync),
-                    UserId = 0,
-                    ScreenName = "OverDraft",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        overdraftid, branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -276,20 +222,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OverDraftRepository),
-                    Method_Function = nameof(GetSequencesNo),
-                    UserId = userid,
-                    ScreenName = "OverDraft",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        userid, branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -329,20 +261,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OverDraftRepository),
-                    Method_Function = nameof(DeleteAsync),
-                    UserId = userid,
-                    ScreenName = "OverDraft",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        overdraftid, branchid, orgid, userid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,

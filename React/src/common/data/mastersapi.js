@@ -4917,84 +4917,79 @@ export const UpdateAccessRights = async (headerId, payload) => {
 
 
 export const saveOrUpdateRevenue = async (payload, isEdit = false) => {
-    try {
-        debugger
-        const url = isEdit ? "/Revenue/update" : "/Revenue/create";
-        const requestFn = isEdit ? put : post;
-        const response = await requestFn(url, payload);
-        return response.data;
+    try { debugger
+      const url = isEdit ? "/Revenue/update" : "/Revenue/create";
+      const requestFn = isEdit ? put : post;
+      const response = await requestFn(url, payload);
+      return response.data;
     } catch (error) {
-        console.error("Error saving/updating Revenue:", error);
-        throw error;
+      console.error("Error saving/updating Revenue:", error);
+      throw error;
     }
-};
+  };
+  
+  export const getRevenueList = async (orgId, branchId, revenueId = null, revType = null, voucherNo = null) => {
+      try { debugger
+          const response = await get('/Revenue/list', {
+              params: {
+                  orgid: orgId,
+                  branchid: branchId,
+                  revenueid: revenueId ?? 0,
+                  revtype: revType ?? null,
+                  voucherno : voucherNo ?? null,
+              }
+          });
+          return response.data;
+      } catch (error) {
+          console.error("Failed to fetch Revenue Type list", error);
+          return [];
+      }
+  };
+   
+  export const getRevenueType = async (orgId, branchId) => {
+      try {
+          debugger
+          const response = await get('/Revenue/revenuetype-list', {   
+              params:{         
+              branchId: branchId,
+              orgId: orgId
+              }
+          });
+          return response.data;
+      } catch (error) {
+          console.error("Failed to fetch revenue type list", error);
+          return [];
+      }
+  };
+  
+  export const GetRevenueSeqNum = async (branchId, orgId ,userid ) => {
+      try { debugger
+          const response = await get(`/Revenue/get-seq-num?branchId=${branchId}&orgid=${orgId}&userid=${userid}`);
+          return response;
+      } catch (error) {
+          console.error('Failed to fetch Seq Num', error);
+          return { status: false, message: error.message || 'Server error' };
+      }
+  };
 
-export const getRevenueList = async (orgId, branchId, revenueId = null, revType = null, voucherNo = null) => {
-    try {
-        debugger
-        const response = await get('/Revenue/list', {
-            params: {
-                orgid: orgId,
-                branchid: branchId,
-                revenueid: revenueId ?? 0,
-                revtype: revType ?? null,
-                voucherno: voucherNo ?? null,
-            }
-        });
-        return response.data;
-    } catch (error) {
-        console.error("Failed to fetch Revenue Type list", error);
-        return [];
-    }
-};
-
-export const getRevenueType = async (orgId, branchId) => {
-    try {
-        debugger
-        const response = await get('/Revenue/revenuetype-list', {
-            params: {
-                branchId: branchId,
-                orgId: orgId
-            }
-        });
-        return response.data;
-    } catch (error) {
-        console.error("Failed to fetch revenue type list", error);
-        return [];
-    }
-};
-
-export const GetRevenueSeqNum = async (branchId, orgId, userid) => {
-    try {
-        debugger
-        const response = await get(`/Revenue/get-seq-num?branchId=${branchId}&orgid=${orgId}&userid=${userid}`);
-        return response;
-    } catch (error) {
-        console.error('Failed to fetch Seq Num', error);
-        return { status: false, message: error.message || 'Server error' };
-    }
-};
-
-export const getCashBookList = async ({ orgid, branchid, fromDate, toDate }) => {
-    debugger
-    const params = new URLSearchParams();
+export const getCashBookList = async ({ orgid, branchid, fromDate, toDate }) => { debugger
+    const params = new URLSearchParams();   
     params.append("orgid", orgid);
-    params.append("branchid", branchid);
+    params.append("branchid", branchid); 
     if (fromDate) params.append("fromDate", fromDate);
-    if (toDate) params.append("toDate", toDate);
+    if (toDate) params.append("toDate", toDate);   
 
     const response = await get(`/CashBook/list?${params.toString()}`);
     return response;
 };
 
-export const getBankBookList = async ({ orgid, branchid, fromDate, toDate, bankid }) => {
-    debugger
-    const params = new URLSearchParams();
+export const getBankBookList = async ({ orgid, branchid, fromDate, toDate,bankid }) => { debugger
+    const params = new URLSearchParams();   
     params.append("orgid", orgid);
-    params.append("branchid", branchid);
-    params.append("bankid", bankid);
+    params.append("branchid", branchid); 
+    params.append("bankid", bankid); 
     if (fromDate) params.append("fromDate", fromDate);
-    if (toDate) params.append("toDate", toDate);
+    if (toDate) params.append("toDate", toDate);   
 
     const response = await get(`/BankBook/list?${params.toString()}`);
     return response;
@@ -5022,21 +5017,19 @@ export const getOverDraftList = async (overdraftId = null, overdraftType = null,
 };
 
 export const saveOrUpdateOverDraft = async (payload, isEdit = false) => {
-    try {
-        debugger
-        const url = isEdit ? "/OverDraft/update" : "/OverDraft/create";
-        const requestFn = isEdit ? put : post;
-        const response = await requestFn(url, payload);
-        return response.data;
-    } catch (error) {
-        console.error("Error saving/updating OverDraft:", error);
-        throw error;
-    }
+  try { debugger
+    const url = isEdit ? "/OverDraft/update" : "/OverDraft/create";
+    const requestFn = isEdit ? put : post;
+    const response = await requestFn(url, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error saving/updating OverDraft:", error);
+    throw error;
+  }
 };
 
-export const GetOverDraftSeqNum = async (branchId, orgId, userid) => {
-    try {
-        debugger
+export const GetOverDraftSeqNum = async (branchId, orgId ,userid ) => {
+    try { debugger
         const response = await get(`/OverDraft/get-seq-num?branchId=${branchId}&orgid=${orgId}&userid=${userid}`);
         return response;
     } catch (error) {

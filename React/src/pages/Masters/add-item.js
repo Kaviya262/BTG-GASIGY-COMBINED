@@ -10,7 +10,6 @@ import Flatpickr from "react-flatpickr"
 import Select from "react-select";
 import Swal from 'sweetalert2';
 import 'primeicons/primeicons.css';
-import useAccess from "../../common/access/useAccess";
 import {  GetAllItems, GetItemCategoryAutoComplete, GetItemGroupAutoComplete, GetItemMasterSeqNo, GetItemUomList, GetSupplierById, GetSupplierCategoryAutoComplete, GetSupplierCountries, GetSupplierCurrencies, GetSupplierTaxList, SaveItemMaster, SaveSupplierMaster } from "common/data/mastersapi";
 
 const AddItems = () => {
@@ -26,14 +25,6 @@ const AddItems = () => {
         }
     }; 
     const [branchId, setBranchId] = useState(1);
-     const { access, applyAccessUI } = useAccess("Masters", "Items");
-                      const canViewDetails = !access.loading && access.canViewDetails;
-                      
-                           useEffect(() => {
-                              if (!access.loading) {
-                                  applyAccessUI();
-                              }
-                          }, [access, applyAccessUI]);
     const [orgId, setOrgId] = useState(1);
     const [userId, setUserId] = useState(1);
     const [itemGroups, setItemGroups] = useState([]);
@@ -242,7 +233,6 @@ const AddItems = () => {
 
                                             <button
                                                 type="submit"
-                                                data-access="save"
                                                 className="btn btn-info"                                                
                                             >
                                                 <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2" ></i>{isEditMode ? "Update" : "Save"}

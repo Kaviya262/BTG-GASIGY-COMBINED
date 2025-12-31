@@ -1,19 +1,12 @@
 ﻿using BackEnd.AccessRights;
-using BackEnd.Units;
 using Core.Abstractions;
 using Core.AccessRights;
-using Core.Master.ErrorLog;
 using Core.Models;
 using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using MediatR;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,12 +16,10 @@ namespace Infrastructure.Repositories
     {
 
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
 
-        public AccessRightsRepository(IUnitOfWorkDB4 financedb, IErrorLogMasterRepository errorLogMasterRepository)
+        public AccessRightsRepository(IUnitOfWorkDB4 financedb)
         {
             _connection = financedb.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
 
         public async Task<object> GetApprovalSettings(int userid, int branchId, Int32 orgid, Int32 screenid)
@@ -54,21 +45,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetApprovalSettings),
-                    UserId = userid,
-                    ScreenName = "Access Rights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                         userid, branchId, orgid, screenid,
-      
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -160,23 +136,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetMenusDetails),
-                    UserId = userid,
-                    ScreenName = "Access Rights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        
-                        orgid, userid, branchId,
-                    }) 
-                    
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -215,21 +174,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetRolesAsync),
-                    UserId = 0,
-                    ScreenName = "Access Rights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchId, orgId,
-
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -266,22 +210,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetDepartmentsAsync),
-                    UserId = 0,
-                    ScreenName = "Access Rights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchId, orgId,
-
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -318,22 +246,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetModuleScreensAsync),
-                    UserId = 0,
-                    ScreenName = "Access Rights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchId,
-                        orgId,
-
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -350,13 +262,8 @@ namespace Infrastructure.Repositories
                 if (request == null || string.IsNullOrWhiteSpace(request.Role))
                     throw new ArgumentException("Invalid request");
 
-                var existData = "select count(*) from master_accessrights_header where RoleId = @RoleId and DepartmentId = @DepartmentId  and IsActive = 1 and ifnull(Hod,0) = @Hod;";
-                var data = await _connection.ExecuteScalarAsync<int>(existData, new { RoleId = request.RoleId, DepartmentId = request.DepartmentId, Hod = request.IsHOD });
-
-                if (data == 0)
-                {
-                    // 1️⃣ Insert Header (Includes DepartmentId as INT)
-                    var sqlInsertHeader = @"
+                // 1️⃣ Insert Header (Includes DepartmentId as INT)
+                var sqlInsertHeader = @"
                 INSERT INTO master_accessrights_header
                 (Role, Department, DepartmentId, Hod, BranchId, OrgId, IsActive, CreatedBy, CreatedDate, CreatedIP, EffectiveFrom, RoleId)
                 VALUES
@@ -364,103 +271,75 @@ namespace Infrastructure.Repositories
 
                 SELECT LAST_INSERT_ID();";
 
-                    int headerId = await _connection.ExecuteScalarAsync<int>(
-                        sqlInsertHeader,
-                        new
-                        {
-                            Role = request.Role,
-                            Department = request.Department,
-                            DepartmentId = request.DepartmentId,
-                            Hod = request.IsHOD,
-                            BranchId = 1,
-                            OrgId = 1,
-                            IsActive = 1,
-                            CreatedBy = 0,
-                            CreatedDate = DateTime.Now,
-                            CreatedIP = "",
-                            EffectiveFrom = request.EffectiveDate ?? DateTime.Now,
-                            RoleId = request.RoleId
-                        }
-                    );
-
-
-                    var sqlInsertDetail = @"
-                INSERT INTO master_accessrights_details
-                (HeaderId, ModuleId, Module, ScreenId, Screen, `View`, `New`, `Edit`, `Delete`, `Post`, `Save`, `Print`, ViewRate, SendMail, ViewDetails, Records, IsActive)
-                VALUES
-                (@HeaderId, @ModuleId, @Module, @ScreenId, @Screen, @View, @New, @Edit, @Delete, @Post, @Save, @Print, @ViewRate, @SendMail, @ViewDetails, @Records, @IsActive);";
-
-                    foreach (var module in request.Modules)
+                int headerId = await _connection.ExecuteScalarAsync<int>(
+                    sqlInsertHeader,
+                    new
                     {
-                        foreach (var screen in module.Screens)
-                        {
-                            var p = screen.Permissions;
-
-                            await _connection.ExecuteAsync(
-                                sqlInsertDetail,
-                                new
-                                {
-                                    HeaderId = headerId,
-                                    ModuleId = screen.ModuleId,
-                                    Module = module.ModuleName,
-                                    ScreenId = screen.ScreenId,
-                                    Screen = screen.ScreenName,
-                                    View = p.View,
-                                    New = p.New,
-                                    Edit = p.Edit,
-                                    Delete = p.Delete,
-                                    Post = p.Post,
-                                    Save = p.Save,
-                                    Print = p.Print,
-                                    ViewRate = p.ViewRate,
-                                    SendMail = p.SendMail,
-                                    ViewDetails = p.ViewDetails,
-                                    Records = p.RecordsPerPage,
-                                    IsActive = true
-                                }
-                            );
-                        }
+                        Role = request.Role,
+                        Department = request.Department,
+                        DepartmentId = request.DepartmentId,
+                        Hod = request.IsHOD,
+                        BranchId = 1,
+                        OrgId = 1,
+                        IsActive = 1,
+                        CreatedBy = 0,
+                        CreatedDate = DateTime.Now,
+                        CreatedIP = "",
+                        EffectiveFrom = request.EffectiveDate ?? DateTime.Now,
+                        RoleId = request.RoleId
                     }
+                );
 
-                    return new
-                    {
-                        Status = true,
 
-                        HeaderId = headerId,
-                        role = request.Role,
-                        department = request.Department,
-                        departmentId = request.DepartmentId,
-                        effectiveDate = request.EffectiveDate,
-                        isHOD = request.IsHOD,
-                        roleId = request.RoleId,
-                        modules = request.Modules
-                    };
-                }
-                else
+                var sqlInsertDetail = @"
+                INSERT INTO master_accessrights_details
+                (HeaderId, Module, Screen, `View`, `Edit`, `Delete`, `Post`, `Save`, `Print`, ViewRate, SendMail, ViewDetails, Records, IsActive)
+                VALUES
+                (@HeaderId, @Module, @Screen, @View, @Edit, @Delete, @Post, @Save, @Print, @ViewRate, @SendMail, @ViewDetails, @Records, @IsActive);";
+
+                foreach (var module in request.Modules)
                 {
-                    return new
+                    foreach (var screen in module.Screens)
                     {
-                        Status = false,
-                        Message = $"Already used this Role And Department",
-                        Data = (object?)null
-                    };
+                        var p = screen.Permissions;
+
+                        await _connection.ExecuteAsync(
+                            sqlInsertDetail,
+                            new
+                            {
+                                HeaderId = headerId,
+                                Module = module.ModuleName,
+                                Screen = screen.ScreenName,
+                                View = p.View,
+                                Edit = p.Edit,
+                                Delete = p.Delete,
+                                Post = p.Post,
+                                Save = p.Save,
+                                Print = p.Print,
+                                ViewRate = p.ViewRate,
+                                SendMail = p.SendMail,
+                                ViewDetails = p.ViewDetails,
+                                Records = p.RecordsPerPage,
+                                IsActive = true
+                            }
+                        );
+                    }
                 }
 
-               
+                return new
+                {
+                    HeaderId = headerId,
+                    role = request.Role,
+                    department = request.Department,
+                    departmentId = request.DepartmentId,
+                    effectiveDate = request.EffectiveDate,
+                    isHOD = request.IsHOD,
+                    roleId = request.RoleId,
+                    modules = request.Modules
+                };
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(SaveAccessRights),
-                    UserId = 0,
-                    ScreenName = "AccessRights",
-                    RequestData_Payload = JsonConvert.SerializeObject(request)
-                });
                 return new
                 {
                     Status = false,
@@ -489,27 +368,20 @@ namespace Infrastructure.Repositories
                     Data = null
                 };
 
-            var existData = "select count(*) from master_accessrights_header where RoleId = @RoleId and DepartmentId = @DepartmentId  and IsActive = 1 and ifnull(Hod,0) = @Hod and Id !=@Id;";
-            var data = await _connection.ExecuteScalarAsync<int>(existData, new { RoleId = request.RoleId, DepartmentId = request.DepartmentId, Hod = request.IsHOD, Id = request.HeaderId });
+            int headerId = request.HeaderId;
 
-            if (data == 0)
-            {
+            // Get current IsActive from header
+            var dbIsActive = await _connection.ExecuteScalarAsync<int>(
+            "SELECT IsActive FROM master_accessrights_header WHERE Id = @Id",
+            new { Id = headerId });
 
-                int headerId = request.HeaderId;
+            // Correct logic → set to 1 or 0 based on request
+            int finalIsActive = request.IsActive.HasValue
+            ? (request.IsActive.Value ? 1 : 0)
+            : dbIsActive;
 
-
-                // Get current IsActive from header
-                var dbIsActive = await _connection.ExecuteScalarAsync<int>(
-                "SELECT IsActive FROM master_accessrights_header WHERE Id = @Id",
-                new { Id = headerId });
-
-                // Correct logic → set to 1 or 0 based on request
-                int finalIsActive = request.IsActive.HasValue
-                ? (request.IsActive.Value ? 1 : 0)
-                : dbIsActive;
-
-                // Update header table
-                var sqlUpdateHeader = @"
+            // Update header table
+            var sqlUpdateHeader = @"
         UPDATE master_accessrights_header
         SET 
             Role = @Role,
@@ -525,88 +397,85 @@ namespace Infrastructure.Repositories
         WHERE Id = @Id;
     ";
 
-                // Insert detail row
-                var sqlInsertDetail = @"
+            // Insert detail row
+            var sqlInsertDetail = @"
         INSERT INTO master_accessrights_details
-        (HeaderId,ModuleId, Module,ScreenId, Screen, `View`, `New`, `Edit`, `Delete`, `Post`, `Save`, `Print`,
+        (HeaderId, Module, Screen, `View`, `Edit`, `Delete`, `Post`, `Save`, `Print`,
          ViewRate, SendMail, ViewDetails, Records, IsActive)
         VALUES
-        (@HeaderId, @ModuleId, @Module,@ScreenId, @Screen, @View, @New, @Edit, @Delete, @Post, @Save, @Print,
+        (@HeaderId, @Module, @Screen, @View, @Edit, @Delete, @Post, @Save, @Print,
          @ViewRate, @SendMail, @ViewDetails, @Records, @IsActive);
     ";
 
-                try
+            try
+            {
+                // Update header
+                await _connection.ExecuteAsync(sqlUpdateHeader, new
                 {
-                    // Update header
-                    await _connection.ExecuteAsync(sqlUpdateHeader, new
-                    {
-                        Id = headerId,
-                        Role = request.Role,
-                        Department = request.Department,
-                        Hod = request.IsHOD,
-                        BranchId = 1,
-                        OrgId = 1,
-                        ModifiedBy = 0,
-                        LastModifiedDate = DateTime.Now,
-                        ModifiedIP = "",
-                        EffectiveFrom = request.EffectiveDate ?? DateTime.Now,
-                        FinalIsActive = finalIsActive,
-                    });
+                    Id = headerId,
+                    Role = request.Role,
+                    Department = request.Department,
+                    Hod = request.IsHOD,
+                    BranchId = 1,
+                    OrgId = 1,
+                    ModifiedBy = 0,
+                    LastModifiedDate = DateTime.Now,
+                    ModifiedIP = "",
+                    EffectiveFrom = request.EffectiveDate ?? DateTime.Now,
+                    FinalIsActive = finalIsActive,
+                });
 
-                    // LOOP modules + screens
-                    foreach (var module in request.Modules)
+                // LOOP modules + screens
+                foreach (var module in request.Modules)
+                {
+                    foreach (var screen in module.Screens)
                     {
-                        foreach (var screen in module.Screens)
-                        {
-                            var p = screen.Permissions;
+                        var p = screen.Permissions;
 
-                            // Check if detail row already exists
-                            var existingCount = await _connection.ExecuteScalarAsync<int>(@"
+                        // Check if detail row already exists
+                        var existingCount = await _connection.ExecuteScalarAsync<int>(@"
                     SELECT COUNT(*) FROM master_accessrights_details
                     WHERE HeaderId = @HeaderId AND Module = @Module AND Screen = @Screen
                 ", new
-                            {
-                                HeaderId = headerId,
-                                Module = module.ModuleName,
-                                Screen = screen.ScreenName
-                            });
+                        {
+                            HeaderId = headerId,
+                            Module = module.ModuleName,
+                            Screen = screen.ScreenName
+                        });
 
-                            // Check if all permissions false
-                            bool allFalse =
-                                !p.View && !p.New && !p.Edit && !p.Delete && !p.Post &&
-                                !p.Save && !p.Print && !p.ViewRate &&
-                                !p.SendMail && !p.ViewDetails;
+                        // Check if all permissions false
+                        bool allFalse =
+                            !p.View && !p.Edit && !p.Delete && !p.Post &&
+                            !p.Save && !p.Print && !p.ViewRate &&
+                            !p.SendMail && !p.ViewDetails;
 
-                            // DELETE only if the row existed earlier
-                            if (allFalse)
-                            {
-                                if (existingCount > 0)
-                                {
-                                    await _connection.ExecuteAsync(@"
-                            DELETE FROM master_accessrights_details
-                            WHERE HeaderId = @HeaderId AND Module = @Module AND Screen = @Screen
-                        ", new
-                                    {
-                                        HeaderId = headerId,
-                                        ModuleId = screen.ModuleId,
-                                        Module = module.ModuleName,
-                                        ScreenId = screen.ScreenId,
-                                        Screen = screen.ScreenName
-                                    });
-                                }
-
-                                // Skip insert/update
-                                continue;
-                            }
-
-                            // If exists → UPDATE
+                        // DELETE only if the row existed earlier
+                        if (allFalse)
+                        {
                             if (existingCount > 0)
                             {
                                 await _connection.ExecuteAsync(@"
+                            DELETE FROM master_accessrights_details
+                            WHERE HeaderId = @HeaderId AND Module = @Module AND Screen = @Screen
+                        ", new
+                                {
+                                    HeaderId = headerId,
+                                    Module = module.ModuleName,
+                                    Screen = screen.ScreenName
+                                });
+                            }
+
+                            // Skip insert/update
+                            continue;
+                        }
+
+                        // If exists → UPDATE
+                        if (existingCount > 0)
+                        {
+                            await _connection.ExecuteAsync(@"
                         UPDATE master_accessrights_details
                         SET 
                             `View` = @View,
-                            `New` = @New,
                             `Edit` = @Edit,
                             `Delete` = @Delete,
                             `Post` = @Post,
@@ -619,102 +488,74 @@ namespace Infrastructure.Repositories
                             IsActive = 1
                         WHERE HeaderId = @HeaderId AND Module = @Module AND Screen = @Screen
                     ", new
-                                {
-                                    HeaderId = headerId,
-                                    ModuleId = screen.ModuleId,
-                                    Module = module.ModuleName,
-                                    ScreeId = screen.ScreenId,
-                                    Screen = screen.ScreenName,
-                                    View = p.View,
-                                    New = p.New,
-                                    Edit = p.Edit,
-                                    Delete = p.Delete,
-                                    Post = p.Post,
-                                    Save = p.Save,
-                                    Print = p.Print,
-                                    ViewRate = p.ViewRate,
-                                    SendMail = p.SendMail,
-                                    ViewDetails = p.ViewDetails,
-                                    Records = p.RecordsPerPage
-                                });
-                            }
-                            else
                             {
-                                // If not exists → INSERT
-                                await _connection.ExecuteAsync(sqlInsertDetail, new
-                                {
-                                    HeaderId = headerId,
-                                    ModuleId = screen.ModuleId,
-                                    Module = module.ModuleName,
-                                    ScreenId = screen.ScreenId,
-                                    Screen = screen.ScreenName,
-                                    View = p.View,
-                                    New = p.New,
-                                    Edit = p.Edit,
-                                    Delete = p.Delete,
-                                    Post = p.Post,
-                                    Save = p.Save,
-                                    Print = p.Print,
-                                    ViewRate = p.ViewRate,
-                                    SendMail = p.SendMail,
-                                    ViewDetails = p.ViewDetails,
-                                    Records = p.RecordsPerPage,
-                                    IsActive = true
-                                });
-                            }
+                                HeaderId = headerId,
+                                Module = module.ModuleName,
+                                Screen = screen.ScreenName,
+                                View = p.View,
+                                Edit = p.Edit,
+                                Delete = p.Delete,
+                                Post = p.Post,
+                                Save = p.Save,
+                                Print = p.Print,
+                                ViewRate = p.ViewRate,
+                                SendMail = p.SendMail,
+                                ViewDetails = p.ViewDetails,
+                                Records = p.RecordsPerPage
+                            });
+                        }
+                        else
+                        {
+                            // If not exists → INSERT
+                            await _connection.ExecuteAsync(sqlInsertDetail, new
+                            {
+                                HeaderId = headerId,
+                                Module = module.ModuleName,
+                                Screen = screen.ScreenName,
+                                View = p.View,
+                                Edit = p.Edit,
+                                Delete = p.Delete,
+                                Post = p.Post,
+                                Save = p.Save,
+                                Print = p.Print,
+                                ViewRate = p.ViewRate,
+                                SendMail = p.SendMail,
+                                ViewDetails = p.ViewDetails,
+                                Records = p.RecordsPerPage,
+                                IsActive = true
+                            });
                         }
                     }
+                }
 
-                    // SUCCESS response
-                    return new ResponseModel
-                    {
-                        Status = true,
-                        Message = "Access rights updated successfully",
-                        Data = new
-                        {
-                            HeaderId = headerId,
-                            role = request.Role,
-                            department = request.Department,
-                            departmentId = request.DepartmentId,
-                            effectiveDate = request.EffectiveDate,
-                            isHOD = request.IsHOD,
-                            roleId = request.RoleId,
-                            isActive = finalIsActive,
-                            modules = request.Modules
-                        }
-                    };
-                }
-                catch (Exception ex)
+                // SUCCESS response
+                return new ResponseModel
                 {
-                    await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
+                    Status = true,
+                    Message = "Access rights updated successfully",
+                    Data = new
                     {
-                        ErrorMessage = ex.Message,
-                        ErrorType = ex.GetType().Name,
-                        StackTrace = ex.StackTrace,
-                        Source = nameof(AccessRightsRepository),
-                        Method_Function = nameof(UpdateAccessRights),
-                        UserId = 0,
-                        ScreenName = "AccessRights",
-                        RequestData_Payload = JsonConvert.SerializeObject(request)
-                    });
-                    return new ResponseModel
-                    {
-                        Status = false,
-                        Message = $"Error updating access rights: {ex.Message}",
-                        Data = null
-                    };
-                }
-            }
-            else
-            {
-                return new
-                {
-                    Status = false,
-                    Message = $"Already used this Role And Department",
-                    Data = (object?)null
+                        HeaderId = headerId,
+                        role = request.Role,
+                        department = request.Department,
+                        departmentId = request.DepartmentId,
+                        effectiveDate = request.EffectiveDate,
+                        isHOD = request.IsHOD,
+                        roleId = request.RoleId,
+                        isActive = finalIsActive,
+                        modules = request.Modules
+                    }
                 };
             }
-
+            catch (Exception ex)
+            {
+                return new ResponseModel
+                {
+                    Status = false,
+                    Message = $"Error updating access rights: {ex.Message}",
+                    Data = null
+                };
+            }
         }
 
 
@@ -732,6 +573,7 @@ namespace Infrastructure.Repositories
                 param.Add("@ScreenId", 0);
                 param.Add("@HeaderId", 0);
 
+                // Fetch flat data from SP
                 var flatList = (await _connection.QueryAsync<dynamic>(
                     AccessRights.RolesAccessProc,
                     param,
@@ -741,20 +583,21 @@ namespace Infrastructure.Repositories
                 bool ConvertToBool(object val)
                 {
                     if (val == null) return false;
-                    try { return Convert.ToInt32(val) == 1; }
-                    catch { return false; }
+                    try
+                    {
+                        return Convert.ToInt32(val) == 1;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }
 
-                int ToInt(object val)
-                {
-                    if (val == null || val is DBNull) return 0;
-                    return Convert.ToInt32(val);
-                }
 
                 var groupedHeaders = flatList
                     .GroupBy(h => new
                     {
-                        HeaderId = ToInt(h.HeaderId),
+                        HeaderId = (int)h.HeaderId,
                         Role = (string)h.Role,
                         Department = (string)h.Department,
                         Hod = ConvertToBool(h.Hod),
@@ -769,44 +612,28 @@ namespace Infrastructure.Repositories
                         effectiveDate = headerGroup.Key.EffectiveFrom,
                         isHOD = headerGroup.Key.Hod,
                         isActive = headerGroup.Key.IsActive,
-
                         modules = headerGroup
-                            .GroupBy(m => new
-                            {
-                                ModuleName = (string)m.Module,
-                                ModuleId = ToInt(m.ModuleId) // SAFE
-                            })
+                            .GroupBy(m => (string)m.Module)
                             .Select(moduleGroup => new
                             {
-                                moduleName = moduleGroup.Key.ModuleName,
-                                moduleId = moduleGroup.Key.ModuleId,
-
-                                screens = moduleGroup
-                                    .GroupBy(s => new
+                                moduleName = moduleGroup.Key,
+                                screens = moduleGroup.Select(s => new
+                                {
+                                    screenName = (string)s.Screen,
+                                    permissions = new
                                     {
-                                        ScreenName = (string)s.Screen,
-                                        ScreenId = ToInt(s.ScreenId) // SAFE
-                                    })
-                                    .Select(screenGroup => new
-                                    {
-                                        screenName = screenGroup.Key.ScreenName,
-                                        screenId = screenGroup.Key.ScreenId,
-
-                                        permissions = screenGroup.Select(s => new
-                                        {
-                                            view = ConvertToBool(s.View),
-                                            @new = ConvertToBool(s.New),
-                                            edit = ConvertToBool(s.Edit),
-                                            delete = ConvertToBool(s.Delete),
-                                            post = ConvertToBool(s.Post),
-                                            save = ConvertToBool(s.Save),
-                                            print = ConvertToBool(s.Print),
-                                            viewRate = ConvertToBool(s.ViewRate),
-                                            sendMail = ConvertToBool(s.SendMail),
-                                            viewDetails = ConvertToBool(s.ViewDetails),
-                                            recordsPerPage = ToInt(s.Records)
-                                        }).FirstOrDefault()
-                                    }).ToList()
+                                        view = ConvertToBool(s.View),
+                                        edit = ConvertToBool(s.Edit),
+                                        delete = ConvertToBool(s.Delete),
+                                        post = ConvertToBool(s.Post),
+                                        save = ConvertToBool(s.Save),
+                                        print = ConvertToBool(s.Print),
+                                        viewRate = ConvertToBool(s.ViewRate),
+                                        sendMail = ConvertToBool(s.SendMail),
+                                        viewDetails = ConvertToBool(s.ViewDetails),
+                                        recordsPerPage = (int)s.Records
+                                    }
+                                }).ToList()
                             }).ToList()
                     }).ToList();
 
@@ -819,20 +646,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetAccessRightsByBranchOrg),
-                    UserId = 0,
-                    ScreenName = "AccessRights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchId , orgId
-                    })
-                });
                 return new ResponseModel
                 {
                     Status = false,
@@ -865,28 +678,14 @@ namespace Infrastructure.Repositories
                     commandType: CommandType.StoredProcedure
                 )).ToList();
 
-                // Safe Converters
-                bool ToBool(object val)
-                {
-                    if (val == null || val is DBNull) return false;
-                    try { return Convert.ToInt32(val) == 1; }
-                    catch { return false; }
-                }
-
-                int ToInt(object val)
-                {
-                    if (val == null || val is DBNull) return 0;
-                    return Convert.ToInt32(val);
-                }
-
                 var groupedHeader = flatList
                     .GroupBy(h => new
                     {
-                        HeaderId = ToInt(h.HeaderId),
+                        HeaderId = (int)h.HeaderId,
                         Role = (string)h.Role,
                         Department = (string)h.Department,
-                        Hod = ToBool(h.Hod),
-                        IsActive = ToBool(h.IsActive),
+                        Hod = (bool)h.Hod,
+                        IsActive = Convert.ToBoolean(h.IsActive),
                         EffectiveFrom = (DateTime)h.EffectiveFrom
                     })
                     .Select(headerGroup => new AccessRightsSaveRequest
@@ -897,45 +696,28 @@ namespace Infrastructure.Repositories
                         EffectiveDate = headerGroup.Key.EffectiveFrom,
                         IsHOD = headerGroup.Key.Hod,
                         IsActive = headerGroup.Key.IsActive,
-
                         Modules = headerGroup
-                            .GroupBy(m => new
-                            {
-                                ModuleName = (string)m.Module,
-                                ModuleId = ToInt(m.ModuleId)    // <-- NEW
-                            })
+                            .GroupBy(m => (string)m.Module)
                             .Select(moduleGroup => new ModuleScreens
                             {
-                                ModuleName = moduleGroup.Key.ModuleName,
-                                 // <-- NEW
-
-                                Screens = moduleGroup
-                                    .GroupBy(s => new
+                                ModuleName = moduleGroup.Key,
+                                Screens = moduleGroup.Select(s => new ScreenPermissions
+                                {
+                                    ScreenName = (string)s.Screen,
+                                    Permissions = new Permissions
                                     {
-                                        ScreenName = (string)s.Screen,
-                                        ScreenId = ToInt(s.ScreenId), // <-- NEW
-                                        ModuleId = ToInt(s.ModuleId),
-                                    })
-                                    .Select(screenGroup => new ScreenPermissions
-                                    {
-                                        ScreenName = screenGroup.Key.ScreenName,
-                                        ScreenId = screenGroup.Key.ScreenId, // <-- NEW
-
-                                        Permissions = screenGroup.Select(s => new Permissions
-                                        {
-                                            View = ToBool(s.View),
-                                            New = ToBool(s.New),
-                                            Edit = ToBool(s.Edit),
-                                            Delete = ToBool(s.Delete),
-                                            Post = ToBool(s.Post),
-                                            Save = ToBool(s.Save),
-                                            Print = ToBool(s.Print),
-                                            ViewRate = ToBool(s.ViewRate),
-                                            SendMail = ToBool(s.SendMail),
-                                            ViewDetails = ToBool(s.ViewDetails),
-                                            RecordsPerPage = ToInt(s.Records)
-                                        }).FirstOrDefault()
-                                    }).ToList()
+                                        View = (bool)s.View,
+                                        Edit = (bool)s.Edit,
+                                        Delete = (bool)s.Delete,
+                                        Post = (bool)s.Post,
+                                        Save = (bool)s.Save,
+                                        Print = (bool)s.Print,
+                                        ViewRate = (bool)s.ViewRate,
+                                        SendMail = (bool)s.SendMail,
+                                        ViewDetails = (bool)s.ViewDetails,
+                                        RecordsPerPage = (int)s.Records
+                                    }
+                                }).ToList()
                             }).ToList()
                     }).FirstOrDefault();
 
@@ -948,21 +730,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetAccessRightsDetailById),
-                    UserId = 0,
-                    ScreenName = "AccessRights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        headerId
-                    })
-                });
                 return new ResponseModel
                 {
                     Status = false,
@@ -1002,20 +769,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(AccessRightsRepository),
-                    Method_Function = nameof(GetUserRoleDeptMappedAsync),
-                    UserId = userId,
-                    ScreenName = "AccessRights",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        userId, orgId, branchId
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,

@@ -29,10 +29,8 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { useRef } from "react";
 import { use } from "react";
-import useAccess from "../../../common/access/useAccess";
 
 const ManageInvocie = () => {
-  const { access, applyAccessUI } = useAccess("Sales", "Sales Invoice");
   const history = useHistory();
   const [invoiceList, setInvoiceList] = useState(null);
   const [filters, setFilters] = useState(null);
@@ -84,12 +82,6 @@ const ManageInvocie = () => {
         return null;
     }
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   useEffect(() => {
     setLoading(false);
@@ -207,7 +199,7 @@ const ManageInvocie = () => {
   const GetALLInvoiceList = async (filterData = null) => {
     // Use provided filterData, ref (latest state), or fallback to state
     const currentFilter = filterData || invoiceFilterRef.current || invoiceFilter;
-
+    
     setErrormsg("");
     if (!currentFilter.FromDate || !currentFilter.ToDate) {
       setErrormsg("Please select both From and To dates.");
@@ -242,8 +234,8 @@ const ManageInvocie = () => {
     const customerId = option ? option.value : 0;
     setInvoiceFilter(prevState => {
       const updated = {
-        ...prevState,
-        customerid: customerId
+        ...prevState, 
+        customerid: customerId 
       };
       invoiceFilterRef.current = updated;
       return updated;
@@ -312,14 +304,11 @@ const ManageInvocie = () => {
     document
       .getElementById("ToDate")
       ._flatpickr.setDate(resetFilter.ToDate, false);
-
-   // setIsseacrch(!isseacrch);
-   GetALLInvoiceList(resetFilter);
+    setIsseacrch(!isseacrch);
   };
-
-  // useEffect(() => {
-  //   GetALLInvoiceList();
-  // }, [isseacrch]);
+  useEffect(() => {
+    GetALLInvoiceList();
+  }, [isseacrch]);
 
   const exportToExcel = () => {
     const filteredQuotes = invoiceList.map(({ IsPosted, ...rest }) => rest);
@@ -352,14 +341,6 @@ const ManageInvocie = () => {
     const fileName = `Sales-Invoice-List-${year}-${month}-${day}-${hours}-${minutes}-${ampm}.xlsx`;
     saveAs(data, fileName);
   };
-
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
 
   return (
     <React.Fragment>
@@ -493,7 +474,6 @@ const ManageInvocie = () => {
                     type="button"
                     className="btn btn-success"
                     onClick={linkAddinvoice}
-                    data-access="new"
                   >
                     <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>
                     New
@@ -507,7 +487,7 @@ const ManageInvocie = () => {
                   value={invoiceList}
                   paginator
                   showGridlines
-                  rows={access.records || 10}
+                  rows={10}
                   loading={loading}
                   dataKey="InvoiceId"
                   filters={filters}
@@ -550,16 +530,14 @@ const ManageInvocie = () => {
                     filter
                     filterPlaceholder="Search by DO"
                   />
-                  {access.canViewRate && (
-                    <Column
-                      field="TotalAmount"
-                      header="Total Amount (IDR)"
-                      filter
-                      filterPlaceholder="Search by date"
-                      body={actionTotalTemplate}
-                      className="text-end"
-                    />
-                  )}
+                  <Column
+                    field="TotalAmount"
+                    header="Total Amount (IDR)"
+                    filter
+                    filterPlaceholder="Search by date"
+                    body={actionTotalTemplate}
+                    className="text-end"
+                  />
                   <Column
                     field="Status"
                     header="Status"

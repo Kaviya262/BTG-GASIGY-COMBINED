@@ -1,11 +1,8 @@
 ﻿using BackEnd.FinanceModule.Revenue;
 using Core.Abstractions;
 using Core.FinanceModule.Revenue;
-using Core.Master.ErrorLog;
-using Core.Master.Supplier;
 using Core.Models;
 using Dapper;
-using DocumentFormat.OpenXml.Bibliography;
 using Newtonsoft.Json;
 using System.Data;
 
@@ -14,12 +11,10 @@ namespace Infrastructure.Repositories
     public class RevenueRepository : IRevenueRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
 
-        public RevenueRepository(IUnitOfWorkDB3 financeDb, IErrorLogMasterRepository errorLogMasterRepository)
+        public RevenueRepository(IUnitOfWorkDB3 financeDb)
         {
             _connection = financeDb.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
 
         public async Task<object> AddAsync(RevenueModel obj)
@@ -70,17 +65,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RevenueRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = obj.Header.userid,
-                    ScreenName = "Revenue",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -118,17 +102,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RevenueRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = obj.Header.userid,
-                    ScreenName = "Revenue",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -168,20 +141,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RevenueRepository),
-                    Method_Function = nameof(GetByIdRevenueAsync),
-                    UserId = 0,
-                    ScreenName = "Revenue",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid, revenueid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -219,20 +178,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RevenueRepository),
-                    Method_Function = nameof(GetListRevenueAsync),
-                    UserId = 0,
-                    ScreenName = "Revenue",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -270,20 +215,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(RevenueRepository),
-                    Method_Function = nameof(GetRevenueTypeListAsync),
-                    UserId = 0,
-                    ScreenName = "Revenue",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -323,20 +254,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(SupplierMasterRepository),
-                    Method_Function = nameof(GetSequencesNo),
-                    UserId = 0,
-                    ScreenName = "Revenue",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                       branchId, orgid, userid
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,

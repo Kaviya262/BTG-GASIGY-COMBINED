@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { GetUserAccess } from "../../common/data/mastersapi";
 
 export default function useAccess(moduleName, screenName) {
@@ -72,14 +72,13 @@ export default function useAccess(moduleName, screenName) {
                     canEdit: scr.Edit === 1,
                     canDelete: scr.Delete === 1,
                     canSave: scr.Save === 1,
-                    canNew: scr.New === 1,
+                    canNew: scr.Save === 1,
                     canPrint: scr.Print === 1,
                     canExport: scr.View === 1,
                     canPost: scr.Post === 1,
                     canViewDetails: scr.ViewDetails === 1,
                     canViewRate: scr.ViewRate === 1,
                     canSendMail: scr.SendMail === 1,
-                    records: scr.Records || 10,
                     loading: false
                 });
 
@@ -98,19 +97,10 @@ export default function useAccess(moduleName, screenName) {
     }, [moduleName, screenName]);
 
 
-    const hideTimerRef = useRef();
-
-    // Hide / show UI buttons based on current access
+    // Disable UI buttons
     const applyAccessUI = useCallback(() => {
-        if (access.loading || typeof document === "undefined") {
-            return;
-        }
+        setTimeout(() => {
 
-        if (hideTimerRef.current) {
-            clearTimeout(hideTimerRef.current);
-        }
-
-        hideTimerRef.current = setTimeout(() => {
             const buttons = document.querySelectorAll("button[data-access]");
 
             buttons.forEach(btn => {
@@ -131,44 +121,14 @@ export default function useAccess(moduleName, screenName) {
                 };
 
                 if (!allow[key]) {
-                    btn.style.display = "none";
-                } else {
-                    btn.style.display = "inline-flex";
+                    btn.disabled = true;
+                    btn.style.opacity = "0.5";
+                    btn.style.cursor = "not-allowed";
                 }
             });
-        }, 200);
+
+        }, 250);
     }, [access]);
-
-    useEffect(() => {
-        return () => {
-            if (hideTimerRef.current) {
-                clearTimeout(hideTimerRef.current);
-            }
-        };
-    }, []);
-
-    // Auto-apply whenever access state settles
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
-    // Re-apply whenever new nodes are injected into DOM (e.g. popups/modals)
-    useEffect(() => {
-        if (access.loading || typeof MutationObserver === "undefined" || typeof document === "undefined") {
-            return;
-        }
-
-        const observer = new MutationObserver(() => {
-            applyAccessUI();
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        return () => observer.disconnect();
-    }, [access.loading, applyAccessUI]);
-
 
     return { access, applyAccessUI };
 }

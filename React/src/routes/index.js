@@ -268,17 +268,17 @@ import ManageClaimPaymentDesc from "pages/Masters/manage-claim-payment-desc";
 import DiscussionList from '../pages/Finance/DiscussionList';
 import AccessRights from "pages/RolesAccessRights/AccessRights";
 import CopyPurchaseRequisition from "pages/Procurements/procurementscopy-purchaserequisition";
-
-
-
+ 
+  
+  
 import CashBook from "../pages/FinanceModule/Report/CashBook";
 import BankBook from "../pages/FinanceModule/Report/BankBook";
-
+ 
 
 
 import AccountsReceivable from '../pages/FinanceModule/AccountsReceivable';
 
-
+ 
 
 import OverDraft from '../pages/FinanceModule/OverDraft';
 import ManageOverDraft from '../pages/FinanceModule/ManageOverDraft';
@@ -313,344 +313,344 @@ import TrialBalanceReport from '../pages/FinanceModule/Reports/TrialBalanceRepor
 import BalanceSheetReport from '../pages/FinanceModule/Reports/BalanceSheetReport';
 import ARBookReport from '../pages/FinanceModule/Reports/ARBookReport';
 // --- ADD THIS IMPORT ---
-import ARBookDOReport from "../pages/FinanceModule/Reports/ARBookDOReport";
+import ARBookDOReport from "../pages/FinanceModule/Reports/ARBookDOReport"; 
 
 import Pendingpo from '../pages/FinanceModule/Reports/Pendingpo';
 
-import AddBankBook from "../pages/FinanceModule/Report/AddBankBook";
+import  AddBankBook from "../pages/FinanceModule/Report/AddBankBook";
 
 import BankReconciliation from "../pages/FinanceModule/Reports/BankReconciliation";
 const authProtectedRoutes = [
 
+  
+  { path: "/manage-gl", exact: true, component: ManageGl },
+  { path: "/add-glmaster", component: AddGLMaster },
+  { path: "/edit-glmaster/:id", component: AddGLMaster },
+  {path: "/bankreconciliation", component: BankReconciliation},
+  { path: "/Pendingpo", component: Pendingpo },
+  {path:"/AccountsReceivable",component:AccountsReceivable},
+  {path: "/ManageOverDraft", component: ManageOverDraft},
+  {path: "/OverDraft/add", component: OverDraft},
+  {path: "/OverDraft/edit/:id", component: OverDraft},
+  {path: "/BankBook", component: BankBook},
+  {path: "/AddBankBook", component: AddBankBook},
+  { path: "/verify-customer", component: VerifyCustomer },
+  { path: "/bank-book-entries", component: AddBankBook },
+  
+ 
+  {path:"/AssetRegister",component:AssetRegister},
+  {path:"/AddExpense",component:AddExpense},
 
-  { path: "/manage-gl", exact: true, component: ManageGl },
-  { path: "/add-glmaster", component: AddGLMaster },
-  { path: "/edit-glmaster/:id", component: AddGLMaster },
-  { path: "/bankreconciliation", component: BankReconciliation },
-  { path: "/Pendingpo", component: Pendingpo },
-  { path: "/AccountsReceivable", component: AccountsReceivable },
-  { path: "/ManageOverDraft", component: ManageOverDraft },
-  { path: "/OverDraft/add", component: OverDraft },
-  { path: "/OverDraft/edit/:id", component: OverDraft },
-  { path: "/BankBook", component: BankBook },
-  { path: "/AddBankBook", component: AddBankBook },
-  { path: "/verify-customer", component: VerifyCustomer },
-  { path: "/bank-book-entries", component: AddBankBook },
+  // {path:"/AddPettyCash",component:AddPettyCash},
+  // {path:"/ManagePettyCash",component:ManagePettyCash},
+  {path: "/pettyCash", component: ManageExpense},
+  {path: "/pettyCash/add", component: AddExpense},
+  {path: "/pettyCash/edit/:id", component: AddExpense},
+  {path:"/ManageRevenues",component:ManageRevenues},
+  {path:"/TaxReport",component:TaxReport},
+  {path:"/ManageExpense",component:ManageExpense},
 
-
-  { path: "/AssetRegister", component: AssetRegister },
-  { path: "/AddExpense", component: AddExpense },
-
-  // {path:"/AddPettyCash",component:AddPettyCash},
-  // {path:"/ManagePettyCash",component:ManagePettyCash},
-  { path: "/pettyCash", component: ManageExpense },
-  { path: "/pettyCash/add", component: AddExpense },
-  { path: "/pettyCash/edit/:id", component: AddExpense },
-  { path: "/ManageRevenues", component: ManageRevenues },
-  { path: "/TaxReport", component: TaxReport },
-  { path: "/ManageExpense", component: ManageExpense },
+  
+ 
+  {path: "/revenue/add", component: OtherRevenues},
+  {path: "/revenue/edit/:id", component: OtherRevenues},
 
 
 
-  { path: "/revenue/add", component: OtherRevenues },
-  { path: "/revenue/edit/:id", component: OtherRevenues },
+  {path:"/ManageRevenueType",component:ManageRevenueType},
+  {path:"/ManageGLCode",component:ManageGLCode},
+  {path:"/ManageBankMaster",component:ManageBankMaster},
+  {path:"/ManageAssetType",component:ManageAssetType},
 
-
-
-  { path: "/ManageRevenueType", component: ManageRevenueType },
-  { path: "/ManageGLCode", component: ManageGLCode },
-  { path: "/ManageBankMaster", component: ManageBankMaster },
-  { path: "/ManageAssetType", component: ManageAssetType },
-
-  { path: "/RevenueType", component: RevenueType },
-  { path: "/GLCode", component: GLCode },
-  { path: "/BankMaster", component: BankMaster },
-  { path: "/AssetType", component: AssetType },
-  { path: "/SalesReport", component: SalesReport },
-  { path: "/ProfitAndLoss", component: ProfitLoss },
-
-  { path: "/LedgerReport", component: LedgerReport },
-  { path: "/TrialBalanceReport", component: TrialBalanceReport },
-  { path: "/BalanceSheetReport", component: BalanceSheetReport },
-  { path: "/ARBookReport", component: ARBookReport },
+  {path:"/RevenueType",component:RevenueType},
+  {path:"/GLCode",component:GLCode},
+  {path:"/BankMaster",component:BankMaster},
+  {path:"/AssetType",component:AssetType},
+  {path:"/SalesReport",component:SalesReport},
+  {path:"/ProfitAndLoss",component:ProfitLoss},
+  
+  {path:"/LedgerReport",component:LedgerReport},
+  {path:"/TrialBalanceReport",component:TrialBalanceReport},
+  {path:"/BalanceSheetReport",component:BalanceSheetReport},
+  {path:"/ARBookReport",component:ARBookReport},
   // --- ADD THIS ROUTE ---
-  { path: "/ar-book-do", component: ARBookDOReport },
+  {path:"/ar-book-do", component: ARBookDOReport}, 
 
-  { path: "/dashboard", component: Dashboard },
-  { path: "/dashboard-saas", component: DashboardSaas },
-  { path: "/dashboard-crypto", component: DashboardCrypto },
-  { path: "/dashboard-blog", component: DashboardBlog },
+  { path: "/dashboard", component: Dashboard },
+  { path: "/dashboard-saas", component: DashboardSaas },
+  { path: "/dashboard-crypto", component: DashboardCrypto },
+  { path: "/dashboard-blog", component: DashboardBlog },
 
-  //Crypto
-  { path: "/crypto-wallet", component: CryptoWallet },
-  { path: "/crypto-buy-sell", component: CryptoBuySell },
-  { path: "/crypto-exchange", component: CryptoExchange },
-  { path: "/crypto-lending", component: CryptoLending },
-  { path: "/crypto-orders", component: CryptoOrders },
-  { path: "/crypto-kyc-application", component: CryptoKYCApplication },
+  //Crypto
+  { path: "/crypto-wallet", component: CryptoWallet },
+  { path: "/crypto-buy-sell", component: CryptoBuySell },
+  { path: "/crypto-exchange", component: CryptoExchange },
+  { path: "/crypto-lending", component: CryptoLending },
+  { path: "/crypto-orders", component: CryptoOrders },
+  { path: "/crypto-kyc-application", component: CryptoKYCApplication },
 
-  //profile
-  { path: "/profile", component: UserProfile },
+  //profile
+  { path: "/profile", component: UserProfile },
 
-  //chat
-  { path: "/chat", component: Chat },
+  //chat
+  { path: "/chat", component: Chat },
 
-  //File Manager
-  { path: "/apps-filemanager", component: FileManager },
+  //File Manager
+  { path: "/apps-filemanager", component: FileManager },
 
-  //calendar
-  { path: "/calendar", component: Calendar },
+  //calendar
+  { path: "/calendar", component: Calendar },
 
-  //Ecommerce
-  // { path: "/ecommerce-products/:id", component: EcommerceProducts },
-  { path: "/ecommerce-products", component: EcommerceProducts },
-  { path: "/ecommerce-product-details/:id", component: EcommerceProductDetail },
+  //Ecommerce
+  // { path: "/ecommerce-products/:id", component: EcommerceProducts },
+  { path: "/ecommerce-products", component: EcommerceProducts },
+  { path: "/ecommerce-product-details/:id", component: EcommerceProductDetail },
 
-  { path: "/ecommerce-orders", component: EcommerceOrders },
-  { path: "/ecommerce-customers", component: EcommerceCustomers },
-  { path: "/ecommerce-cart", component: EcommerceCart },
-  { path: "/ecommerce-checkout", component: EcommerceCheckout },
-  { path: "/ecommerce-shops", component: EcommerceShops },
-  { path: "/ecommerce-add-product", component: EcommerceAddProduct },
+  { path: "/ecommerce-orders", component: EcommerceOrders },
+  { path: "/ecommerce-customers", component: EcommerceCustomers },
+  { path: "/ecommerce-cart", component: EcommerceCart },
+  { path: "/ecommerce-checkout", component: EcommerceCheckout },
+  { path: "/ecommerce-shops", component: EcommerceShops },
+  { path: "/ecommerce-add-product", component: EcommerceAddProduct },
 
-  //Email
-  { path: "/email-inbox", component: EmailInbox },
-  { path: "/email-read", component: EmailRead },
-  { path: "/email-template-basic", component: EmailBasicTemplte },
-  { path: "/email-template-alert", component: EmailAlertTemplte },
-  { path: "/email-template-billing", component: EmailTemplateBilling },
+  //Email
+  { path: "/email-inbox", component: EmailInbox },
+  { path: "/email-read", component: EmailRead },
+  { path: "/email-template-basic", component: EmailBasicTemplte },
+  { path: "/email-template-alert", component: EmailAlertTemplte },
+  { path: "/email-template-billing", component: EmailTemplateBilling },
 
-  //Invoices
-  { path: "/invoices-list", component: InvoicesList },
-  { path: "/invoices-detail", component: InvoiceDetail },
-  { path: "/invoices-detail/:id", component: InvoiceDetail },
+  //Invoices
+  { path: "/invoices-list", component: InvoicesList },
+  { path: "/invoices-detail", component: InvoiceDetail },
+  { path: "/invoices-detail/:id", component: InvoiceDetail },
 
-  // Tasks
-  { path: "/tasks-list", component: TasksList },
-  { path: "/tasks-kanban", component: TasksKanban },
-  { path: "/tasks-create", component: TasksCreate },
+  // Tasks
+  { path: "/tasks-list", component: TasksList },
+  { path: "/tasks-kanban", component: TasksKanban },
+  { path: "/tasks-create", component: TasksCreate },
 
-  //Projects
-  { path: "/projects-grid", component: ProjectsGrid },
-  { path: "/projects-list", component: ProjectsList },
-  { path: "/projects-overview", component: ProjectsOverview },
-  { path: "/projects-overview/:id", component: ProjectsOverview },
-  { path: "/projects-create", component: ProjectsCreate },
+  //Projects
+  { path: "/projects-grid", component: ProjectsGrid },
+  { path: "/projects-list", component: ProjectsList },
+  { path: "/projects-overview", component: ProjectsOverview },
+  { path: "/projects-overview/:id", component: ProjectsOverview },
+  { path: "/projects-create", component: ProjectsCreate },
 
-  // Contacts
-  { path: "/contacts-grid", component: ContactsGrid },
-  { path: "/contacts-list", component: ContactsList },
-  { path: "/contacts-profile", component: ContactsProfile },
+  // Contacts
+  { path: "/contacts-grid", component: ContactsGrid },
+  { path: "/contacts-list", component: ContactsList },
+  { path: "/contacts-profile", component: ContactsProfile },
 
-  //Blog
-  { path: "/blog-list", component: BlogList },
-  { path: "/blog-grid", component: BlogGrid },
-  { path: "/blog-details", component: BlogDetails },
+  //Blog
+  { path: "/blog-list", component: BlogList },
+  { path: "/blog-grid", component: BlogGrid },
+  { path: "/blog-details", component: BlogDetails },
 
-  //Charts
-  { path: "/apex-charts", component: ChartApex },
-  { path: "/chartist-charts", component: ChartistChart },
-  { path: "/chartjs-charts", component: ChartjsChart },
-  { path: "/e-charts", component: EChart },
-  { path: "/sparkline-charts", component: SparklineChart },
-  { path: "/charts-knob", component: ChartsKnob },
-  { path: "/re-charts", component: ReCharts },
+  //Charts
+  { path: "/apex-charts", component: ChartApex },
+  { path: "/chartist-charts", component: ChartistChart },
+  { path: "/chartjs-charts", component: ChartjsChart },
+  { path: "/e-charts", component: EChart },
+  { path: "/sparkline-charts", component: SparklineChart },
+  { path: "/charts-knob", component: ChartsKnob },
+  { path: "/re-charts", component: ReCharts },
 
-  // Icons
-  { path: "/icons-boxicons", component: IconBoxicons },
-  { path: "/icons-dripicons", component: IconDripicons },
-  { path: "/icons-materialdesign", component: IconMaterialdesign },
-  { path: "/icons-fontawesome", component: IconFontawesome },
+  // Icons
+  { path: "/icons-boxicons", component: IconBoxicons },
+  { path: "/icons-dripicons", component: IconDripicons },
+  { path: "/icons-materialdesign", component: IconMaterialdesign },
+  { path: "/icons-fontawesome", component: IconFontawesome },
 
-  // Tables
-  { path: "/tables-basic", component: BasicTables },
-  { path: "/tables-datatable", component: DatatableTables },
-  { path: "/tables-responsive", component: ResponsiveTables },
-  { path: "/tables-editable", component: EditableTables },
-  { path: "/tables-dragndrop", component: DragDropTables },
+  // Tables
+  { path: "/tables-basic", component: BasicTables },
+  { path: "/tables-datatable", component: DatatableTables },
+  { path: "/tables-responsive", component: ResponsiveTables },
+  { path: "/tables-editable", component: EditableTables },
+  { path: "/tables-dragndrop", component: DragDropTables },
 
-  // Maps
-  { path: "/maps-google", component: MapsGoogle },
-  { path: "/maps-vector", component: MapsVector },
-  { path: "/maps-leaflet", component: MapsLeaflet },
+  // Maps
+  { path: "/maps-google", component: MapsGoogle },
+  { path: "/maps-vector", component: MapsVector },
+  { path: "/maps-leaflet", component: MapsLeaflet },
 
-  // Forms
-  { path: "/form-elements", component: FormElements },
-  { path: "/form-layouts", component: FormLayouts },
-  { path: "/form-advanced", component: FormAdvanced },
-  { path: "/form-editors", component: FormEditors },
-  { path: "/form-mask", component: FormMask },
-  { path: "/form-repeater", component: FormRepeater },
-  { path: "/form-uploads", component: FormUpload },
-  { path: "/form-wizard", component: FormWizard },
-  { path: "/form-validation", component: FormValidations },
-  { path: "/form-xeditable", component: FormXeditable },
-  { path: "/dual-listbox", component: DualListbox },
+  // Forms
+  { path: "/form-elements", component: FormElements },
+  { path: "/form-layouts", component: FormLayouts },
+  { path: "/form-advanced", component: FormAdvanced },
+  { path: "/form-editors", component: FormEditors },
+  { path: "/form-mask", component: FormMask },
+  { path: "/form-repeater", component: FormRepeater },
+  { path: "/form-uploads", component: FormUpload },
+  { path: "/form-wizard", component: FormWizard },
+  { path: "/form-validation", component: FormValidations },
+  { path: "/form-xeditable", component: FormXeditable },
+  { path: "/dual-listbox", component: DualListbox },
 
-  // Ui
-  { path: "/ui-alerts", component: UiAlert },
-  { path: "/ui-buttons", component: UiButtons },
-  { path: "/ui-cards", component: UiCards },
-  { path: "/ui-carousel", component: UiCarousel },
-  { path: "/ui-colors", component: UiColors },
-  { path: "/ui-dropdowns", component: UiDropdown },
-  { path: "/ui-general", component: UiGeneral },
-  { path: "/ui-grid", component: UiGrid },
-  { path: "/ui-images", component: UiImages },
-  { path: "/ui-lightbox", component: UiLightbox },
-  { path: "/ui-modals", component: UiModal },
-  { path: "/ui-progressbars", component: UiProgressbar },
-  { path: "/ui-tabs-accordions", component: UiTabsAccordions },
-  { path: "/ui-typography", component: UiTypography },
-  { path: "/ui-video", component: UiVideo },
-  { path: "/ui-session-timeout", component: UiSessionTimeout },
-  { path: "/ui-rating", component: UiRating },
-  { path: "/ui-rangeslider", component: UiRangeSlider },
-  { path: "/ui-notifications", component: UiNotifications },
-  { path: "/ui-toasts", component: UiToast },
-  { path: "/ui-offcanvas", component: UiOffCanvas },
-  { path: "/ui-breadcrumb", component: Breadcrumb },
-  { path: "/ui-placeholders", component: UiPlaceholders },
-  //Utility
-  { path: "/pages-starter", component: PagesStarter },
-  { path: "/pages-timeline", component: PagesTimeline },
-  { path: "/pages-faqs", component: PagesFaqs },
-  { path: "/pages-pricing", component: PagesPricing },
+  // Ui
+  { path: "/ui-alerts", component: UiAlert },
+  { path: "/ui-buttons", component: UiButtons },
+  { path: "/ui-cards", component: UiCards },
+  { path: "/ui-carousel", component: UiCarousel },
+  { path: "/ui-colors", component: UiColors },
+  { path: "/ui-dropdowns", component: UiDropdown },
+  { path: "/ui-general", component: UiGeneral },
+  { path: "/ui-grid", component: UiGrid },
+  { path: "/ui-images", component: UiImages },
+  { path: "/ui-lightbox", component: UiLightbox },
+  { path: "/ui-modals", component: UiModal },
+  { path: "/ui-progressbars", component: UiProgressbar },
+  { path: "/ui-tabs-accordions", component: UiTabsAccordions },
+  { path: "/ui-typography", component: UiTypography },
+  { path: "/ui-video", component: UiVideo },
+  { path: "/ui-session-timeout", component: UiSessionTimeout },
+  { path: "/ui-rating", component: UiRating },
+  { path: "/ui-rangeslider", component: UiRangeSlider },
+  { path: "/ui-notifications", component: UiNotifications },
+  { path: "/ui-toasts", component: UiToast },
+  { path: "/ui-offcanvas", component: UiOffCanvas },
+  { path: "/ui-breadcrumb", component: Breadcrumb },
+  { path: "/ui-placeholders", component: UiPlaceholders },
+  //Utility
+  { path: "/pages-starter", component: PagesStarter },
+  { path: "/pages-timeline", component: PagesTimeline },
+  { path: "/pages-faqs", component: PagesFaqs },
+  { path: "/pages-pricing", component: PagesPricing },
 
-  // this route should be at the end of all other routes
-  // eslint-disable-next-line react/display-name
-  { path: "/", exact: true, component: () => <Redirect to="/manage-quotation" /> },
-  { path: "/manage-customer", component: ManageCustomer },
-  { path: "/manage-order", component: ManageOrders },
+  // this route should be at the end of all other routes
+  // eslint-disable-next-line react/display-name
+  { path: "/", exact: true, component: () => <Redirect to="/manage-quotation" /> },
+  { path: "/manage-customer", component: ManageCustomer },
+  { path: "/manage-order", component: ManageOrders },
 
-  { path: "/TransportPlanner", component: TransportPlanner },
-  { path: "/PackingList", component: PackingList },
+  { path: "/TransportPlanner", component: TransportPlanner },
+  { path: "/PackingList", component: PackingList },
 
-  { path: "/manage-quotation", component: ManageQuotations },
-  { path: "/add-customer", component: AddCustomers },
-  { path: "/add-quotation", component: AddQuotation },
-  { path: "/edit-quotation/:id", component: EditQuotation },
-  { path: "/price-quotation/:id", component: PriceQuotation },
+  { path: "/manage-quotation", component: ManageQuotations },
+  { path: "/add-customer", component: AddCustomers },
+  { path: "/add-quotation", component: AddQuotation },
+  { path: "/edit-quotation/:id", component: EditQuotation },
+  { path: "/price-quotation/:id", component: PriceQuotation },
 
-  { path: "/copy-quotation/:id", component: CopySq },
-  { path: "/manage-gas", component: ManageGas },
-  { path: "/manage-pallet", component: ManagePallet },
-  { path: "/add-pallet", component: AddPallet },
-  { path: "/edit-pallet/:id", component: AddPallet },
-  { path: "/manage-cylinder", component: ManageCylinder },
-  { path: "/manage-suppliers", component: ManageSuppliers },
-  { path: "/add-supplier", component: AddSupplier },
-  { path: "/edit-supplier/:id", component: AddSupplier },
-  { path: "/sales-order", component: AddOrdernew },
-  { path: "/add-order", component: AddOrders },
-  { path: "/edit-order/:id", component: EditOrders },
-  { path: "/edit-orders/:id", component: EditOrders },
-  { path: "/access-rights", component: RoleAccessRight },
-  { path: "/admin-roles", component: ManageRole },
-  { path: "/manage-users", component: ManageUser },
-  { path: "/manage-units", component: ManageUnit },
-  { path: "/manage-payment-terms", component: ManagePaymentTerms },
-  { path: "/manage-payment-methods", component: ManagePaymentMethods },
-  { path: "/add-user", component: AddUser },
-  { path: "/add-cylinder", component: AddCylinder },
-  { path: "/add-unit", component: AddUnit },
-  { path: "/add-payment-term", component: AddPaymentTerm },
-  { path: "/add-payment-method", component: AddPaymentMethod },
-  { path: "/country", component: ManageCountry },
-  { path: "/currency", component: ManageCurrency },
-  { path: "/department", component: ManageDepartment },
-  { path: "/projects", component: ManageProjects },
-  { path: "/manage-packing", component: ManagePacking },
-  { path: "/manage-packing-demo", component: ManagePackingDemo },
-  { path: "/add-packing", component: AddPacking },
-  { path: "/edit-packing/:id", component: AddPacking },
-  { path: "/delivery-order", component: AddDeliveryorder },
-  { path: "/add-invoice", component: AddInvoice },
-  { path: "/sales-invoices", component: ManageInvocie },
-  { path: "/edit-invoices/:id", component: AddInvoice },
+  { path: "/copy-quotation/:id", component: CopySq },
+  { path: "/manage-gas", component: ManageGas },
+  { path: "/manage-pallet", component: ManagePallet },
+  { path: "/add-pallet", component: AddPallet },
+  { path: "/edit-pallet/:id", component: AddPallet },
+  { path: "/manage-cylinder", component: ManageCylinder },
+  { path: "/manage-suppliers", component: ManageSuppliers },
+  { path: "/add-supplier", component: AddSupplier },
+  { path: "/edit-supplier/:id", component: AddSupplier },
+  { path: "/sales-order", component: AddOrdernew },
+  { path: "/add-order", component: AddOrders },
+  { path: "/edit-order/:id", component: EditOrders },
+  { path: "/edit-orders/:id", component: EditOrders },
+  { path: "/access-rights", component: RoleAccessRight },
+  { path: "/admin-roles", component: ManageRole },
+  { path: "/manage-users", component: ManageUser },
+  { path: "/manage-units", component: ManageUnit },
+  { path: "/manage-payment-terms", component: ManagePaymentTerms },
+  { path: "/manage-payment-methods", component: ManagePaymentMethods },
+  { path: "/add-user", component: AddUser },
+  { path: "/add-cylinder", component: AddCylinder },
+  { path: "/add-unit", component: AddUnit },
+  { path: "/add-payment-term", component: AddPaymentTerm },
+  { path: "/add-payment-method", component: AddPaymentMethod },
+  { path: "/country", component: ManageCountry },
+  { path: "/currency", component: ManageCurrency },
+  { path: "/department", component: ManageDepartment },
+  { path: "/projects", component: ManageProjects },
+  { path: "/manage-packing", component: ManagePacking },
+  { path: "/manage-packing-demo", component: ManagePackingDemo },
+  { path: "/add-packing", component: AddPacking },
+  { path: "/edit-packing/:id", component: AddPacking },
+  { path: "/delivery-order", component: AddDeliveryorder },
+  { path: "/add-invoice", component: AddInvoice },
+  { path: "/sales-invoices", component: ManageInvocie },
+  { path: "/edit-invoices/:id", component: AddInvoice },
 
-  { path: "/approval-discussions", component: DiscussionList },
-
-
-  { path: "/add-manual-invoice", component: AddManualInvoice },
-  { path: "/edit-manual-invoice/:id", component: AddManualInvoice },
-  { path: "/manual-invoices", component: ManualInvoice },
-
-  { path: "/sales-return", component: ManageReturn },
-  { path: "/add-return-order", component: AddReturn },
-  { path: "/edit-return-order/:id", component: AddReturn },
-  { path: "/production-order", component: ProductOrder },
-  { path: "/add-production-order", component: AddPo },
-  { path: "/update-production-order/:id", component: AddPo },
-  { path: "/manage-suppliers", component: ManageSuppliers },
-  { path: "/purchase-requisition", component: ManagePurchaseRequistion },
-
-  { path: "/item-request", component: ManageItemsRequest },
-  { path: "/item-issue", component: ManageItemsIssue },
-  { path: "/grn", component: ManageGRN },
-  { path: "/purchase-order", component: ManagePurchaseOrder },
-  { path: "/item-return", component: ManageProcurmentReturn },
-  { path: "/add-purchaserequisition", component: AddPurchaseRequisition },
-  { path: "/procurementsadd-purchaserequisition", component: ProcurementsAddPurchaseRequisition },
-  { path: "/procurementscopy-purchaserequisition", component: CopyPurchaseRequisition },
-
-  { path: "/procurementsadd-memo", component: AddPurchaseMemo },
-  { path: "/edit-procurements-memo/:id", component: AddPurchaseMemo },
-  { path: "/Manageclaim&Payment", component: ManageClaimsPayment },
-  { path: "/add-claim&payment", component: Addclaimpayment },
-  { path: "/edit-claim&payment/:id", component: Addclaimpayment },
-
-  { path: "/copy-claim&payment/:id", component: Copyclaimpayment },
-
-  { path: "/add-purchaseorder", component: AddPurchaseOrder },
-  { path: "/add-grn", component: AddGRN },
-  { path: "/company", component: ManageCompany },
-  { path: "/pr-approval", component: ManagePrApproval },
-  { path: "/po-approval", component: ManagePoApproval },
-  { path: "/procurementspurchase-requisition", component: ProcurementManagePurchaseRequistion },
-  { path: "/purchase-requisition-approval", component: PurchaseRequisitionApproval },
-
-  { path: "/procurementspurchase-memo", component: ManagePurchaseMemo },
-
-  { path: "/procurementspurchase-order", component: ProcurementsManagePurchaseOrder },
-  { path: "/procurementsadd-purchaseorder", component: ProcurementsAddPurchaseOrder },
-  { path: "/AddInvoiceReceipt/:irnid", component: AddInvoiceReceipt },
-  { path: "/InvoiceReceipt", component: InvoiceReceipt },
+  { path: "/approval-discussions", component: DiscussionList },
 
 
-  { path: "/procurementsadd-grn", component: ProcurementsAddGRN },
-  { path: "/procurementsadd-grn/:id", component: ProcurementsAddGRN },
-  { path: "/procurementsgrn", component: ManageProcurementsGRN },
-  { path: "/Manageduebills", component: Manageduebills },
-  { path: "/Managepaymentplan", component: Managepaymentplan },
-  { path: "/Manageapproval", component: Manageapproval },
-  { path: "/Paymentplanapproval", component: Paymentplanapproval },
-  { path: "/PPP", component: PPP },
-  { path: "/PPPApproval", component: PPPApproval },
-  { path: "/ClaimApproval", component: ClaimApproval },
-  { path: "/pettyCash", component: ManageExpense },
-  { path: "/pettyCash/add", component: AddExpense },
-  { path: "/pettyCash/edit/:id", component: AddExpense },
+  { path: "/add-manual-invoice", component: AddManualInvoice },
+  { path: "/edit-manual-invoice/:id", component: AddManualInvoice },
+  { path: "/manual-invoices", component: ManualInvoice },
 
-  { path: "/revenue/add", component: OtherRevenues },
-  { path: "/revenue/edit/:id", component: OtherRevenues },
-  { path: "/OverDraft", component: ManageOverDraft },
-  { path: "/OverDraft/add", component: OverDraft },
-  { path: "/OverDraft/edit/:id", component: OverDraft },
+  { path: "/sales-return", component: ManageReturn },
+  { path: "/add-return-order", component: AddReturn },
+  { path: "/edit-return-order/:id", component: AddReturn },
+  { path: "/production-order", component: ProductOrder },
+  { path: "/add-production-order", component: AddPo },
+  { path: "/update-production-order/:id", component: AddPo },
+  { path: "/manage-suppliers", component: ManageSuppliers },
+  { path: "/purchase-requisition", component: ManagePurchaseRequistion },
 
-  { path: "/CashBook", component: CashBook },
-  { path: "/BankBook", component: BankBook },
+  { path: "/item-request", component: ManageItemsRequest },
+  { path: "/item-issue", component: ManageItemsIssue },
+  { path: "/grn", component: ManageGRN },
+  { path: "/purchase-order", component: ManagePurchaseOrder },
+  { path: "/item-return", component: ManageProcurmentReturn },
+  { path: "/add-purchaserequisition", component: AddPurchaseRequisition },
+  { path: "/procurementsadd-purchaserequisition", component: ProcurementsAddPurchaseRequisition },
+  { path: "/procurementscopy-purchaserequisition", component: CopyPurchaseRequisition },
 
-  { path: "/add-item", component: AddItems },
-  { path: "/edit-item/:id", component: AddItems },
-  { path: "/manage-items", component: ManageItems },
+  { path: "/procurementsadd-memo", component: AddPurchaseMemo },
+  { path: "/edit-procurements-memo/:id", component: AddPurchaseMemo },
+  { path: "/Manageclaim&Payment", component: ManageClaimsPayment },
+  { path: "/add-claim&payment", component: Addclaimpayment },
+  { path: "/edit-claim&payment/:id", component: Addclaimpayment },
 
-  { path: "/add-claim-payment-desc", component: AddClaimPaymentDesc },
-  { path: "/edit-claim-payment-desc/:id", component: AddClaimPaymentDesc },
-  { path: "/manage-claim-payment-desc", component: ManageClaimPaymentDesc },
+  { path: "/copy-claim&payment/:id", component: Copyclaimpayment },
 
-  { path: "/EditDirectSalesForm", component: EditDirectSalesForm },
-  { path: "/roles-access-rights", component: AccessRights },
+  { path: "/add-purchaseorder", component: AddPurchaseOrder },
+  { path: "/add-grn", component: AddGRN },
+  { path: "/company", component: ManageCompany },
+  { path: "/pr-approval", component: ManagePrApproval },
+  { path: "/po-approval", component: ManagePoApproval },
+  { path: "/procurementspurchase-requisition", component: ProcurementManagePurchaseRequistion },
+  { path: "/purchase-requisition-approval", component: PurchaseRequisitionApproval },
+
+  { path: "/procurementspurchase-memo", component: ManagePurchaseMemo },
+
+  { path: "/procurementspurchase-order", component: ProcurementsManagePurchaseOrder },
+  { path: "/procurementsadd-purchaseorder", component: ProcurementsAddPurchaseOrder },
+  { path: "/AddInvoiceReceipt/:irnid", component: AddInvoiceReceipt },
+  { path: "/InvoiceReceipt", component: InvoiceReceipt },
+
+
+  { path: "/procurementsadd-grn", component: ProcurementsAddGRN },
+  { path: "/procurementsadd-grn/:id", component: ProcurementsAddGRN },
+  { path: "/procurementsgrn", component: ManageProcurementsGRN },
+  { path: "/Manageduebills", component: Manageduebills },
+  { path: "/Managepaymentplan", component: Managepaymentplan },
+  { path: "/Manageapproval", component: Manageapproval },
+  { path: "/Paymentplanapproval", component: Paymentplanapproval },
+  { path: "/PPP", component: PPP },
+  { path: "/PPPApproval", component: PPPApproval },
+  { path: "/ClaimApproval", component: ClaimApproval },
+  {path: "/pettyCash", component: ManageExpense},
+  {path: "/pettyCash/add", component: AddExpense},
+  {path: "/pettyCash/edit/:id", component: AddExpense},
+   
+  {path: "/revenue/add", component: OtherRevenues},
+  {path: "/revenue/edit/:id", component: OtherRevenues},
+  {path: "/OverDraft", component: ManageOverDraft},
+  {path: "/OverDraft/add", component: OverDraft},
+  {path: "/OverDraft/edit/:id", component: OverDraft},
+
+  {path: "/CashBook", component: CashBook},
+  {path: "/BankBook", component: BankBook},
+
+  { path: "/add-item", component: AddItems },
+  { path: "/edit-item/:id", component: AddItems },
+  { path: "/manage-items", component: ManageItems },
+
+  { path: "/add-claim-payment-desc", component: AddClaimPaymentDesc },
+  { path: "/edit-claim-payment-desc/:id", component: AddClaimPaymentDesc },
+  { path: "/manage-claim-payment-desc", component: ManageClaimPaymentDesc },
+
+  { path: "/EditDirectSalesForm", component: EditDirectSalesForm },
+  { path: "/roles-access-rights", component: AccessRights },
 ];
 
 const publicRoutes = [
@@ -658,38 +658,38 @@ const publicRoutes = [
 
 
 
-  { path: "/logout", component: Logout },
-  { path: "/login", component: Login },
-  { path: "/forgot-password", component: ForgetPwd },
-  { path: "/register", component: Register },
+  { path: "/logout", component: Logout },
+  { path: "/login", component: Login },
+  { path: "/forgot-password", component: ForgetPwd },
+  { path: "/register", component: Register },
 
-  { path: "/pages-maintenance", component: PagesMaintenance },
-  { path: "/pages-comingsoon", component: PagesComingsoon },
-  { path: "/pages-404", component: Pages404 },
-  { path: "/pages-500", component: Pages500 },
-  { path: "/crypto-ico-landing", component: CryptoIcoLanding },
+  { path: "/pages-maintenance", component: PagesMaintenance },
+  { path: "/pages-comingsoon", component: PagesComingsoon },
+  { path: "/pages-404", component: Pages404 },
+  { path: "/pages-500", component: Pages500 },
+  { path: "/crypto-ico-landing", component: CryptoIcoLanding },
 
-  // Authentication Inner
-  { path: "/pages-login", component: Login1 },
-  { path: "/pages-login-2", component: Login2 },
+  // Authentication Inner
+  { path: "/pages-login", component: Login1 },
+  { path: "/pages-login-2", component: Login2 },
 
-  { path: "/pages-register", component: Register1 },
-  { path: "/pages-register-2", component: Register2 },
+  { path: "/pages-register", component: Register1 },
+  { path: "/pages-register-2", component: Register2 },
 
-  { path: "/page-recoverpw", component: Recoverpw },
-  { path: "/pages-recoverpw-2", component: Recoverpw2 },
+  { path: "/page-recoverpw", component: Recoverpw },
+  { path: "/pages-recoverpw-2", component: Recoverpw2 },
 
-  { path: "/pages-forgot-pwd", component: ForgetPwd1 },
-  { path: "/pages-forgot-pwd-2", component: ForgetPwd2 },
+  { path: "/pages-forgot-pwd", component: ForgetPwd1 },
+  { path: "/pages-forgot-pwd-2", component: ForgetPwd2 },
 
-  { path: "/auth-lock-screen", component: LockScreen },
-  { path: "/auth-lock-screen-2", component: LockScreen2 },
-  { path: "/page-confirm-mail", component: ConfirmMail },
-  { path: "/page-confirm-mail-2", component: ConfirmMail2 },
-  { path: "/auth-email-verification", component: EmailVerification },
-  { path: "/auth-email-verification-2", component: EmailVerification2 },
-  { path: "/auth-two-step-verification", component: TwostepVerification },
-  { path: "/auth-two-step-verification-2", component: TwostepVerification2 },
+  { path: "/auth-lock-screen", component: LockScreen },
+  { path: "/auth-lock-screen-2", component: LockScreen2 },
+  { path: "/page-confirm-mail", component: ConfirmMail },
+  { path: "/page-confirm-mail-2", component: ConfirmMail2 },
+  { path: "/auth-email-verification", component: EmailVerification },
+  { path: "/auth-email-verification-2", component: EmailVerification2 },
+  { path: "/auth-two-step-verification", component: TwostepVerification },
+  { path: "/auth-two-step-verification-2", component: TwostepVerification2 },
 
 
 ];

@@ -11,7 +11,6 @@ import makeAnimated from "react-select/animated";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { Editor } from "react-draft-wysiwyg";
-import useAccess from "../../../common/access/useAccess";
 
 // Styles
 import "flatpickr/dist/themes/material_blue.css";
@@ -160,7 +159,6 @@ export const handleSalesOrderSubmit = async ({
 const animatedComponents = makeAnimated();
 
 const DirectSalesForm = forwardRef((props, ref) => {
-    const { access, applyAccessUI } = useAccess("Sales", "Orders");
     const {
         soData,
         handleSelectChange,
@@ -321,12 +319,6 @@ const DirectSalesForm = forwardRef((props, ref) => {
 
 
     };
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
     const submitForm = async (e, actionType, value) => {
 
         if (value === 2) {
@@ -802,7 +794,6 @@ const DirectSalesForm = forwardRef((props, ref) => {
     };
 
     const handleSubmit = async ({ e, actionType }) => {
-        if (isSubmitting) return;
         let hasError = false;
         let tempErrors = []; // Temporary error array
         setIsModalOpen2(false);
@@ -929,7 +920,7 @@ const DirectSalesForm = forwardRef((props, ref) => {
                         "Failed to add SQ:",
                         response?.Message || "Unknown error"
                     );
-                    const msg = [response?.message || "Please verify the gas code details."];
+                    const msg = [response?.Message || "Please verify the gas code details."];
                     errorHandler(msg); // ✅ Use centralized errorHandler
                     return { success: false, message: msg };
                 }
@@ -1654,17 +1645,15 @@ const DirectSalesForm = forwardRef((props, ref) => {
 
                                                                                     />
 
-                                                                                    {access.canSave && (
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className="btn btn-info fa-pull-right"
-                                                                                            onClick={e => setIsModalOpen3(true)} disabled={sqbasicinfo.IsWithCustomer}
-                                                                                            data-access="save"
 
-                                                                                        >
-                                                                                            <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
-                                                                                        </button>
-                                                                                    )}
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="btn btn-info fa-pull-right"
+                                                                                        onClick={e => setIsModalOpen3(true)} disabled={sqbasicinfo.IsWithCustomer}
+
+                                                                                    >
+                                                                                        <i className="bx bx-plus label-icon font-size-16 align-middle "></i>
+                                                                                    </button>
 
                                                                                 </div>
                                                                                 {/*                                       
@@ -2265,20 +2254,17 @@ const DirectSalesForm = forwardRef((props, ref) => {
                                                                                 return (
                                                                                     <tr key={item.GasCodeId || index}>
                                                                                         <td>
-                                                                                            {access.canDelete && (
-                                                                                                <span
-                                                                                                    color="danger"
-                                                                                                    className="btn-sm"
-                                                                                                    onClick={() => openModal(index)}
+                                                                                            <span
+                                                                                                color="danger"
+                                                                                                className="btn-sm"
+                                                                                                onClick={() => openModal(index)}
+                                                                                                title="Delete"
+                                                                                            >
+                                                                                                <i
+                                                                                                    className="mdi mdi-trash-can-outline label-icon align-middle"
                                                                                                     title="Delete"
-                                                                                                    data-access="delete"
-                                                                                                >
-                                                                                                    <i
-                                                                                                        className="mdi mdi-trash-can-outline label-icon align-middle"
-                                                                                                        title="Delete"
-                                                                                                    />
-                                                                                                </span>
-                                                                                            )}
+                                                                                                />
+                                                                                            </span>
                                                                                         </td>
                                                                                         <td>
                                                                                             <Select
@@ -2548,7 +2534,6 @@ const DirectSalesForm = forwardRef((props, ref) => {
                                     color="success"
                                     size="lg"
                                     onClick={() => handleRemoveItem(gaslistindex)}
-                                    disabled={isSubmitting}
                                 >
                                     Yes
                                 </Button>
@@ -2557,7 +2542,6 @@ const DirectSalesForm = forwardRef((props, ref) => {
                                     size="lg"
                                     className="btn btn-danger"
                                     onClick={() => setIsModalOpen(false)}
-                                    disabled={isSubmitting}
                                 >
                                     Cancel
                                 </Button>
@@ -2593,7 +2577,6 @@ const DirectSalesForm = forwardRef((props, ref) => {
                                     color="success"
                                     size="lg"
                                     onClick={e => handleSubmit(e, submittype)}
-                                    disabled={isSubmitting}
                                 >
                                     Yes
                                 </Button>
@@ -2602,7 +2585,6 @@ const DirectSalesForm = forwardRef((props, ref) => {
                                     size="lg"
                                     className="btn btn-danger"
                                     onClick={() => setIsModalOpen2(false)}
-                                    disabled={isSubmitting}
                                 >
                                     Cancel
                                 </Button>

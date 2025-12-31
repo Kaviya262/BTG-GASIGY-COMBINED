@@ -28,19 +28,19 @@ class Sidebar extends Component {
           <div className="navbar-brand-box">
             <Link to="/" className="logo logo-dark">
               <span className="logo-sm">
-                <img src={logo} alt="" style={{ height: '30PX' }} />
+                <img src={logo} alt="" style={{ height: '30PX' }}/>
               </span>
               <span className="logo-lg">
-                <img src={logoDark} alt="" style={{ height: '69px' }} />
+                <img src={logoDark} alt="" style={{ height: '69px' }}/>
               </span>
             </Link>
 
             <Link to="/" className="logo logo-light">
               <span className="logo-sm">
-                <img src={logoLightSvg} alt="" style={{ height: '30PX' }} />
+                <img src={logoLightSvg} alt="" style={{ height: '30PX' }}/>
               </span>
               <span className="logo-lg">
-                <img src={logoLightPng} alt="" style={{ height: '69px' }} />
+                <img src={logoLightPng} alt="" style={{ height: '69px' }}/>
               </span>
             </Link>
           </div>

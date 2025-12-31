@@ -62,7 +62,7 @@ namespace Core.OrderMngMaster.Common
                 Task<object> GetDeliveryAgGasDetails(Int32 GasCodeId);
                 Task<object> GetReturnOrderGasCode(Int32 BranchId, string SearchText, int CustomerId);
                 Task<object> GetSoHistory(Int32 BranchId, Int32 sqid, Int32 soid, Int32 GasCodeId);
-                Task<object> GetBarcodeDetails(string Barcode, Int32 PackingId,int doid, Int32 UomId);
+                Task<object> GetBarcodeDetails(string Barcode, Int32 PackingId,int doid);
                 Task<object> GetPressure(string SearchText, Int32 BranchId);
                 Task<object> GetVolume(string SearchText, Int32 BranchId);
                 Task<object> IsAdminUser(string UserId);

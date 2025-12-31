@@ -7,8 +7,6 @@ import { loginSuccess, logoutUserSuccess, apiError } from "./actions"
 //Include Both Helper File with needed methods
 import { getFirebaseBackend } from "../../../helpers/firebase_helper"
 import { GetMenuDetails } from "common/data/mastersapi";
-import { startSessionTimer } from "helpers/sessionManager";
-import { clearSessionTimer } from "helpers/sessionManager";
 
 import {
   postFakeLogin,
@@ -45,15 +43,15 @@ function* loginUser({ payload: { user, history } }) {
       // const userdetails = { username : 'admin', email: 'admin@btggas.com', uid: '1' }
 
       const response = yield call(post, process.env.REACT_APP_LOGIN_API, {
-        username: user.email,
-        password: user.password,
+            username: user.email,
+            password: user.password,
       });
 
 
       // ✅ Check if response exists and has a token
       if (response.status && response?.data.token) {
         debugger;
-        const userdetails = { username: user.email, email: user.email, uid: response.data.userId, IsAdmin: response.data.isAdmin, u_id: response.data.u_Id, superAdmin: response.data.superIsAdmin }
+        const userdetails = { username : user.email, email: user.email, uid: response.data.userId,IsAdmin:response.data.isAdmin,u_id:response.data.u_Id,superAdmin:response.data.superIsAdmin }
         // Encrypt and store "authUser"
         localStorage.setItem("authUser", JSON.stringify(userdetails));
         localStorage.setItem("authDetails", encryptData(JSON.stringify(response)));
@@ -64,16 +62,6 @@ function* loginUser({ payload: { user, history } }) {
           refreshToken: response?.data.refreshToken,
           expiration: response?.data.expiration,
         });
-
-        startSessionTimer(
-          response.data.token,
-          response.data.refreshToken,
-          () => {
-            localStorage.clear();
-            history.push("/login");
-          }
-        );
-
 
         const menuResponse = yield call(GetMenuDetails, response.data.u_Id, 1, 1);
 
@@ -87,45 +75,41 @@ function* loginUser({ payload: { user, history } }) {
 
         // Optional: navigate to dashboard
         if (history) {
-          // history.push("/manage-quotation");
-          if (menuResponse != undefined && menuResponse != null && menuResponse.data != null && menuResponse.data != undefined) {
-
-            if (menuResponse.data.homePage != undefined && menuResponse.data.homePage != null && menuResponse.data.homePage != "") {
-              history.push(menuResponse.data.homePage);
-            } else {
-              history.push("/manage-quotation");
-            }
-
-          }
-          else {
+         // history.push("/manage-quotation");
+         if(menuResponse !=undefined && menuResponse !=null && menuResponse.data !=null && menuResponse.data !=undefined ){
+          
+          if(menuResponse.data.homePage !=undefined && menuResponse.data.homePage !=null && menuResponse.data.homePage!=""){
+            history.push(menuResponse.data.homePage);
+          }else
+          {
             history.push("/manage-quotation");
           }
-
+          
+         }
+         else{
+          history.push("/manage-quotation");
+         }
+         
         }
       } else {
-        const backendMessage = response.message || "Invalid login response";
         // Handle failed login or invalid token
-        yield put(apiError(backendMessage));
+        yield put(apiError("Invalid login response"));
       }
     }
     // history.push("/manage-quotation")
   } catch (error) {
-    let message = "Unexpected error occurred.";
-    if (error.response) {
-      const status = error.response.status;
-      if (status === 401) {
-        message = "Unauthorized: Invalid email or password.";
-      } else if (status === 403) {
-        message = "Forbidden: You do not have access.";
-      } else if (status === 500) {
-        message = "Server error. Please try again later.";
-      } else {
-        message = `Error ${status}: ${error.response.data?.message || error.message}`;
-      }
-    } else if (error.message) {
-      message = error.message;
-    }
-    yield put(apiError(message));
+    if (error.response) { 
+      const status = error.response.status; let message = "Unexpected error occurred."
+    if (status === 401) {
+      message = "Unauthorized: Invalid email or password.";
+    } else if (status === 403) {
+      message = "Forbidden: You do not have access.";
+    } else if (status === 500) {
+      message = "Server error. Please try again later.";
+    } else {
+      message = `Error ${status}: ${error.response.data?.message || error.message}`;
+    }   } 
+    yield put(apiError(error))
   }
 }
 
@@ -138,11 +122,9 @@ function* logoutUser({ payload: { history } }) {
       const response = yield call(fireBaseBackend.logout)
       yield put(logoutUserSuccess(response))
     }
-    clearSessionTimer();
-    localStorage.clear();
     history.push("/login")
   } catch (error) {
-    yield put(apiError(error.message || "Logout failed"));
+    yield put(apiError(error))
   }
 }
 
@@ -164,7 +146,7 @@ function* socialLogin({ payload: { data, history, type } }) {
     }
     history.push("/dashboard")
   } catch (error) {
-    yield put(apiError(error.message || "Social login failed"));
+    yield put(apiError(error))
   }
 }
 

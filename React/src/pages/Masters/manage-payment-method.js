@@ -13,7 +13,6 @@ import {
     GetAllPaymentMethods,
     SaveMethods,
 } from "../../../src/common/data/mastersapi";
-import useAccess from "../../common/access/useAccess";
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -22,7 +21,6 @@ const initFilters = () => ({
 });
 
 const ManagePaymentMethods = () => {
-    const { access, applyAccessUI } = useAccess("Masters", "Payment Methods");
     const history = useHistory();
     const [methods, setMethods] = useState([]);
     const [filteredMethods, setFilteredMethods] = useState([]);
@@ -44,12 +42,6 @@ const ManagePaymentMethods = () => {
     const toggleModal = () => {
         setIsModalOpen(!isModalOpen);
     };
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         debugger
@@ -199,9 +191,7 @@ const ManagePaymentMethods = () => {
     };
 
     const actionBodyTemplate = (rowData) => {
-        if (!access?.canEdit) {
-            return null;
-        }
+
         console.log(selectedRow, "rowData :", rowData);
         if (rowData.IsActive == 1) {
             return (
@@ -210,7 +200,7 @@ const ManagePaymentMethods = () => {
                         editRow(rowData);
                         console.log("onClick :", rowData);
                     }}
-
+ 
                         title={"Edit"}>
                         <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                     </span>
@@ -220,7 +210,7 @@ const ManagePaymentMethods = () => {
         else {
             return (
                 <div className="actions">
-
+ 
                     <span
                         style={{
                             cursor: 'not-allowed',
@@ -235,7 +225,7 @@ const ManagePaymentMethods = () => {
                 </div>
             )
         }
-
+ 
     };
 
     const handleSubmit = async (values, { resetForm }) => {
@@ -337,14 +327,6 @@ const ManagePaymentMethods = () => {
         );
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -369,7 +351,7 @@ const ManagePaymentMethods = () => {
                                     <button type="button" className="btn btn-info" onClick={handleSearch}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={handleSearchCancel}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
 
-                                    <button type="button" className="btn btn-success" onClick={handleNew} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={handleNew}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -377,7 +359,7 @@ const ManagePaymentMethods = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable value={filteredMethods} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="PaymentMethodId" filters={filters} globalFilterFields={["PaymentMethodCode", "PaymentMethodName"]} header={header} emptyMessage="No payment methods found." onFilter={(e) => setFilters(e.filters)} >
+                                <DataTable value={filteredMethods} paginator showGridlines rows={10} loading={loading} dataKey="PaymentMethodId" filters={filters} globalFilterFields={["PaymentMethodCode", "PaymentMethodName"]} header={header} emptyMessage="No payment methods found." onFilter={(e) => setFilters(e.filters)} >
                                     <Column field="PaymentMethodCode" header="Payment Method Code" filter filterPlaceholder="Search by Code" />
                                     <Column field="PaymentMethodName" header="Payment Method Name" filter filterPlaceholder="Search by Name" />
                                     <Column field="IsActive" header="Active" showFilterMatchModes={false} body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }} />
@@ -427,12 +409,10 @@ const ManagePaymentMethods = () => {
                                                     </Row>
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 text-end button-items">
-                                                            {access?.canSave && (
-                                                                <Button type="submit" className="btn btn-info">
-                                                                    <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
-                                                                    {selectedRow?.Id && selectedRow.Id > 0 ? "Update" : "Save"}
-                                                                </Button>
-                                                            )}
+                                                            <Button type="submit" className="btn btn-info">
+                                                                <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
+                                                                {selectedRow?.Id && selectedRow.Id > 0 ? "Update" : "Save"}
+                                                            </Button>
                                                             <Button type="button" className="btn btn-danger" onClick={toggleModal}>
                                                                 <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel
                                                             </Button>

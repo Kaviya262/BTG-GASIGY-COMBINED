@@ -34,7 +34,6 @@ import {
 } from "../../../common/data/invoiceapi";
 import { GetAllPackingList, SaveBarcodePackingList, GetByIdBarcodepackingList } from "../../../common/data/mastersapi";
 import logo from '../../../assets/images/logo.png';
-import useAccess from "../../../common/access/useAccess";
 
 // Format date function
 const formatDate = (dateString) => {
@@ -48,7 +47,6 @@ const formatDate = (dateString) => {
 };
 
 const PackingList = () => {
-  const { access, applyAccessUI } = useAccess("Distribution", "Packing List");
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({});
   const driverOptions = [
@@ -66,7 +64,7 @@ const PackingList = () => {
   const [showBarcodeModal, setShowBarcodeModal] = useState(false);
 
   const driverTemplate = (rowData) => <span>{rowData.driver}</span>;
-
+  
   // Helper function to get first word of truck name
   const getFirstWord = (text) => {
     if (!text) return "";
@@ -77,11 +75,11 @@ const PackingList = () => {
     const truckName = rowData.truck || "";
     const firstWord = getFirstWord(truckName);
     return (
-      <span
-        title={truckName}
-        style={{
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
+      <span 
+        title={truckName} 
+        style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
           textOverflow: 'ellipsis',
           display: 'inline-block',
           maxWidth: '100%'
@@ -91,7 +89,7 @@ const PackingList = () => {
       </span>
     );
   };
-
+  
   const packerDropdown = (rowData) => <span>{rowData.packer}</span>;
   // const packerDropdown = (rowData) => (
   //     <Input
@@ -269,8 +267,7 @@ const PackingList = () => {
       RackId: selectedRackId,
       isSubmitted: isSubmit,
       userId: 1,
-      packNo: selectedOrder.pdlNumber,
-      UomId: barcodeSO.uomId || selectedOrder.uomId
+      packNo: selectedOrder.pdlNumber
     };
 
     try {
@@ -359,12 +356,6 @@ const PackingList = () => {
     });
     setKeyword("");
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   // Initialize filters on mount
   useEffect(() => {
@@ -545,12 +536,12 @@ const PackingList = () => {
     return (
       <div className="row align-items-center g-3 clear-spa">
         <div className="col-12 col-lg-6">
-          <Button
-            className="btn btn-danger btn-label"
-            onClick={() => { setKeyword(""); setFilters({}); setSalesOrders(allPackingData); }}
-          >
-            <i className="mdi mdi-filter-off label-icon" /> Clear
-          </Button>
+         <Button 
+        className="btn btn-danger btn-label" 
+        onClick={() => { setKeyword(""); setFilters({}); setSalesOrders(allPackingData); }}
+         >
+        <i className="mdi mdi-filter-off label-icon" /> Clear
+         </Button>
         </div>
         <div className="col-12 col-lg-3 text-end">
           <span className="me-4"><Tag value="S" severity={getSeverity("Saved")} /> Saved</span>
@@ -572,10 +563,8 @@ const PackingList = () => {
                 const filtered = allPackingData.filter(item => {
                   // Search in customer, packer, gasCode, and any other relevant fields
                   return (
-                    (item.customer && item.customer.toLowerCase().includes(lowerVal)) ||
                     (item.customerName && item.customerName.toLowerCase().includes(lowerVal)) ||
                     (item.packer && item.packer.toLowerCase().includes(lowerVal)) ||
-                    (item.driver && item.driver.toLowerCase().includes(lowerVal)) ||
                     (item.gasCode && item.gasCode.toLowerCase().includes(lowerVal)) ||
                     (item.pdlNumber && String(item.pdlNumber).toLowerCase().includes(lowerVal))
                   );
@@ -699,18 +688,16 @@ const PackingList = () => {
     const packingId = selectedOrder.packingId;
     const donoId = selectedOrder.DOID;
     const packingdetailsId = selectedOrder.packingDetailsId
-    const uomId = barcodeSO.uomId || selectedOrder.uomId;
     debugger
     try {
       const response = await GetBarcodePackingList({
         packingId: packingId,
         barcode: barcode ?? "",
         donoId: donoId,
-        uomId: uomId
       });
       debugger
       if (response?.status) {
-        await fetchBarcodeDetailsAndRacks(packingId, packingdetailsId, uomId);
+        await fetchBarcodeDetailsAndRacks(packingId, packingdetailsId);
       }
 
     } catch (error) {
@@ -828,9 +815,7 @@ const PackingList = () => {
         packingDetailsId: item["PackingDetailsId"] || null,
         deliveryDetailRefId: item["Delivery Detail Ref ID"] || null,
         packingId: item["PackingId"] || null,
-        DOID: item["DOID"] || null,
-        uomId: item["UomId"] || null,
-        uom: item["UOM"] || ""
+        DOID: item["DOID"] || null
       }));
 
       setAllPackingData(mappedData);     // keep original full list
@@ -1222,14 +1207,6 @@ const PackingList = () => {
     );
   };
 
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
-
   return (
     <React.Fragment>
       <div className="page-content">
@@ -1321,13 +1298,9 @@ const PackingList = () => {
                     className="btn btn-info"
                     onClick={async () => {
                       setLoading(true);
-                      if (!searchBy && !searchValue) {
-                        await fetchPackingList(); // fetch all from API
-                      } else {
-                        const filteredData = filterSalesOrders(searchBy, searchValue);
-                        setSalesOrders(filteredData);
-                      }
-                      setLoading(false);
+                      const filteredData = filterSalesOrders(searchBy, searchValue);
+                      setSalesOrders(filteredData);
+                      setTimeout(() => setLoading(false), 500); // simulate async, remove if real async
                     }}
                   >
                     <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i>
@@ -1364,7 +1337,6 @@ const PackingList = () => {
                     type="button"
                     className="btn btn-primary"
                     onClick={handlePrint}
-                    data-access="print"
                   >
                     <i className="bx bx-printer label-icon font-size-16 align-middle me-2"></i>
                     Print
@@ -1380,12 +1352,13 @@ const PackingList = () => {
 
                 <DataTable
                   value={salesOrders}
-                  rows={access.records || 10}
+                  rows={10}
                   header={header}
                   paginator
-                  loading={loading}
                   filters={filters}
                   globalFilterFields={['customer', 'gasCode', 'status', 'gasDescription', 'driver', 'pdlNumber', 'pdlDate', 'truck', 'packer', 'estTime']}
+                  scrollable
+                  scrollHeight="400px"
                   responsiveLayout="scroll"
                   className='blue-bg'
                   emptyMessage="No order found."
@@ -1407,16 +1380,16 @@ const PackingList = () => {
 />
 <Column field="soDate" header="SO Date" style={{ width: '6%' }} /> */}
 
-                  <Column
-                    field="pdlNumber"
-                    header="PDL No."
+                  <Column 
+                    field="pdlNumber" 
+                    header="PDL No." 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by PDL No."
                   />
-                  <Column
-                    field="pdlDate"
-                    header="PDL Date"
+                  <Column 
+                    field="pdlDate" 
+                    header="PDL Date" 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by PDL Date"
@@ -1431,39 +1404,39 @@ const PackingList = () => {
                     style={{ whiteSpace: 'nowrap' }}
                     bodyStyle={{ whiteSpace: 'nowrap', overflow: 'visible' }}
                   />
-                  <Column
-                    field="customer"
-                    header="Customer"
-                    style={{ width: "20%" }}
+                  <Column 
+                    field="customer" 
+                    header="Customer" 
+                    style={{ width: "20%" }} 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by Customer"
                   />
-                  <Column
-                    field="gasCode"
-                    header="Gas Code"
+                  <Column 
+                    field="gasCode" 
+                    header="Gas Code" 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by Gas Code"
                   />
-                  <Column
-                    field="gasDescription"
-                    header="Gas Description"
+                  <Column 
+                    field="gasDescription" 
+                    header="Gas Description" 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by Gas Description"
                   />
-                  <Column
-                    field="soQty"
-                    header="SO Qty"
+                  <Column 
+                    field="soQty" 
+                    header="SO Qty" 
                     style={{ textAlign: "center" }}
                     filter
                     filterPlaceholder="Search by SO Qty"
                   />
 
-                  <Column
-                    field="plannedQty"
-                    header="Plan Deliv Qty"
+                  <Column 
+                    field="plannedQty" 
+                    header="Plan Deliv Qty" 
                     style={{ textAlign: "center" }}
                     filter
                     filterPlaceholder="Search by Plan Deliv Qty"
@@ -1485,53 +1458,53 @@ const PackingList = () => {
                       </Button>
                     )} headerStyle={{ textAlign: 'center' }}
                   />
-                  <Column
-                    header="Seq Time"
-                    field="estTime"
+                  <Column 
+                    header="Seq Time" 
+                    field="estTime" 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by Seq Time"
                   />
-                  <Column
-                    field="driver"
-                    header="Driver"
-                    body={driverTemplate}
+                  <Column 
+                    field="driver" 
+                    header="Driver" 
+                    body={driverTemplate} 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by Driver"
                   />
-                  <Column
-                    field="truck"
-                    header="Truck"
-                    body={truckTemplate}
+                  <Column 
+                    field="truck" 
+                    header="Truck" 
+                    body={truckTemplate} 
                     headerStyle={{ textAlign: 'center' }}
                     style={{ minWidth: '110px' }}
                     bodyStyle={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
                     filter
                     filterPlaceholder="Search by Truck"
                   />
-                  <Column
-                    header="Packer"
-                    body={packerDropdown}
+                  <Column 
+                    header="Packer" 
+                    body={packerDropdown} 
                     headerStyle={{ textAlign: 'center' }}
                     filter
                     filterPlaceholder="Search by Packer"
                     field="packer"
                   />
-                  <Column
-                    body={rowData => <DelivInstCell inst={rowData.instruction} />}
-                    header="Deliv Inst"
-                    tooltip="testt"
+                  <Column 
+                    body={rowData => <DelivInstCell inst={rowData.instruction} />} 
+                    header="Deliv Inst" 
+                    tooltip="testt" 
                     headerStyle={{ textAlign: 'center' }}
                     field="instruction"
                     filter
                     filterPlaceholder="Search by Deliv Inst"
                   />
                   {/* <Column header="Save / Post" body={savePostTemplate} style={{ width: '3%', textAlign: 'center' }} /> */}
-                  <Column
-                    header="Status"
-                    className="text-center"
-                    body={statusTemplate}
+                  <Column 
+                    header="Status" 
+                    className="text-center" 
+                    body={statusTemplate} 
                     headerStyle={{ textAlign: 'center' }}
                     field="status"
                     filter
@@ -1661,14 +1634,14 @@ const PackingList = () => {
                     value={barcodeData}
                     onChange={handleInputChange}
                     onKeyDown={handleBarcodeScan}
-                    disabled={remainingBarcodes <= 0 || !access.canSave}
+                    disabled={remainingBarcodes <= 0}
                   />
                   <InputGroupText>
                     <Button
                       color="primary"
                       size="sm"
                       onClick={handleButtonClick}
-                      disabled={remainingBarcodes <= 0 || !access.canSave}
+                      disabled={remainingBarcodes <= 0}
                     >
                       Enter
                     </Button>
@@ -1722,16 +1695,14 @@ const PackingList = () => {
           </div>
         </ModalBody>
         <ModalFooter>
-          {access.canSave && (
-            <Button className="btn btn-info" onClick={() => handleSave(0)}>
-              Save
-            </Button>
-          )}
-          {access.canPost && (
-            <Button className="btn btn-success" onClick={() => handleSave(1)}>
-              Post
-            </Button>
-          )}
+
+          <Button className="btn btn-info" onClick={() => handleSave(0)}>
+            Save
+          </Button>
+
+          <Button className="btn btn-success" onClick={() => handleSave(1)}>
+            Post
+          </Button>
 
           <Button className='btn btn-danger' onClick={closeBarcodeModal}>
             Cancel

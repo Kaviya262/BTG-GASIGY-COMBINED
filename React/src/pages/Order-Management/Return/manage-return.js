@@ -20,10 +20,8 @@ import { fetchGasList, GetCustomer } from "common/data/mastersapi";
 import { searchReturnOrders } from "common/data/invoiceapi";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import useAccess from "../../../common/access/useAccess";
 
 const ManageReturn = () => {
-    const { access, applyAccessUI } = useAccess("Sales", "Return Order");
     const [isClearable, setIsClearable] = useState(true);
     const [isSearchable, setIsSearchable] = useState(true);
     const [isDisabled, setIsDisabled] = useState(false);
@@ -103,12 +101,6 @@ const ManageReturn = () => {
     }, []);
 
     useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
-    useEffect(() => {
         const loadCustomerList = async () => {
             const data = await GetCustomer(1, -1);
             setCustomerList(data);
@@ -165,32 +157,15 @@ const ManageReturn = () => {
         );
     };
 
-    // const actionBodyTemplate = (rowData) => {
-    //     if (rowData.Status != "Posted") {
-    //         return (
-    //             <div className="actions">
-    //                 <span style={{ marginRight: '0.5rem' }} title="Edit" onClick={() => editRow(rowData)} >
-    //                     <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-    //                 </span>
-    //             </div>)
-    //     }
-    // };
-
     const actionBodyTemplate = (rowData) => {
-        return (
-            <div className="actions">
-                {rowData.Status != "Posted" && access.canEdit && (
-                    <span
-                        style={{ marginRight: '0.5rem', cursor: 'pointer' }}
-                        title="Edit"
-                        onClick={() => editRow(rowData)}
-                        data-access="edit" // <-- Add this
-                    >
+        if (rowData.Status != "Posted") {
+            return (
+                <div className="actions">
+                    <span style={{ marginRight: '0.5rem' }} title="Edit" onClick={() => editRow(rowData)} >
                         <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                     </span>
-                )}
-            </div>
-        );
+                </div>)
+        }
     };
 
     const statusBodyTemplate = (rowData) => {
@@ -265,13 +240,13 @@ const ManageReturn = () => {
     // Helper function to parse date string to Date object for comparison
     const parseDate = (dateString) => {
         if (!dateString) return null;
-
+        
         try {
             // Handle different date formats
             // Format 1: YYYY-MM-DD (e.g., "2025-01-03")
             // Format 2: DD-MMM-YYYY (e.g., "03-Jan-2025")
             // Format 3: Other formats
-
+            
             const parts = dateString.split('-');
             if (parts.length === 3) {
                 // If first part is 4 digits, it's YYYY-MM-DD
@@ -282,11 +257,11 @@ const ManageReturn = () => {
                 if (parts[0].length === 2) {
                     // Try to parse DD-MMM-YYYY format
                     const day = parseInt(parts[0], 10);
-                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                     const monthIndex = monthNames.indexOf(parts[1]);
                     const year = parseInt(parts[2], 10);
-
+                    
                     if (monthIndex !== -1 && !isNaN(day) && !isNaN(year)) {
                         return new Date(year, monthIndex, day);
                     }
@@ -294,7 +269,7 @@ const ManageReturn = () => {
                     return new Date(dateString);
                 }
             }
-
+            
             // Try standard Date parsing
             const parsed = new Date(dateString);
             if (isNaN(parsed.getTime())) {
@@ -310,27 +285,27 @@ const ManageReturn = () => {
     // Filter records by Return Date (RtnDate) between FromDate and ToDate (inclusive)
     const filterByReturnDate = (data, fromDate, toDate) => {
         if (!fromDate || !toDate || !data || !Array.isArray(data)) return data;
-
+        
         const from = parseDate(fromDate);
         const to = parseDate(toDate);
-
+        
         if (!from || !to) return data;
-
+        
         // Set time to start of day for fromDate
         from.setHours(0, 0, 0, 0);
-
+        
         // Set time to end of day for toDate to include all records on that day
         to.setHours(23, 59, 59, 999);
-
+        
         return data.filter(item => {
             if (!item.RtnDate) return false;
-
+            
             const returnDate = parseDate(item.RtnDate);
             if (!returnDate) return false;
-
+            
             // Reset time to start of day for comparison
             returnDate.setHours(0, 0, 0, 0);
-
+            
             // Check if Return Date is between or equal to FromDate and ToDate (inclusive)
             return returnDate >= from && returnDate <= to;
         });
@@ -339,33 +314,33 @@ const ManageReturn = () => {
     const searchReturnOrderList = async (filterData = null) => {
         // Use provided filterData, ref (latest state), or fallback to state
         const currentFilter = filterData || searchFilterRef.current || searchFilter;
-
+        
         setErrormsg("");
-
+        
         // Validate dates
         if (!currentFilter.FromDate || !currentFilter.ToDate) {
             setErrormsg("Please select both From and To dates.");
             return;
         }
-
+        
         if (currentFilter.FromDate > currentFilter.ToDate) {
             setErrormsg("To date should not be earlier than From date.");
             return;
         }
-
+        
         setLoading(true);
         try {
             const response = await searchReturnOrders(currentFilter);
             if (response?.status) {
                 let filteredData = response?.data || [];
-
+                
                 // Apply client-side filtering based on Return Date
                 filteredData = filterByReturnDate(
                     filteredData,
                     currentFilter.FromDate,
                     currentFilter.ToDate
                 );
-
+                
                 setquotes(filteredData);
             } else {
                 console.log("Failed to fetch production orders");
@@ -424,14 +399,6 @@ const ManageReturn = () => {
         const fileName = `Return-Order-List-${year}-${month}-${day}-${hours}-${minutes}-${ampm}.xlsx`;
         saveAs(data, fileName);
     };
-
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
 
     return (
         <React.Fragment>
@@ -503,16 +470,16 @@ const ManageReturn = () => {
                                             <FormGroup>
                                                 <Label></Label>
                                                 <InputGroup>
-                                                    <Flatpickr
-                                                        name="FromDate"
-                                                        id="FromDate"
-                                                        className="form-control d-block"
-                                                        placeholder="dd-mm-yyyy"
-                                                        options={{
-                                                            altInput: true,
-                                                            altFormat: "d-M-Y",
-                                                            dateFormat: "Y-m-d"
-                                                        }}
+                                                    <Flatpickr 
+                                                        name="FromDate" 
+                                                        id="FromDate" 
+                                                        className="form-control d-block" 
+                                                        placeholder="dd-mm-yyyy" 
+                                                        options={{ 
+                                                            altInput: true, 
+                                                            altFormat: "d-M-Y", 
+                                                            dateFormat: "Y-m-d" 
+                                                        }} 
                                                         value={searchFilter.FromDate}
                                                         onChange={handleDateChange}
                                                     />
@@ -530,16 +497,16 @@ const ManageReturn = () => {
                                             <FormGroup>
                                                 <Label></Label>
                                                 <InputGroup>
-                                                    <Flatpickr
-                                                        name="ToDate"
-                                                        id="ToDate"
-                                                        className="form-control d-block"
-                                                        placeholder="dd-mm-yyyy"
+                                                    <Flatpickr 
+                                                        name="ToDate" 
+                                                        id="ToDate" 
+                                                        className="form-control d-block" 
+                                                        placeholder="dd-mm-yyyy" 
                                                         options={{
                                                             altInput: true,
                                                             altFormat: "d-M-Y",
                                                             dateFormat: "Y-m-d"
-                                                        }}
+                                                        }} 
                                                         value={searchFilter.ToDate}
                                                         onChange={handleDateChange}
                                                     />
@@ -558,7 +525,7 @@ const ManageReturn = () => {
                                     <button type="button" className="btn btn-secondary" onClick={exportToExcel}>
                                         <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Export
                                     </button>
-                                    <button type="button" className="btn btn-success" onClick={handleAddpk} data-access="new">
+                                    <button type="button" className="btn btn-success" onClick={handleAddpk}>
                                         <i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New
                                     </button>
                                 </div>
@@ -566,12 +533,12 @@ const ManageReturn = () => {
                         </Card>
                         <Col lg="12">
                             <Card >
-                                <DataTable value={quotes} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="Rtn_ID" filters={filters} globalFilterFields={['RtndNo', 'RtnDate', 'customername', 'DONumber']} header={header} emptyMessage="No order found." onFilter={(e) => setFilters(e.filters)} className='blue-bg' sortField="Rtn_ID" sortOrder={-1}>
+                                <DataTable value={quotes} paginator showGridlines rows={10} loading={loading} dataKey="Rtn_ID" filters={filters} globalFilterFields={['RtndNo', 'RtnDate', 'customername', 'DONumber']} header={header} emptyMessage="No order found." onFilter={(e) => setFilters(e.filters)} className='blue-bg' sortField="Rtn_ID" sortOrder={-1}>
                                     <Column field="RtndNo" header="Return Order No." filter filterPlaceholder="Search by System Seq. No." style={{ width: "15%" }} />
                                     <Column field="RtnDate" header="Return Date" filter filterPlaceholder="Search by date" className="text-left" style={{ width: "12%" }} />
                                     <Column field="customername" header="Customer" filter filterPlaceholder="Search by customer" />
                                     <Column field="DONumber" header="DO No." filter filterPlaceholder="Search by name" />
-                                    <Column field="Status" header="Status" body={statusBodyTemplate} filter filterElement={statusFilterTemplate} className="text-center" />
+                                    <Column field="Status" header="Status" body={statusBodyTemplate} filter filterElement={statusFilterTemplate} className="text-center"  />
                                     <Column field="Rtn_ID" header="Action" showFilterMatchModes={false} body={actionBodyTemplate} className="text-center" />
                                 </DataTable>
                             </Card>

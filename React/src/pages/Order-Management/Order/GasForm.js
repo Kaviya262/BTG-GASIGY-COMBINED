@@ -5,10 +5,8 @@ import Flatpickr from "react-flatpickr";
 import {
     GetShippingAddress
 } from "../../../common/data/mastersapi";
-import useAccess from "../../../common/access/useAccess";
 
 const GasForm = ({ soData, gascoderows, setGascoderows, colKey, UOMList, addressrowids, setAddressrowids, setErrorMsg }) => {
-    const { access, applyAccessUI } = useAccess("Sales", "Orders");
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const minDate = new Date(currentYear, 0, 1);
@@ -24,13 +22,6 @@ const GasForm = ({ soData, gascoderows, setGascoderows, colKey, UOMList, address
     const toggleModal = () => {
         setIsModalOpen(!isModalOpen);
     };
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
     useEffect(() => {
         console.log("Updated gascoderows:", gascoderows);
     }, [gascoderows]);
@@ -375,7 +366,7 @@ const GasForm = ({ soData, gascoderows, setGascoderows, colKey, UOMList, address
                             </div>
                         </ModalBody>
                         <ModalFooter>
-                            <Button type="button" className="btn btn-info" onClick={saveAddressdet} data-access="save">
+                            <Button type="button" className="btn btn-info" onClick={saveAddressdet}>
                                 <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>Save
                             </Button>
                             <Button type="button" color="secondary" onClick={toggleModal}>

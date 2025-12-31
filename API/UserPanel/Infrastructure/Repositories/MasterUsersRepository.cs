@@ -1,13 +1,10 @@
-﻿using BackEnd.Master;
+﻿using System.Data;
+using BackEnd.Master;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.OrderMngMaster.Users;
 using Dapper;
 using DocumentFormat.OpenXml.Spreadsheet;
-using Newtonsoft.Json;
-using System.Data;
 using UserPanel.Infrastructure.Data;
 
 namespace Infrastructure.Repositories
@@ -15,14 +12,10 @@ namespace Infrastructure.Repositories
     public class MasterUsersRepository : IMasterUsersRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
 
-        public MasterUsersRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public MasterUsersRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
         public Task<object> GetAllAsync(int opt)
@@ -57,20 +50,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterUsersRepository),
-                    Method_Function = nameof(GetAllUser),
-                    UserId = 0,
-                    ScreenName = "User",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        prodId, fromDate, toDate, branchId, pageNumber, pageSize, UserName, keyword
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -87,8 +66,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryAsync<object>($"select * from users where id = {userStatus.MasterUser.Id}");
-
                 var param = new DynamicParameters();
                 param.Add("@in_Id", userStatus.MasterUser.Id);
                 param.Add("@in_IsActive", userStatus.MasterUser.IsActive);
@@ -101,19 +78,6 @@ namespace Infrastructure.Repositories
                     commandType: CommandType.StoredProcedure
                 );
 
-                // Log transaction
-                await LogTransactionAsync(
-                    id: userStatus.MasterUser.Id,
-                    branchId: userStatus.MasterUser.BranchId,
-                    orgId: 1,
-                    actionType: "Update",
-                    actionDescription: "Update users",
-                    oldValue: oldvalue,
-                    newValue: userStatus,
-                    tableName: "MasterCylinder",
-                    userId: 1
-                );
-
                 return new ResponseModel()
                 {
                     Data = null,
@@ -124,17 +88,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterUsersRepository),
-                    Method_Function = nameof(ToggleUserActiveStatusAsync),
-                    UserId = 0,
-                    ScreenName = "User",
-                    RequestData_Payload = JsonConvert.SerializeObject(userStatus)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -151,8 +104,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryAsync<object>($"select * from users where id = {createOrUpdateUser.MasterUserspwd.Id}");
-
                 var param = new DynamicParameters();
                 param.Add("opt",1);
 
@@ -163,19 +114,6 @@ namespace Infrastructure.Repositories
                     "proc_updateusercredential",
                     param,
                     commandType: CommandType.StoredProcedure
-                );
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: createOrUpdateUser.MasterUserspwd.Id,
-                    branchId: createOrUpdateUser.MasterUserspwd.BranchId,
-                    orgId: 1,
-                    actionType: "Update",
-                    actionDescription: "Update User",
-                    oldValue: oldvalue,
-                    newValue: createOrUpdateUser,
-                    tableName: "users",
-                    userId: 1
                 );
                 var user = result.FirstOrDefault();
                 if (user == 1)
@@ -203,17 +141,6 @@ namespace Infrastructure.Repositories
             }
             catch(Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterUsersRepository),
-                    Method_Function = nameof(UpdateUserPasswordAsync),
-                    UserId = 0,
-                    ScreenName = "User",
-                    RequestData_Payload = JsonConvert.SerializeObject(createOrUpdateUser)
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -232,14 +159,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                object oldValue = null;
-                bool isUpdate = createOrUpdateUser.MasterUser.Id > 0;
-
-                if (isUpdate)
-                {
-                    oldValue = await _connection.QuerySingleOrDefaultAsync<object>("SELECT * FROM users WHERE Id = @Id", new { Id = createOrUpdateUser.MasterUser.Id }
-                    );
-                }
                 var param = new DynamicParameters();
 
                 // Input parameters
@@ -280,22 +199,6 @@ namespace Infrastructure.Repositories
                 bool status;
                 int statusCode;
                 int data;
-
-                string actionType = isUpdate ? "Update" : "Insert";
-                string actionDescription = isUpdate ? "Updated User" : "Created New User";
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: isUpdate ? createOrUpdateUser.MasterUser.Id : newUserId,
-                    branchId: createOrUpdateUser.MasterUser.BranchId,
-                    orgId: 1,
-                    actionType: "Insert",
-                    actionDescription: "Added new User",
-                    oldValue: isUpdate ? oldValue : null,
-                    newValue: createOrUpdateUser,
-                    tableName: "user",
-                    userId: 1
-                );
 
                 switch (result)
                 {
@@ -347,17 +250,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterUsersRepository),
-                    Method_Function = nameof(CreateOrUpdateUserAsync),
-                    UserId = 0,
-                    ScreenName = "User",
-                    RequestData_Payload = JsonConvert.SerializeObject(createOrUpdateUser)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -373,90 +265,41 @@ namespace Infrastructure.Repositories
         #region Get User by ID and Branch ID
         public async Task<object> GetUserByIdAsync(int userId,int branchId)
         {
-            try
+            var param = new DynamicParameters();
+            param.Add("in_UserID", userId);
+            param.Add("in_BranchId", branchId);
+
+            var result = await _connection.QueryAsync<MasterUsers>(
+                "GetUserById",
+                param,
+                commandType: CommandType.StoredProcedure
+            );
+
+            var user = result.FirstOrDefault();
+
+            if (user == null)
             {
-                var param = new DynamicParameters();
-                param.Add("in_UserID", userId);
-                param.Add("in_BranchId", branchId);
-
-                var result = await _connection.QueryAsync<MasterUsers>(
-                    "GetUserById",
-                    param,
-                    commandType: CommandType.StoredProcedure
-                );
-
-                var user = result.FirstOrDefault();
-
-                if (user == null)
-                {
-                    return new ResponseModel
-                    {
-                        Data = null,
-                        Message = "User not found",
-                        Status = false
-                    };
-                }
-
-                var command = new MasterUsersCommand
-                {
-                    MasterUser = user
-                };
-
                 return new ResponseModel
                 {
-                    Data = command,
-                    Message = "User found",
-                    Status = true
-                };
-            }
-            catch (Exception Ex)
-            {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(MasterUsersRepository),
-                    Method_Function = nameof(GetUserByIdAsync),
-                    UserId = 0,
-                    ScreenName = "User",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        userId, branchId
-                    })
-                });
-                return new ResponseModel()
-                {
                     Data = null,
-                    Message = "User not found" + Ex.Message,
+                    Message = "User not found",
                     Status = false
                 };
             }
+
+            var command = new MasterUsersCommand
+            {
+                MasterUser = user
+            };
+
+            return new ResponseModel
+            {
+                Data = command,
+                Message = "User found",
+                Status = true
+            };
         }
 
         #endregion
-
-        private async Task LogTransactionAsync(int? id, int? branchId, int? orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Master",
-                ScreenName = "User",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 }

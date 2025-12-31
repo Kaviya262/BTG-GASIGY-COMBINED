@@ -14,7 +14,6 @@ import {
     GetAllPaymentTerm,
     SaveTerms,
 } from "../../../src/common/data/mastersapi";
-import useAccess from "../../common/access/useAccess";
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -24,7 +23,6 @@ const initFilters = () => ({
 });
 
 const ManagePaymentTerms = () => {
-    const { access, applyAccessUI } = useAccess("Masters", "Payment Terms");
     const history = useHistory();
 
     const [paymentTerms, setPaymentTerms] = useState([]);
@@ -47,12 +45,6 @@ const ManagePaymentTerms = () => {
 
 
     const toggleModal = () => setIsModalOpen(prev => !prev);
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -81,9 +73,8 @@ const ManagePaymentTerms = () => {
         paymentTermCode: Yup.string()
             .trim()
             .required("Payment Term Code is required")
-            .max(60, "Payment Term Code is atmost 60 characters")
-            .test("unique", "Payment Term Code should be Unique!", function (value) {
-                debugger
+            .max(60,"Payment Term Code is atmost 60 characters")
+            .test("unique", "Payment Term Code should be Unique!", function (value) { debugger
                 if (!value) return true;
                 const existCode = paymentTerms.find(
                     Term => Term.PaymentTermCode?.trim().toLowerCase() === value.trim().toLowerCase() &&
@@ -92,8 +83,8 @@ const ManagePaymentTerms = () => {
                 return !existCode;
             }),
         paymentTermDescription: Yup.string()
-            .trim()
-            .max(50, "Payment Term Description is atmost 50 characters"),
+        .trim()
+        .max(50,"Payment Term Description is atmost 50 characters"),
     }), [paymentTerms]);
 
     const getPaymentTerms = useCallback(async (from, to, code) => {
@@ -117,7 +108,7 @@ const ManagePaymentTerms = () => {
                 });
                 setSwitchStates(switchState);
             }
-            else {
+             else {
                 setFilteredPayTerms([]);
 
             }
@@ -237,40 +228,37 @@ const ManagePaymentTerms = () => {
         setIsModalOpen2(true);
     };
 
-    const actionBodyTemplate = (rowData) => {
-        if (!access?.canEdit) {
-            return null;
-        }
-        console.log(selectedRow, "rowData :", rowData);
-        if (rowData.IsActive == 1) {
-            return (
-                <div className="actions">
-                    <span onClick={() => {
-                        editRow(rowData);
-                        console.log("onClick :", rowData);
-                    }}
+    const actionBodyTemplate = (rowData) => {     
+        debugger   
+        console.log(selectedRow,"rowData :", rowData);
+          if(rowData.IsActive==1){    
+       return (
+        <div className="actions">
+            <span onClick={()=>{
+                   editRow(rowData);
+                    console.log("onClick :", rowData);
+            }} 
+            
+             title= {"Edit"  }>
+                <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
+            </span>
+        </div>
+       )
+       }
+       else{
+           return (
+                    <div className="actions">
 
-                        title={"Edit"}>
-                        <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-                    </span>
-                </div>
-            )
-        }
-        else {
-            return (
-                <div className="actions">
-
-                    <span
-                        style={{
-                            cursor: 'not-allowed',
-                            opacity: 0.5,
-                            pointerEvents: 'none'
-                        }}
-                        title={"Disabled"}>
-                        <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-                    </span>
-                </div>)
-        }
+          <span  
+            style={{ cursor :   'not-allowed',
+                     opacity : 0.5,
+                     pointerEvents :   'none'
+             }} 
+             title= { "Disabled" }>
+                <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
+            </span>
+            </div>)
+       }
     };
 
     const actionBodyTemplate2 = (rowData) => (
@@ -295,14 +283,6 @@ const ManagePaymentTerms = () => {
         </div>
     ), [clearFilter, globalFilterValue, onGlobalFilterChange]);
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -319,7 +299,7 @@ const ManagePaymentTerms = () => {
                                             <label htmlFor="name" className="form-label mb-0">Payment Term Code</label>
                                         </div>
                                         <div className="col-12 col-lg-3 col-md-3 col-sm-3">
-                                            <input id="name" type="text" className="form-control" value={payTermCode} onChange={(e) => setPayTermCode(e.target.value)} maxLength={20} />
+                                            <input id="name" type="text" className="form-control" value={payTermCode} onChange={(e) => setPayTermCode(e.target.value)} maxLength={20}/>
                                         </div>
 
                                     </div>
@@ -330,7 +310,7 @@ const ManagePaymentTerms = () => {
                                     <button type="button" className="btn btn-danger" onClick={handleSearchCancel}>
                                         <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
 
-                                    <button type="button" className="btn btn-success" onClick={handleNew} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={handleNew}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -338,7 +318,7 @@ const ManagePaymentTerms = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable value={filteredPayTerms} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="PaymentTermId" filters={filters} globalFilterFields={["PaymentTermCode", "PaymentTermDesc", "DueDays"]} header={header} emptyMessage="No payment terms found." onFilter={(e) => setFilters(e.filters)}>
+                                <DataTable value={filteredPayTerms} paginator showGridlines rows={10} loading={loading} dataKey="PaymentTermId" filters={filters} globalFilterFields={["PaymentTermCode", "PaymentTermDesc", "DueDays"]} header={header} emptyMessage="No payment terms found." onFilter={(e) => setFilters(e.filters)}>
                                     <Column field="PaymentTermCode" header="Code" filter filterPlaceholder="Search by Code" />
                                     <Column field="PaymentTermDesc" header="Description" filter filterPlaceholder="Search by Description" />
                                     <Column field="DueDays" filter header="Due Days" />
@@ -376,7 +356,7 @@ const ManagePaymentTerms = () => {
                                                         <Col md="12">
                                                             <FormGroup>
                                                                 <Label htmlFor="paymentTermCode" className="required-label">Code <span className="text-muted">(Max 60 characters)</span></Label>
-                                                                <Field name="paymentTermCode" className={`form-control ${errors.paymentTermCode && touched.paymentTermCode ? "is-invalid" : ""}`} maxLength="60" />
+                                                                <Field name="paymentTermCode" className={`form-control ${errors.paymentTermCode && touched.paymentTermCode ? "is-invalid" : ""}`} maxLength="60"/>
                                                                 <ErrorMessage name="paymentTermCode" component="div" className="text-danger" />
                                                             </FormGroup>
                                                         </Col>
@@ -402,14 +382,12 @@ const ManagePaymentTerms = () => {
                                                     </Row>
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 text-end button-items">
-                                                            {access?.canSave && (
-                                                                <Button type="submit" className="btn btn-info" disabled={isSubmitting} >
-                                                                    <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
-                                                                    {isSubmitting
-                                                                        ? selectedRow ? "Updating..." : "Saving..."
-                                                                        : selectedRow ? "Update" : "Save"}
-                                                                </Button>
-                                                            )}
+                                                            <Button type="submit" className="btn btn-info" disabled={isSubmitting}>
+                                                                <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
+                                                                {isSubmitting
+                                                                    ? selectedRow ? "Updating..." : "Saving..."
+                                                                    : selectedRow ? "Update" : "Save"}
+                                                            </Button>
 
                                                             <Button type="button" className="btn btn-danger" onClick={toggleModal}>
                                                                 <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel

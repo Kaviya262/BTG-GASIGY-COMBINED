@@ -45,3 +45,15 @@ D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.dll
 D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\refint\Core.dll
 D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.pdb
 D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\Core\obj\Debug\net9.0\ref\Core.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.deps.json
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\bin\Debug\net9.0\Core.pdb
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.AssemblyReference.cache
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfoInputs.cache
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.AssemblyInfo.cs
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.csproj.CoreCompileInputs.cache
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\refint\Core.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\Core.pdb
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\Core\obj\Debug\net9.0\ref\Core.dll

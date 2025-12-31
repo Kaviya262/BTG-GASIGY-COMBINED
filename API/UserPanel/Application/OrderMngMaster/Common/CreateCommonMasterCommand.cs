@@ -33,6 +33,5 @@ namespace Application.OrderMngMaster.Common
         public int? PackerId { get; set; }
         public string PDLNo { get; set; }
         public int? CustomerId { get; set; }
-        public Int32 UomId { get; set; }
     }
 }

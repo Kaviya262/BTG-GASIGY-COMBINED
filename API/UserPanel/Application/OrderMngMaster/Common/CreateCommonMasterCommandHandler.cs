@@ -231,7 +231,7 @@ namespace Application.OrderMngMaster.Common
             }
             if (command.Opt == -1)
             {
-                var Result = await _repository.GetBarcodeDetails(command.SearchText, command.packingid, command.doid, command.UomId);
+                var Result = await _repository.GetBarcodeDetails(command.SearchText, command.packingid, command.doid);
                 return Result;
             }
             if (command.Opt == 38)

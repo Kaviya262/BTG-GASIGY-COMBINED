@@ -58,3 +58,7 @@ class SaveDraftRequest(BaseModel):
 class UpdateReferenceRequest(BaseModel):
     id: int
     new_reference: str
+
+class BulkUpdateReferenceRequest(BaseModel):
+    ids: List[int]
+    new_reference: str

@@ -30,7 +30,6 @@ import {
 import { getCustomers } from "store/actions";
 import { AutoComplete } from "primereact/autocomplete";
 import makeAnimated from "react-select/animated";
-import useAccess from "../../../common/access/useAccess";
 
 const getUserDetails = () => {
     if (localStorage.getItem("authUser")) {
@@ -40,7 +39,6 @@ const getUserDetails = () => {
 }
 const animatedComponents = makeAnimated();
 const PriceQuotation = () => {
-    const { access, applyAccessUI } = useAccess("Sales", "Quotations");
     const { id } = useParams();
     const history = useHistory();
     const [selectedOptions, setselectedOptions] = useState(null);
@@ -128,13 +126,6 @@ const PriceQuotation = () => {
     });
     const [UserData, setUserData] = useState(null);
     const [IsAdmin, setIsAdmin] = useState(0);
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
     useEffect(() => {
 
         const loadIsadmindetails = async () => {
@@ -366,158 +357,158 @@ const PriceQuotation = () => {
     });
     const [errorMsg, setErrorMsg] = useState([]);
 
-    const validationfn = (name, value, tempErrors, formValues) => {
-        debugger
-        let newErrorClass = "";
-        let newErrorMsg = "";
-        let newValue = typeof value === "string" ? value.trim() : value;
-        if (name === "TBA" || name === "Qtn_Month" || name === "Qtn_Day") {
-            const isTBAfilled = !!sqbasicinfo.TBA;
-            const isQtnMonthFilled = !!sqbasicinfo.Qtn_Month;
-            const isQtnDayFilled = !!sqbasicinfo.Qtn_Day;
+     const validationfn = (name, value, tempErrors, formValues) => {
+    debugger
+    let newErrorClass = "";
+    let newErrorMsg = "";
+    let newValue = typeof value === "string" ? value.trim() : value;
+    if (name === "TBA" || name === "Qtn_Month" || name === "Qtn_Day") {
+      const isTBAfilled = !!sqbasicinfo.TBA;
+      const isQtnMonthFilled = !!sqbasicinfo.Qtn_Month;
+      const isQtnDayFilled = !!sqbasicinfo.Qtn_Day;
 
 
-            if (isTBAfilled) {
-                if (name === "TBA" && !newValue) {
-                    newErrorClass = "form-control is-invalid";
-                    newErrorMsg = "Please enter the TBA.";
-                }
-                if (name === "Qtn_Month" || name === "Qtn_Day") {
-                    newErrorClass = "";
-                }
-            } else if (isQtnMonthFilled && isQtnDayFilled) {
-                if (name === "TBA") {
-                    newErrorClass = "";
-                }
-                if ((name === "Qtn_Month" || name === "Qtn_Day") && !newValue) {
-                    newErrorClass = "form-control is-invalid";
-                    newErrorMsg = `Please select a quotation validity ${name === "Qtn_Month" ? "month" : "day"}.`;
-                }
-            } else {
-                newErrorClass = "form-control is-invalid";
-                newErrorMsg = "Please Enter Quotation Validity (TBA or Qtn Month & Day).";
-            }
-        } else {
-
-            switch (name) {
-                case "Sys_SQ_Nbr":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Manual SQ No. is required.";
-                    }
-                    break;
-                case "SQ_Type":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "SQ Type is required.";
-                    }
-                    break;
-                // case "Validity":
-                //   if (!newValue || Number(newValue) > 60) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Quote Validity cannot exceed 60 days.";
-                //   }
-                //   break;
-                case "Subject":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Quote Subject cannot be empty.";
-                    }
-                    break;
-                case "CustomerId":
-                    if (!newValue) {
-                        newErrorClass = "select-invalid";
-                        newErrorMsg = "Please select a customer.";
-                    }
-                    break;
-                case "CustomerContactId":
-                    if (!newValue) {
-                        if (sqbasicinfo.IsWithCustomer == true) {
-                            newErrorClass = "form-control is-invalid";
-                            newErrorMsg = "Please select a contact person.";
-                        }
-                    }
-                    break;
-                case "customercontactoperation":
-                    if (!newValue) {
-                        if (sqbasicinfo.IsWithCustomer == true) {
-                            newErrorClass = "form-control is-invalid";
-                            newErrorMsg = "Please select customer operation contact.";
-                        }
-                    }
-                    break;
-                /* case "DeliveryAddressId":
-                   if (!newValue) {
-                     newErrorClass = "form-control is-invalid";
-                     newErrorMsg = "Please select a delivery address.";
-                   }
-                   break;*/
-
-                case "EffectiveFromDate":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Please select a Effective From Date.";
-                    }
-                    break;
-
-
-                // case "Qtn_Month":
-                //   if (!newValue) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Please select a quotation validity month.";
-                //   }
-                //   break;
-
-                // case "Qtn_Day":
-                //   if (!newValue) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Please select a quotation validity day.";
-                //   }
-                //   break;
-
-                // case "TBA":
-                //   if (!newValue) {
-                //     newErrorClass = "form-control is-invalid";
-                //     newErrorMsg = "Please enter the TBA.";
-                //   }
-                //   break;
-                case "DeliveryTerms":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Delivery Term is required.";
-                    }
-                    break;
-                case "PaymentTerms":
-                    if (!newValue) {
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Payment Terms is required.";
-                    }
-                    break;
-                case "PaymentMethod":
-                    if (!newValue) {
-                        console.log("error patment method");
-                        newErrorClass = "form-control is-invalid";
-                        newErrorMsg = "Payment Method is required.";
-                    }
-                    break;
-                case "SalesPerson":
-                    if (!newValue) {
-                        newErrorClass = "select-invalid";
-                        newErrorMsg = "Please select a Sales Person.";
-                    }
-                    break;
-                default:
-                    break;
-            }
+      if (isTBAfilled) {
+        if (name === "TBA" && !newValue) {
+          newErrorClass = "form-control is-invalid";
+          newErrorMsg = "Please enter the TBA.";
         }
-
-        setErrorClass(prev => ({ ...prev, [name]: newErrorClass }));
-
-        if (newErrorMsg) {
-            tempErrors.push(newErrorMsg);
-            console.log("errormsg =>", tempErrors);
+        if (name === "Qtn_Month" || name === "Qtn_Day") {
+          newErrorClass = "";
         }
-    };
+      } else if (isQtnMonthFilled && isQtnDayFilled) {
+        if (name === "TBA") {
+          newErrorClass = "";
+        }
+        if ((name === "Qtn_Month" || name === "Qtn_Day") && !newValue) {
+          newErrorClass = "form-control is-invalid";
+          newErrorMsg = `Please select a quotation validity ${name === "Qtn_Month" ? "month" : "day"}.`;
+        }
+      } else {
+        newErrorClass = "form-control is-invalid";
+        newErrorMsg = "Please Enter Quotation Validity (TBA or Qtn Month & Day).";
+      }
+    } else {
+
+      switch (name) {
+        case "Sys_SQ_Nbr":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Manual SQ No. is required.";
+          }
+          break;
+        case "SQ_Type":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "SQ Type is required.";
+          }
+          break;
+        // case "Validity":
+        //   if (!newValue || Number(newValue) > 60) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Quote Validity cannot exceed 60 days.";
+        //   }
+        //   break;
+        case "Subject":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Quote Subject cannot be empty.";
+          }
+          break;
+        case "CustomerId":
+          if (!newValue) {
+            newErrorClass = "select-invalid";
+            newErrorMsg = "Please select a customer.";
+          }
+          break;
+        case "CustomerContactId":
+          if (!newValue) {
+            if (sqbasicinfo.IsWithCustomer == true) {
+              newErrorClass = "form-control is-invalid";
+              newErrorMsg = "Please select a contact person.";
+            }
+          }
+          break;
+        case "customercontactoperation":
+          if (!newValue) {
+            if (sqbasicinfo.IsWithCustomer == true) {
+              newErrorClass = "form-control is-invalid";
+              newErrorMsg = "Please select customer operation contact.";
+            }
+          }
+          break;
+        /* case "DeliveryAddressId":
+           if (!newValue) {
+             newErrorClass = "form-control is-invalid";
+             newErrorMsg = "Please select a delivery address.";
+           }
+           break;*/
+
+        case "EffectiveFromDate":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Please select a Effective From Date.";
+          }
+          break;
+
+
+        // case "Qtn_Month":
+        //   if (!newValue) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Please select a quotation validity month.";
+        //   }
+        //   break;
+
+        // case "Qtn_Day":
+        //   if (!newValue) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Please select a quotation validity day.";
+        //   }
+        //   break;
+
+        // case "TBA":
+        //   if (!newValue) {
+        //     newErrorClass = "form-control is-invalid";
+        //     newErrorMsg = "Please enter the TBA.";
+        //   }
+        //   break;
+        case "DeliveryTerms":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Delivery Term is required.";
+          }
+          break;
+        case "PaymentTerms":
+          if (!newValue) {
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Payment Terms is required.";
+          }
+          break;
+        case "PaymentMethod":
+          if (!newValue) {
+            console.log("error patment method");
+            newErrorClass = "form-control is-invalid";
+            newErrorMsg = "Payment Method is required.";
+          }
+          break;
+        case "SalesPerson":
+          if (!newValue) {
+            newErrorClass = "select-invalid";
+            newErrorMsg = "Please select a Sales Person.";
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
+    setErrorClass(prev => ({ ...prev, [name]: newErrorClass }));
+
+    if (newErrorMsg) {
+      tempErrors.push(newErrorMsg);
+      console.log("errormsg =>", tempErrors);
+    }
+  };
     const handleInputChange = (e) => {
         const { name, value } = e.target;
 
@@ -897,11 +888,10 @@ const PriceQuotation = () => {
                                                 <button type="button" className="btn btn-danger fa-pull-right" onClick={handleCancel}>
                                                     <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel
                                                 </button>
-                                                {access.canSave && (
-                                                    <button type="button" disabled={IsAdmin == 0} className="btn btn-info fa-pull-right" onClick={(e) => openModal2(e, "save")}>
-                                                        <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Update
-                                                    </button>
-                                                )}
+
+                                                <button type="button" disabled={IsAdmin == 0} className="btn btn-info fa-pull-right" onClick={(e) => openModal2(e, "save")}>
+                                                    <i className="bx bx-comment-check label-icon font-size-16 align-middle me-2"></i>Update
+                                                </button>
                                             </div>
                                         </div>
 
@@ -1287,15 +1277,9 @@ const PriceQuotation = () => {
                                                                             <th className="text-center" style={{ width: "5%" }}>Qty</th>
                                                                             <th className="text-center required-label" style={{ width: "14%" }}>UOM</th>
                                                                             <th className="text-center required-label" style={{ width: "10%" }}>Currency</th>
-                                                                            {access.canViewRate && (
-                                                                                <th className="text-center required-label" style={{ width: "10%" }}>Unit Price</th>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <th className="text-center" style={{ width: "10%" }}>Total Price </th>
-                                                                            )}
-                                                                            {access.canViewRate && (
-                                                                                <th className="text-center" style={{ width: "10%" }}>Price (IDR)</th>
-                                                                            )}
+                                                                            <th className="text-center required-label" style={{ width: "10%" }}>Unit Price</th>
+                                                                            <th className="text-center" style={{ width: "10%" }}>Total Price </th>
+                                                                            <th className="text-center" style={{ width: "10%" }}>Price (IDR)</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -1370,59 +1354,54 @@ const PriceQuotation = () => {
                                                                                             ))}
                                                                                         </Input>
                                                                                     </td>
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            {/* <Input type="number" onChange={(e) => handleUnitPriceChange(index, e.target.value)} name="UnitPrice" id={`UnitPrice-${index}`} value={quotationDetails[index].UnitPrice} /> */}
-                                                                                            <Input type="text" className="text-end" inputMode="numeric" maxLength={15} value={formatCurrency(quotationDetails[index].UnitPrice)}
-                                                                                                onChange={(e) => {
-                                                                                                    const raw = e.target.value.replace(/[^0-9]/g, '');
-                                                                                                    if (raw.length <= 11) {
-                                                                                                        handleUnitPriceChange(index, raw);
-                                                                                                    }
-                                                                                                }}
-                                                                                                onKeyDown={(e) => {
-                                                                                                    if (e.key === '.' || e.key === 'e' || e.key === '-' || (e.key.length === 1 && !/[0-9]/.test(e.key))) {
-                                                                                                        e.preventDefault();
-                                                                                                    }
-                                                                                                }}
-                                                                                            />
-                                                                                        </td>
-                                                                                    )}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            {/* <Input type="text" disabled name="TotalPrice" value={quotationDetails[index].TotalPrice} id={`TotalPrice-${index}`}/> */}
-                                                                                            <Input
-                                                                                                type="text"
-                                                                                                disabled
-                                                                                                name="TotalPrice"
-                                                                                                value={new Intl.NumberFormat('en-US', {
-                                                                                                    style: 'decimal',
-                                                                                                    minimumFractionDigits: 2,
-                                                                                                    maximumFractionDigits: 2
-                                                                                                }).format(quotationDetails[index]?.TotalPrice || 0)}
-                                                                                                id={`TotalPrice-${index}`}
-                                                                                                className="text-end"
-                                                                                            />
-                                                                                        </td>
-                                                                                    )}
-                                                                                    {access.canViewRate && (
-                                                                                        <td>
-                                                                                            {/* <Input type="text" disabled name="ConvertedPrice" value={quotationDetails[index].ConvertedPrice} id={`ConvertedPrice-${index}`}/> */}
-                                                                                            <Input
-                                                                                                type="text"
-                                                                                                disabled
-                                                                                                name="ConvertedPrice"
-                                                                                                value={new Intl.NumberFormat('en-US', {
-                                                                                                    style: 'decimal',
-                                                                                                    minimumFractionDigits: 2,
-                                                                                                    maximumFractionDigits: 2
-                                                                                                }).format(quotationDetails[index]?.ConvertedPrice || 0)} // Ensure value is defined
-                                                                                                id={`ConvertedPrice-${index}`}
-                                                                                                className="text-end"
-                                                                                            />
 
-                                                                                        </td>
-                                                                                    )}
+                                                                                    <td>
+                                                                                        {/* <Input type="number" onChange={(e) => handleUnitPriceChange(index, e.target.value)} name="UnitPrice" id={`UnitPrice-${index}`} value={quotationDetails[index].UnitPrice} /> */}
+                                                                                        <Input type="text" className="text-end" inputMode="numeric" maxLength={15} value={formatCurrency(quotationDetails[index].UnitPrice)}
+                                                                                            onChange={(e) => {
+                                                                                                const raw = e.target.value.replace(/[^0-9]/g, '');
+                                                                                                if (raw.length <= 11) {
+                                                                                                    handleUnitPriceChange(index, raw);
+                                                                                                }
+                                                                                            }}
+                                                                                            onKeyDown={(e) => {
+                                                                                                if (e.key === '.' || e.key === 'e' || e.key === '-' || (e.key.length === 1 && !/[0-9]/.test(e.key))) {
+                                                                                                    e.preventDefault();
+                                                                                                }
+                                                                                            }}
+                                                                                        />
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {/* <Input type="text" disabled name="TotalPrice" value={quotationDetails[index].TotalPrice} id={`TotalPrice-${index}`}/> */}
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            disabled
+                                                                                            name="TotalPrice"
+                                                                                            value={new Intl.NumberFormat('en-US', {
+                                                                                                style: 'decimal',
+                                                                                                minimumFractionDigits: 2,
+                                                                                                maximumFractionDigits: 2
+                                                                                            }).format(quotationDetails[index]?.TotalPrice || 0)}
+                                                                                            id={`TotalPrice-${index}`}
+                                                                                            className="text-end"
+                                                                                        />
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {/* <Input type="text" disabled name="ConvertedPrice" value={quotationDetails[index].ConvertedPrice} id={`ConvertedPrice-${index}`}/> */}
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            disabled
+                                                                                            name="ConvertedPrice"
+                                                                                            value={new Intl.NumberFormat('en-US', {
+                                                                                                style: 'decimal',
+                                                                                                minimumFractionDigits: 2,
+                                                                                                maximumFractionDigits: 2
+                                                                                            }).format(quotationDetails[index]?.ConvertedPrice || 0)} // Ensure value is defined
+                                                                                            id={`ConvertedPrice-${index}`}
+                                                                                            className="text-end"
+                                                                                        />
+
+                                                                                    </td>
                                                                                 </tr>
                                                                             )
                                                                         })}

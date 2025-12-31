@@ -1,12 +1,10 @@
-﻿using BackEnd.Master;
+﻿using System.Data;
+using System.Dynamic;
+using BackEnd.Master;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
 using Core.Models;
 using Core.OrderMngMaster.Common;
 using Dapper;
-using Newtonsoft.Json;
-using System.Data;
-using System.Dynamic;
 
 namespace Infrastructure.Repositories
 {
@@ -14,13 +12,11 @@ namespace Infrastructure.Repositories
     {
         private readonly IDbConnection _connection;
         private readonly IDbConnection _masterDBConnection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
 
-        public OrderMngMasterRepository(IUnitOfWorkDB1 unitOfWork, IUnitOfWorkDB4 masterDBConnection, IErrorLogMasterRepository errorLogMasterRepository)
+        public OrderMngMasterRepository(IUnitOfWorkDB1 unitOfWork, IUnitOfWorkDB4 masterDBConnection)
         {
             _connection = unitOfWork.Connection;
             _masterDBConnection = masterDBConnection.Connection;
-            _errorLogRepo = errorLogMasterRepository;
         }
 
 
@@ -55,20 +51,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetQuotationTypeAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -108,20 +90,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCustomerContactAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        customerid, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -160,20 +128,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCustomerAddressAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        contactid, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -213,20 +167,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCustomerAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branch, Sqid, searchtext
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -267,20 +207,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPaymentTermAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branch, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -321,20 +247,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetGasCodeAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branch, searchtext, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -375,20 +287,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetUOMAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branch, searchtext, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -429,20 +327,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCurrencyAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branch, searchtext, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -481,20 +365,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetGasCodeDetailsAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        GasCodeId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -532,20 +402,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCurrencyConversionAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        currencyid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -583,20 +439,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSalesPersonAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, SearchText, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -634,20 +476,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPaymentMethodAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, Sqid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -684,20 +512,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSQNumberAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, SearchText
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -735,20 +549,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSOTypeAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -786,20 +586,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSQCustomerAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -837,20 +623,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCustomerSQAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        customerid, BranchId, soid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -888,20 +660,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSQGasCodeAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        sqid, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -939,20 +697,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCustomerGasCodeAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, GasCodeId, customerid, SOID
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -993,20 +737,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCustomerGasCodeDetailAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        customerid, BranchId, soid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1044,20 +774,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPackingCustomerIdAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1066,6 +782,8 @@ namespace Infrastructure.Repositories
                 };
             }
         }
+
+
 
 
         public async Task<object> GetCustomerPackingIdAsync(Int32 customerid, Int32 BranchId)
@@ -1097,20 +815,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPackingCustomerIdAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        customerid, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1149,20 +853,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetGasTypes),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1201,20 +891,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetGasCodeAgGasTypes),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        GasTypeId, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1254,20 +930,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCylinderDetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        SearchText, BranchId, GasCodeId, ProductionId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1305,20 +967,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetProductionNo),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        SearchText, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1356,20 +1004,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPackingDetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        packingid, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1409,20 +1043,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetsaleordercustomerId),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1464,20 +1084,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPackersName),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1516,20 +1122,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetDriversName),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1570,20 +1162,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPackingSO),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        customerid, BranchId, Packingid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1622,20 +1200,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPackingSODetail),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        soid, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1674,20 +1238,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetReturnOrderCylinderDetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        SearchText, GasCodeId, BranchId, ProductionId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1725,20 +1275,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetReturnOrderCustomerPackingIdAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, customerid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1777,20 +1313,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetDeliveryAgGasDetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        GasCodeId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1828,20 +1350,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetDeliveryAgDODetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        PackingId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1879,20 +1387,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetReturnOrderGasCode),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        CustomerId, SearchText, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1930,20 +1424,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSoHistory),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, GasCodeId, sqid, soid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1953,7 +1433,7 @@ namespace Infrastructure.Repositories
             }
         }
 
-        public async Task<object> GetBarcodeDetails(string Barcode, Int32 PackingId, Int32 doid, Int32 UomId)
+        public async Task<object> GetBarcodeDetails(string Barcode, Int32 PackingId, Int32 doid)
         {
             try
             {
@@ -1966,7 +1446,6 @@ namespace Infrastructure.Repositories
                 param.Add("@UserId", 0);
                 param.Add("@doid", doid);
                 param.Add("@rackid", 0);
-                param.Add("@uomid", UomId);
 
                 var List = await _connection.QueryAsync(OrderMngMaster.BarcodeProcedure, param: param, commandType: CommandType.StoredProcedure);
                 var Modellist = List.ToList();
@@ -1979,20 +1458,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetBarcodeDetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        Barcode, PackingId, doid
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2031,20 +1496,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPressure),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        SearchText, BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2084,20 +1535,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetVolume),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, SearchText
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2126,20 +1563,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(IsAdminUser),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        UserId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2166,20 +1589,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCylinderSize),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2209,20 +1618,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetContactName),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        CustomerId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2252,20 +1647,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetGasCode),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2295,20 +1676,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPalletType),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        brachId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2349,20 +1716,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSOGasCodeDetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        SOID
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2402,20 +1755,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetStagedata),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2454,20 +1793,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetgasCodeData),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, SearchText
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2506,20 +1831,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetRackDetails),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2557,14 +1868,21 @@ namespace Infrastructure.Repositories
 
                     if (I == 0)
                     {
+
+
                         Modellist.Gas = nl;
                     }
                     else if (I == 1)
                     {
+
                         Modellist.SO = nl;
                     }
+
                     I++;
+
+
                 }
+
 
                 return new ResponseModel()
                 {
@@ -2575,20 +1893,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(Getgascodeagainstcustomer),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, CustomerId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2626,20 +1930,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetSOagainstGas),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, GasCodeId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2678,20 +1968,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetCustomerFilter),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, SearchText
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2730,20 +2006,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetPackerList),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, SearchText
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2781,20 +2043,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetTruckName),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        BranchId, SearchText
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -2825,20 +2073,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetGasCodePalletAsync),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        gasCodeId, palletTypeId, branchId, palletId
-                    })
-                });
                 return new ResponseModel
                 {
                     Data = null,
@@ -2872,20 +2106,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetBarcodePackingList),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        Barcode, packingId, userId, branchId, packingDetailsId, deliveryDetailRefId, packerId, customerId
-                    })
-                });
                 // Log ex if possible
                 return new ResponseModel()
                 {
@@ -2918,20 +2138,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(OrderMngMasterRepository),
-                    Method_Function = nameof(GetBank),
-                    UserId = 0,
-                    ScreenName = "OrderMngMaster",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        userId, branchId
-                    })
-                });
                 // Log ex if possible
                 return new ResponseModel()
                 {

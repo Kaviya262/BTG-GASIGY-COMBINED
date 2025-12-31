@@ -14,8 +14,6 @@ import {
     GetAllCountries, SaveCountry
 } from "../../../src/common/data/mastersapi";
 import { isDisabled } from "@testing-library/user-event/dist/utils";
-import useAccess from "../../common/access/useAccess";
-
 const initFilters = () => ({
 
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -26,15 +24,6 @@ const initFilters = () => ({
 });
 const ManageCountry = () => {
     const history = useHistory();
-
-    const { access, applyAccessUI } = useAccess("Masters", "Country");
-    const canViewDetails = !access.loading && access.canViewDetails;
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
 
     const [country, setCountry] = useState([]);
     const [filteredCountry, setFilteredCountry] = useState([]);
@@ -136,7 +125,7 @@ const ManageCountry = () => {
                 });
                 setSwitchStates(initialSwitch);
             }
-            else {
+            else{
                 setFilteredCountry([]);
             }
         }
@@ -212,9 +201,6 @@ const ManageCountry = () => {
     const actionBodyTemplate = (rowData) => {
 
         console.log(selectedRow, "rowData :", rowData);
-        if (!access?.canEdit) {
-            return null;
-        }
         if (rowData.IsActive == 1) {
             return (
                 <div className="actions">
@@ -222,7 +208,7 @@ const ManageCountry = () => {
                         editRow(rowData);
                         console.log("onClick :", rowData);
                     }}
-
+ 
                         title={"Edit"}>
                         <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                     </span>
@@ -232,7 +218,7 @@ const ManageCountry = () => {
         else {
             return (
                 <div className="actions">
-
+ 
                     <span
                         style={{
                             cursor: 'not-allowed',
@@ -247,7 +233,7 @@ const ManageCountry = () => {
                 </div>
             )
         }
-
+ 
     };
 
     const handleSubmit = async (values, { resetForm }) => {
@@ -338,14 +324,6 @@ const ManageCountry = () => {
         );
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
@@ -380,7 +358,7 @@ const ManageCountry = () => {
                                     <button type="button" className="btn btn-info" onClick={handleSearch} > <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={handleSearchCancel}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
 
-                                    <button type="button" className="btn btn-success" onClick={handleNew} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={handleNew}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -388,9 +366,9 @@ const ManageCountry = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable value={filteredCountry} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="CountryId"
-                                    filters={filters} globalFilterFields={["CountryCode", "CountryName"]} header={header}
-                                    emptyMessage="No Country found." onFilter={(e) => setFilters(e.filters)}>
+                                <DataTable value={filteredCountry} paginator showGridlines rows={10} loading={loading} dataKey="CountryId" 
+                                filters={filters} globalFilterFields={["CountryCode", "CountryName"]} header={header} 
+                                emptyMessage="No Country found." onFilter={(e) => setFilters(e.filters)}>
                                     <Column field="CountryCode" header="Country Code" filter filterPlaceholder="Search by Code" />
                                     <Column field="CountryName" header="Country Name" filter filterPlaceholder="Search by Name" />
                                     <Column field="IsActive" header="Active" showFilterMatchModes={false} body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }} />
@@ -444,7 +422,7 @@ const ManageCountry = () => {
 
                                                     <div className="row align-items-center g-3 justify-content-end">
                                                         <div className="col-md-12 text-end button-items">
-                                                            <Button type="submit" data-access="save" className="btn btn-info">
+                                                            <Button type="submit" className="btn btn-info">
                                                                 <i className="bx bxs-save label-icon font-size-16 align-middle me-2"></i>
                                                                 {selectedRow?.CountryId && selectedRow.CountryId > 0 ? "Update" : "Save"}
                                                             </Button>

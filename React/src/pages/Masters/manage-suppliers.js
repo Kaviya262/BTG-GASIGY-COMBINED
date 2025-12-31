@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardBody, Col, Container, Row, Modal, ModalHeader, ModalBody, Label, FormGroup, Input, InputGroup } from "reactstrap";
+import { Card, CardBody, Col, Container, Row, Modal, ModalHeader, ModalBody, Label,FormGroup, Input, InputGroup } from "reactstrap"; 
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import { classNames } from 'primereact/utils';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
@@ -17,12 +17,11 @@ import { MultiSelect } from 'primereact/multiselect';
 import { Slider } from 'primereact/slider';
 import { Tag } from 'primereact/tag';
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
-import "primereact/resources/themes/lara-light-blue/theme.css";
+import "primereact/resources/themes/lara-light-blue/theme.css"; 
 import { useHistory } from "react-router-dom";
 import Flatpickr from "react-flatpickr"
 import Select from "react-select";
 import { ChangeSupplierStatus, GetAllSuppliers, GetSupplierBankAutoComplete, GetSupplierCategoryAutoComplete, GetSupplierCityAutoComplete, GetSupplierMasterAutoComplete, GetSupplierStateAutoComplete } from "common/data/mastersapi";
-import useAccess from "../../common/access/useAccess";
 // Move the initFilters function definition above
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -33,17 +32,16 @@ const initFilters = () => ({
 });
 
 const Managesuppliers = () => {
-    const { access, applyAccessUI } = useAccess("Masters", "Suppliers");
     const history = useHistory();
     const FilterTypes = [
-        { name: "Supplier Name", value: 1 },
+        { name: "Supplier Name", value: 1 }, 
         { name: "City", value: 2 },
         { name: "State", value: 3 },
         // { name: "Bank Name", value: 4 },
         { name: "Category", value: 5 },
     ];
 
-    const [suppliers, setSuppliers] = useState([]);
+    const [suppliers, setSuppliers] = useState([]); 
     const [globalFilterValue, setGlobalFilterValue] = useState("");
     const [filters, setFilters] = useState(initFilters());
 
@@ -66,13 +64,7 @@ const Managesuppliers = () => {
         return "";
     };
 
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
-    useEffect(() => {
+     useEffect(() => {
         const fetchSuppliers = async () => {
             setLoading(true);
             try {
@@ -88,9 +80,9 @@ const Managesuppliers = () => {
             } finally {
                 setLoading(false);
             }
-        };
+            };
 
-        if (orgId && branchId) {
+            if (orgId && branchId) {
             fetchSuppliers();
         }
     }, [orgId, branchId]);
@@ -98,84 +90,84 @@ const Managesuppliers = () => {
     useEffect(() => {
         const loadOptions = async () => {
             if (!selectedFilterType) {
-                setAutoOptions([]);
-                return;
+            setAutoOptions([]);
+            return;
             }
 
             let result = [];
             switch (selectedFilterType.value) {
-                case 1: {
-                    // Supplier Name
-                    result = await GetSupplierMasterAutoComplete(orgId, branchId, "%");
-                    setAutoOptions(
-                        (result?.data || []).map(item => ({
-                            label: item.suppliername,
-                            value: item.supplierid,
-                        }))
-                    );
-                    break;
-                }
+            case 1: {
+                // Supplier Name
+                result = await GetSupplierMasterAutoComplete(orgId, branchId, "%");
+                setAutoOptions(
+                (result?.data || []).map(item => ({
+                    label: item.suppliername,
+                    value: item.supplierid,
+                }))
+                );
+                break;
+            }
 
-                case 2: {
-                    // City
-                    result = await GetSupplierCityAutoComplete(orgId, branchId, "%");
-                    setAutoOptions(
-                        (result?.data || []).map(item => ({
-                            label: item.CityName,
-                            value: item.Cityid,
-                        }))
-                    );
-                    break;
-                }
+            case 2: {
+                // City
+                result = await GetSupplierCityAutoComplete(orgId, branchId, "%");
+                setAutoOptions(
+                (result?.data || []).map(item => ({
+                    label: item.CityName,
+                    value: item.Cityid,
+                }))
+                );
+                break;
+            }
 
-                case 3: {
-                    // State
-                    result = await GetSupplierStateAutoComplete(orgId, branchId, "%");
-                    setAutoOptions(
-                        (result?.data || []).map(item => ({
-                            label: item.StateName,
-                            value: item.StateID,
-                        }))
-                    );
-                    break;
-                }
+            case 3: {
+                // State
+                result = await GetSupplierStateAutoComplete(orgId, branchId, "%");
+                setAutoOptions(
+                (result?.data || []).map(item => ({
+                    label: item.StateName,
+                    value: item.StateID,
+                }))
+                );
+                break;
+            }
 
-                case 4: {
-                    // Bank Name
-                    result = await GetSupplierBankAutoComplete(orgId, branchId, "%");
-                    setAutoOptions(
-                        (result?.data || []).map(item => ({
-                            label: item.BankName,
-                            value: item.BankId,
-                        }))
-                    );
-                    break;
-                }
+            case 4: {
+                // Bank Name
+                result = await GetSupplierBankAutoComplete(orgId, branchId, "%");
+                setAutoOptions(
+                (result?.data || []).map(item => ({
+                    label: item.BankName,
+                    value: item.BankId,
+                }))
+                );
+                break;
+            }
 
-                case 5: {
-                    // Category
-                    result = await GetSupplierCategoryAutoComplete(orgId, branchId, "%");
-                    setAutoOptions(
-                        (result?.data || []).map(item => ({
-                            label: item.categoryName,
-                            value: item.id,
-                        }))
-                    );
-                    break;
-                }
+            case 5: {
+                // Category
+                result = await GetSupplierCategoryAutoComplete(orgId, branchId, "%");
+                setAutoOptions(
+                (result?.data || []).map(item => ({
+                    label: item.categoryName,
+                    value: item.id,
+                }))
+                );
+                break;
+            }
 
-                default:
-                    setAutoOptions([]);
+            default:
+                setAutoOptions([]);
             }
         };
 
         loadOptions();
-    }, [selectedFilterType, orgId, branchId]);
+        }, [selectedFilterType, orgId, branchId]);
 
     // useEffect(() => {
     //     const customerData = getCustomers();
     //     setCustomers(customerData);
-
+        
     //     const initialSwitchStates = {};
     //     customerData.forEach(customer => {
     //         initialSwitchStates[customer.SupplierCode] = customer.Active === 1;
@@ -186,7 +178,7 @@ const Managesuppliers = () => {
     const [isModalOpen2, setIsModalOpen2] = useState(false);
     const toggleModal2 = () => {
         setIsModalOpen2(!isModalOpen2);
-    };
+    }; 
 
     // useEffect(() => {
     //     setCustomers(getCustomers());
@@ -258,8 +250,8 @@ const Managesuppliers = () => {
     };
 
     const renderHeader = () => {
-        return (
-            <div className="row align-items-center g-3 clear-spa">
+        return ( 
+            <div className="row align-items-center g-3 clear-spa"> 
                 <div className="col-12 col-lg-3">
                     <Button className="btn btn-danger btn-label" onClick={clearFilter} outlined >
                         <i className="mdi mdi-filter-off label-icon" />
@@ -268,7 +260,7 @@ const Managesuppliers = () => {
                 </div>
                 <div className="col-12 col-lg-3">
                     <input className="form-control" type="text" value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Keyword Search" />
-                </div>
+                </div> 
             </div>
         );
     };
@@ -292,22 +284,19 @@ const Managesuppliers = () => {
     };
 
     const editRow = (rowData) => {
-        console.log('Edit row:', rowData);
+        console.log('Edit row:', rowData); 
         history.push(`/edit-supplier/${rowData.SupplierId}`);
     };
-
+    
     const actionBodyTemplate = (rowData) => {
-        if (!access?.canEdit) {
-            return null;
-        }
         return (
-            <div className="actions">
-                <span onClick={() => editRow(rowData)} title="Edit">
+            <div className="actions"> 
+                <span onClick={() => editRow(rowData)} title="Edit"> 
                     <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                 </span>
             </div>
         )
-    };
+    }; 
 
     const onSwitchChange = () => {
         if (!selectedRow) return;
@@ -383,21 +372,13 @@ const Managesuppliers = () => {
         );
     };
 
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
     return (
         <React.Fragment>
             <div className="page-content">
                 <Container fluid>
-                    <Breadcrumbs title="Master" breadcrumbItem="Suppliers" />
-                    <Row>
-                        <Card className="search-top">
+                    <Breadcrumbs title="Master" breadcrumbItem="Suppliers" /> 
+                    <Row>  
+                        <Card className="search-top">                             
                             <div className="row align-items-end g-3 quotation-mid p-3">
                                 {/* User Name */}
                                 <div className="col-12 col-lg-3 mt-1">
@@ -447,7 +428,7 @@ const Managesuppliers = () => {
                                 <div className={`col-12 ${selectedFilterType ? 'col-lg-5' : 'col-lg-9'} d-flex justify-content-end flex-wrap gap-2`} >
                                     <button type="button" className="btn btn-info" onClick={searchData}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={cancelFilter}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-                                    <button type="button" className="btn btn-success" onClick={linkAddsupplier} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={linkAddsupplier}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -455,14 +436,14 @@ const Managesuppliers = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable value={suppliers} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="SupplierCode" filters={filters} globalFilterFields={["SupplierCode", "SupplierName", "CategoryName", "cityname"]} header={header} emptyMessage="No suppliers found." onFilter={(e) => setFilters(e.filters)}>
+                                <DataTable value={suppliers} paginator showGridlines rows={10} loading={loading} dataKey="SupplierCode" filters={filters} globalFilterFields={["SupplierCode", "SupplierName", "CategoryName", "cityname"]} header={header} emptyMessage="No suppliers found." onFilter={(e) => setFilters(e.filters)}>
                                     {/* <Column field="SupplierCode" header="Supplier Code" filter filterPlaceholder="Search by code" filterClear={filterClearTemplate} filterApply={filterApplyTemplate} filterFooter={filterFooterTemplate} style={{ width: '10%' }} className="text-center"/> */}
-                                    <Column field="SupplierCode" header="Supplier Code" filter filterPlaceholder="Search by Code" style={{ width: '10%' }} />
+                                    <Column field="SupplierCode" header="Supplier Code" filter filterPlaceholder="Search by Code" style={{ width: '10%' }}  />
                                     <Column field="SupplierName" header="Supplier Name" filter filterPlaceholder="Search by name" />
-                                    <Column field="CategoryName" header="Category" filter filterPlaceholder="Search by category" />
-                                    <Column field="cityname" filter header="City" />
-                                    <Column field="IsActive" header="Active" showFilterMatchModes={false} body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }} />
-                                    <Column field="actions" header="Action" showFilterMatchModes={false} body={actionBodyTemplate} className="text-center" headerClassName="text-center" style={{ width: '8%' }} />
+                                    <Column field="CategoryName" header="Category" filter filterPlaceholder="Search by category"/>
+                                    <Column field="cityname" filter header="City"/>
+                                    <Column field="IsActive" header="Active" showFilterMatchModes={false} body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }}/>
+                                    <Column field="actions" header="Action" showFilterMatchModes={false} body={actionBodyTemplate} className="text-center" headerClassName="text-center" style={{ width: '8%' }}/>
                                 </DataTable>
                             </Card>
                         </Col>
@@ -486,7 +467,7 @@ const Managesuppliers = () => {
                             <div className="text-center mt-3 button-items">
                                 {/* <Button className="btn btn-info" color="success" size="lg" onClick={onSwitchChange}> */}
                                 <Button className="btn btn-info" color="success" size="lg" onClick={handleConfirmStatusChange}>
-                                    Yes
+                                Yes
                                 </Button>
                                 <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen(false)}>
                                     Cancel

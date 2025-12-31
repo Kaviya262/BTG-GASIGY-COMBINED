@@ -3,7 +3,6 @@ using Core.Abstractions;
 using Core.Master.Country;
 using Core.Models;
 using Core.OrderMng.Barcode;
-using Core.Master.ErrorLog;
 using Dapper;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System;
@@ -16,17 +15,14 @@ using UserPanel.Infrastructure.Data;
 
 namespace Infrastructure.Repositories
 {
+    public class BarcodeRepository: IBarcodeRepository
+    {
+        private readonly IDbConnection _connection;
 
-        public class BarcodeRepository : IBarcodeRepository
+        public BarcodeRepository(IUnitOfWorkDB1 unitOfWork)
         {
-            private readonly IDbConnection _connection;
-            private readonly IErrorLogMasterRepository _errorLogRepo;
-
-            public BarcodeRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository)
-            {
-                _connection = unitOfWork.Connection;
-                _errorLogRepo = errorLogMasterRepository;
-            }
+            _connection = unitOfWork.Connection;
+        }
 
         #region OptBarcodeScan
         public async Task<object> OptBarcodeScan(Int32 PackingId)
@@ -39,9 +35,9 @@ namespace Infrastructure.Repositories
                     packingid = PackingId,
                     barcode = "",
                     BarcodeDtlid = 0,
-                    UserId = 0,
-                    doid = 0,
-                    rackid = 0
+                    UserId=0,
+                    doid=0,
+                    rackid=0
                 });
                 if (rowsAffected > 0)
                 {
@@ -61,24 +57,14 @@ namespace Infrastructure.Repositories
                         Status = false
                     };
                 }
+
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(BarcodeRepository),
-                    Method_Function = nameof(OptBarcodeScan),
-                    UserId = 0,
-                    ScreenName = "Barcode",
-                    RequestData_Payload = Newtonsoft.Json.JsonConvert.SerializeObject(new { PackingId })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
-                    Message = $"Error updating barcode: {ex.Message}",
+                    Message = ex.Message,
                     Status = false
                 };
             }
@@ -87,16 +73,16 @@ namespace Infrastructure.Repositories
 
 
         #region SaveBarcodeScan
-        public async Task<object> SaveBarcodeScan(Int32 PackingId, Int32 rackid)
+        public async Task<object> SaveBarcodeScan(Int32 PackingId,Int32 rackid)
         {
             try
             {
                 var rowsAffected = await _connection.ExecuteAsync(OrderMngMaster.BarcodeProcedure, new
                 {
-                    Opt = 4,
+                    Opt=4,
                     packingid = PackingId,
-                    barcode = "",
-                    BarcodeDtlid = 0,
+                    barcode="",
+                    BarcodeDtlid=0,
                     UserId = 0,
                     doid = 0,
                     rackid = rackid
@@ -119,24 +105,14 @@ namespace Infrastructure.Repositories
                         Status = false
                     };
                 }
+
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(BarcodeRepository),
-                    Method_Function = nameof(SaveBarcodeScan),
-                    UserId = 0,
-                    ScreenName = "Barcode",
-                    RequestData_Payload = Newtonsoft.Json.JsonConvert.SerializeObject(new { PackingId, rackid })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
-                    Message = $"Error updating barcode: {ex.Message}",
+                    Message = ex.Message,
                     Status = false
                 };
             }
@@ -144,7 +120,7 @@ namespace Infrastructure.Repositories
         #endregion
 
         #region DeleteBarcode
-        public async Task<object> DeleteBarcode(Int32 PackingId, Int32 BarcodeDtlid)
+        public async Task<object> DeleteBarcode(Int32 PackingId,Int32 BarcodeDtlid)
         {
             try
             {
@@ -176,24 +152,14 @@ namespace Infrastructure.Repositories
                         Status = false
                     };
                 }
+
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(BarcodeRepository),
-                    Method_Function = nameof(DeleteBarcode),
-                    UserId = 0,
-                    ScreenName = "Barcode",
-                    RequestData_Payload = Newtonsoft.Json.JsonConvert.SerializeObject(new { PackingId, BarcodeDtlid })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
-                    Message = $"Error removing barcode: {ex.Message}",
+                    Message = ex.Message,
                     Status = false
                 };
             }

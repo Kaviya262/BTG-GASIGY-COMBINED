@@ -30,14 +30,12 @@ import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
 import "flatpickr/dist/themes/material_blue.css";
 import Flatpickr from "react-flatpickr";
 import Breadcrumbs from "../../../components/Common/Breadcrumb";
-import { GetSqAll, GetSqList, IsAdminUser, SQtoggleactivestatus } from "../../../common/data/mastersapi";
+import { GetSqAll, GetSqList,IsAdminUser,SQtoggleactivestatus } from "../../../common/data/mastersapi";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { useRef } from "react";
 import SQPrintColumn from './SQPrintColumn'; // make sure path is correct
-import useAccess from "../../../common/access/useAccess";
-
-const getUserDetails = () => { debugger
+const getUserDetails = () => {
   if (localStorage.getItem("authUser")) {
     const obj = JSON.parse(localStorage.getItem("authUser"))
     return obj;
@@ -45,7 +43,6 @@ const getUserDetails = () => { debugger
 }
 
 const ManageQuotations = () => {
-  const { access, applyAccessUI } = useAccess("Sales", "Quotations");
   const dt = useRef(null);
   // Format quantity with comma separation
   const qtyBodyTemplate = (rowData) => {
@@ -64,26 +61,26 @@ const ManageQuotations = () => {
   const [sqList, setSQList] = useState([]);
   const [cansearch, setCansearch] = useState(false);
   const [filteredQuotes, setFilteredQuotes] = useState(false);
-  const [errormsg, setErrormsg] = useState();
+  const [errormsg, setErrormsg] = useState(); 
   const currentDate = new Date();
   const currentYear = new Date().getFullYear();
   const formatDate = date => date.toISOString().split("T")[0];
   const today = new Date();
   const sevenDaysAgo = new Date();
-
+  
   sevenDaysAgo.setDate(today.getDate() - 7);
   const [quotefilter, setQuoteFilter] = useState({
     SQID: 0,
-    FromDate: formatDate(sevenDaysAgo),
-    ToDate: formatDate(new Date()),
+    FromDate: formatDate(sevenDaysAgo), 
+    ToDate: formatDate(new Date()), 
     BranchId: 1,
   });
   const [isseacrch, setIsseacrch] = useState(false);
   const [filters, setFilters] = useState(null);
   const [UserData, setUserData] = useState(null);
   const [IsAdmin, setIsAdmin] = useState(0);
-  const [successMsg, setSuccessMsg] = useState("");
-  const [successStatus, setSuccessStatus] = useState(false);
+      const [successMsg, setSuccessMsg] = useState("");
+      const [successStatus, setSuccessStatus] = useState(false);
   const [loading, setLoading] = useState(false);
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const globalFilterTimeout = useRef(null);
@@ -95,11 +92,11 @@ const ManageQuotations = () => {
     { label: "Renewal", value: "renewal" },
     { label: "Proposal", value: "proposal" },
   ]);
-  const [switchStates, setSwitchStates] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [txtStatus, setTxtStatus] = useState(null);
-  const toast = useRef(null);
+   const [switchStates, setSwitchStates] = useState({});
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedRow, setSelectedRow] = useState(null);
+    const [txtStatus, setTxtStatus] = useState(null);
+    const toast = useRef(null);
 
   const getSeverity = Status => {
     switch (Status) {
@@ -117,23 +114,18 @@ const ManageQuotations = () => {
         return "warning";
       case "renewal":
         return null;
-      case "Ready To Post":
-        return "info";
-
+        case "Ready To Post":
+          return "info";
+        
     }
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   useEffect(() => {
     const loadSQList = async () => {
       const data = await GetSqList("%", 1);
       setSQList(data);
-
+      debugger;
+     
     };
     loadSQList();
 
@@ -153,7 +145,7 @@ const ManageQuotations = () => {
       } finally {
         setLoading(false);
 
-      //setIsseacrch(!isseacrch);
+        setIsseacrch(!isseacrch);
       };
 
 
@@ -163,26 +155,9 @@ const ManageQuotations = () => {
     initFilters();
   }, [cansearch]);
 
-  const clearFilter = async() => {
+  const clearFilter = () => {
     initFilters();
-    setGlobalFilterValue("");
-    const resetFilter = {
-    SQID: 0,
-    FromDate: formatDate(sevenDaysAgo),
-    ToDate: formatDate(new Date()),
-    BranchId: 1,
   };
-  setQuoteFilter(resetFilter);
-
-  // Force Flatpickr to update
-  document.getElementById("FromDate")._flatpickr.setDate(resetFilter.FromDate, false);
-  document.getElementById("ToDate")._flatpickr.setDate(resetFilter.ToDate, false);
-
-  // Fetch all data using the reset filter
-  await searchhData(resetFilter);
-
- };
-
 
   const onGlobalFilterChange = e => {
     // Only update the local input state on change. Don't apply the DataTable
@@ -320,8 +295,8 @@ const ManageQuotations = () => {
         : rowData.Status === "Posted"
           ? "P"
           : rowData.Status === "Ready To Post"
-            ? "RTP"
-            : rowData.Status;
+        ? "RTP"
+          : rowData.Status;
     return <Tag value={statusShort} severity={getSeverity(rowData.Status)} />;
   };
 
@@ -347,12 +322,11 @@ const ManageQuotations = () => {
     return (
       <div className="actions row align-items-center g-3">
         <div className="col-12 col-lg-6">
-          {rowData.Status != "Posted" && rowData.IsActive == 1 && access.canEdit && (
+          {rowData.Status != "Posted" && rowData.IsActive==1 && (
             <span
               style={{ marginRight: "0.5rem" }}
               title="Edit"
               onClick={() => editRow(rowData)}
-              data-access="edit" // <-- Add this
             >
               <i
                 className="mdi mdi-square-edit-outline"
@@ -362,7 +336,7 @@ const ManageQuotations = () => {
             </span>
           )}
 
-          {rowData.Status == "Posted" && rowData.IsSoTaken == 0 && rowData.IsActive == 1 && IsAdmin == 1 && (
+{rowData.Status == "Posted" && rowData.IsSoTaken==0 && rowData.IsActive==1 && IsAdmin==1 && (
             <span
               style={{ marginRight: "0.5rem" }}
               title="Edit"
@@ -465,56 +439,56 @@ const ManageQuotations = () => {
 
   const handleDateChange = (selectedDates, dateStr, instance) => {
     const fieldName = instance.element.getAttribute("id");
-
+  
     if (selectedDates.length > 0) {
       const localDate = selectedDates[0];
       const yyyy = localDate.getFullYear();
       const mm = String(localDate.getMonth() + 1).padStart(2, "0");
       const dd = String(localDate.getDate()).padStart(2, "0");
       const formatted = `${yyyy}-${mm}-${dd}`;
-
+  
       setQuoteFilter(prevState => ({
         ...prevState,
         [fieldName]: formatted,
       }));
     }
   };
-
+  
   // Removed automatic fetch on quotefilter changes so data is only
   // refreshed when the user explicitly clicks the Search button.
 
 
-  useEffect(() => { debugger
-
+  useEffect(() => {
+    
     const loadIsadmindetails = async () => {
       const userData = getUserDetails();
       setUserData(userData);
       setIsAdmin(userData.IsAdmin);
-
+      
 
     }
     loadIsadmindetails();
-    //searchhData();
+        searchhData();
+    debugger
+  }, [isseacrch]);
 
-  }, []); //isseacrch
-
-  const searchhData = async (filter = quotefilter) => {
-
+  const searchhData = async () => {
+    debugger
     if (
-      filter.FromDate &&
-      filter.ToDate &&
-      filter.FromDate <= filter.ToDate
+      quotefilter.FromDate &&
+      quotefilter.ToDate &&
+      quotefilter.FromDate <= quotefilter.ToDate
     ) {
       setLoading(true);
       try {
         const response = await GetSqAll(
-          filter.SQID,
-          filter.FromDate,
-          filter.ToDate,
-          filter.BranchId
+          quotefilter.SQID,
+          quotefilter.FromDate,
+          quotefilter.ToDate,
+          quotefilter.BranchId
         );
         setQuotes(response);
-        console.log("Fetched with:", filter, response);
+        console.log("Fetched with:", quotefilter, response);
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
@@ -532,7 +506,7 @@ const ManageQuotations = () => {
     // Apply the global filter only after search click
     applyGlobalFilter();
   };
-
+  
   const cancelFilter = async () => {
     const resetFilter = {
       SQID: 0,
@@ -548,9 +522,8 @@ const ManageQuotations = () => {
     document
       .getElementById("ToDate")
       ._flatpickr.setDate(resetFilter.ToDate, false);
-    //setLoading(false);
-    
-    await  searchhData(resetFilter);   
+    setLoading(false);
+    setIsseacrch(!isseacrch);
   };
 
   // const exportToExcel = () => {
@@ -618,16 +591,16 @@ const ManageQuotations = () => {
     const day = String(now.getDate()).padStart(2, "0");
     const month = months[now.getMonth()];
     const year = now.getFullYear();
-
+    
     let hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "pm" : "am";
-    hours = hours % 12 || 12;
-
+    hours = hours % 12 || 12; 
+    
     const timeStr = `${hours}:${minutes}${ampm}`;
-
+    
     const fileName = `BTG-Quotations-${day}${month}${year}-${timeStr}.xlsx`;
-
+    
 
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const data = new Blob([excelBuffer], {
@@ -644,98 +617,87 @@ const ManageQuotations = () => {
 
   }
 
-  const onSwitchChange = async () => {
-    if (!selectedRow) return;
-    const newStatus = !switchStates[selectedRow.id];
-    let statusid = 0;
-    if (newStatus == false) {
-      statusid = 0
-    }
-    else {
-      statusid = 1;
-    }
-    const payload = {
-      Id: selectedRow.id,
-      IsActive: statusid,
-      userid: 1
-    };
-    try {
-      setLoading(true);
-      const response = await SQtoggleactivestatus(payload);
-      if (response?.status) {
+   const onSwitchChange = async () => {
+          if (!selectedRow) return; 
+          const newStatus = !switchStates[selectedRow.id]; 
+          let statusid=0;
+          if(newStatus==false){
+            statusid=0
+          }
+          else{
+            statusid=1;
+          }
+          const payload = {
+              Id: selectedRow.id,
+              IsActive: statusid,
+              userid:1
+          };
+          try {
+            setLoading(true);
+              const response = await SQtoggleactivestatus(payload);
+              if (response?.status) {
 
-        toast.current.show({ severity: 'info', summary: 'Info', detail: response.data });
+                toast.current.show({ severity: 'info', summary: 'Info', detail: response.data });
 
-        console.log('Status updated successfully');
-        searchhData();
+                  console.log('Status updated successfully');
+                  searchhData(); 
+                   
+              } else {
+                toast.current.show({ severity: 'danger', summary: 'Error', detail: response.data });
+                  console.warn('Failed to update status');
+              }
+          } catch (error) {
+            setLoading(false);
+              console.error('API Error:', error);
+              // Optionally revert UI changes on failure
+          }
+          setIsModalOpen(false);
+      };    
 
-      } else {
-        toast.current.show({ severity: 'danger', summary: 'Error', detail: response.data });
-        console.warn('Failed to update status');
-      }
-    } catch (error) {
-      setLoading(false);
-      console.error('API Error:', error);
-      // Optionally revert UI changes on failure
-    }
-    setIsModalOpen(false);
-  };
-
-  useEffect(() => {
-    const initialSwitchStates = {};
-    quotes.forEach(quotes => {
-      initialSwitchStates[quotes.id] = quotes.IsActive === 1;
-    });
-    setSwitchStates(initialSwitchStates);
-  }, [quotes]);
+      useEffect(() => { 
+          const initialSwitchStates = {};
+          quotes.forEach(quotes => {
+              initialSwitchStates[quotes.id] = quotes.IsActive === 1;
+          });
+          setSwitchStates(initialSwitchStates);
+      }, [quotes]);
 
 
   const openModal = (rowData) => {
-    const value = rowData.IsActive == 1 ? "deactive" : "active";
+    const value = rowData.IsActive==1 ? "deactive": "active";
     setTxtStatus(value);
     setSelectedRow(rowData);
     setIsModalOpen(true);
-  };
+};
   const actionBodyTemplate2 = (rowData) => {
-    if (rowData.IsSoTaken == 0) {
-      return (
-        <div className="square-switch">
-          <Input
-            type="checkbox"
-            id={`square-switch-${rowData.id}`}
-            switch="bool"
-            onChange={() => openModal(rowData)}
-            checked={switchStates[rowData.id] || false}
-          />
-          <label htmlFor={`square-switch-${rowData.id}`} data-on-label="Yes" data-off-label="No" style={{ margin: 0 }} />
-        </div>
-      );
-    }
-  };
-
-  if (!access.loading && !access.canView) {
-    debugger;
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
-
-
+    if(rowData.IsSoTaken==0){      
+    return ( 
+              <div className="square-switch">
+                  <Input
+                      type="checkbox"
+                      id={`square-switch-${rowData.id}`} 
+                      switch="bool"
+                      onChange={() => openModal(rowData)} 
+                      checked={switchStates[rowData.id] || false} 
+                  />
+                  <label htmlFor={`square-switch-${rowData.id}`} data-on-label="Yes" data-off-label="No" style={{margin:0}} />
+              </div> 
+          );
+        }
+      };
   return (
     <React.Fragment>
       <div className="page-content">
         <Container fluid>
-          <Toast ref={toast} />
+        <Toast ref={toast} />
 
           <Breadcrumbs title="Sales" breadcrumbItem="Quotations" />
           <Row>
-            {errormsg && (
-              <UncontrolledAlert color="danger">
-                {errormsg}
-              </UncontrolledAlert>
-            )}
+          {errormsg && (
+                          <UncontrolledAlert color="danger">
+                            {errormsg}
+                          </UncontrolledAlert>
+                        )}
             <Card className="search-top mb-0">
               <div className="row align-items-center g-1 quotation-mid">
                 <div className="col-12 col-lg-3 mt-1">
@@ -810,7 +772,7 @@ const ManageQuotations = () => {
                 </div>
                 <div
                   className="col-12 col-lg-2 mt-1"
-
+                  
                 >
                   <div className="d-flex align-items-center gap-2">
                     <div className="col-12 col-lg-3 col-md-4 col-sm-4 text-center">
@@ -857,7 +819,7 @@ const ManageQuotations = () => {
                   <button
                     type="button"
                     className="btn btn-danger"
-                    onClick={() => { cancelFilter();}}
+                    onClick={() => { cancelFilter(); clearFilter(); }}
                   >
                     <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>
                     Cancel
@@ -875,7 +837,6 @@ const ManageQuotations = () => {
                     type="button"
                     className="btn btn-success"
                     onClick={handleAddQuote}
-                    data-access="new"
                   >
                     <i className="bx bx-plus label-icon font-size-16 align-middle"></i>
                     New
@@ -893,7 +854,7 @@ const ManageQuotations = () => {
                   value={quotes}
                   paginator
                   showGridlines
-                  rows={access.records || 10}
+                  rows={10}
                   loading={loading}
                   filters={filters}
                   globalFilterFields={[
@@ -969,8 +930,8 @@ const ManageQuotations = () => {
                     header="SQ_Qty"
                     filter
                     filterPlaceholder="Search by SQ_Qty"
-                    body={qtyBodyTemplate}
-                    bodyClassName="text-end"
+              body={qtyBodyTemplate}
+              bodyClassName="text-end"
                   />
                   {/* <Column
                     field="createdby"
@@ -1007,13 +968,13 @@ const ManageQuotations = () => {
                     exportable={false}
                   />
 
-                  <Column field="Actionstatus" header="IsActive" showFilterMatchModes={false}
-                    body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }} />
-{access.canPrint && (
-                  <Column field="id" header="Print" showFilterMatchModes={false}
-                    body={(rowData) => <SQPrintColumn sqid={rowData.id} />}
-                    className="text-center" />
-)}
+                <Column field="Actionstatus" header="IsActive" showFilterMatchModes={false} 
+                body={actionBodyTemplate2} className="text-center" headerClassName="text-center" style={{ width: '8%' }}/>
+
+                        <Column   field="id" header="Print" showFilterMatchModes={false} 
+                                                    body={(rowData) => <SQPrintColumn sqid={rowData.id} />}
+                                                    className="text-center" />
+
                 </DataTable>
               </Card>
             </Col>
@@ -1021,32 +982,32 @@ const ManageQuotations = () => {
         </Container>
       </div>
 
-      <Modal isOpen={isModalOpen} toggle={() => setIsModalOpen(false)} centered>
-        <ModalBody className="py-3 px-5">
-          <Row>
-            <Col lg={12}>
-              <div className="text-center">
-                <i className="mdi mdi-alert-circle-outline" style={{ fontSize: "9em", color: "orange" }} />
-
-                <h4>Do you want to {txtStatus} this SQ?</h4>
-              </div>
-            </Col>
-          </Row>
-          <Row>
-            <Col>
-              <div className="text-center mt-3 button-items">
-                <Button className="btn btn-info" color="success" size="lg" onClick={onSwitchChange}>
-                  Yes
-                </Button>
-                <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </Col>
-          </Row>
-        </ModalBody>
-      </Modal>
-
+          <Modal isOpen={isModalOpen} toggle={() => setIsModalOpen(false)} centered>
+                      <ModalBody className="py-3 px-5">
+                          <Row>
+                              <Col lg={12}>
+                                  <div className="text-center">
+                                      <i className="mdi mdi-alert-circle-outline" style={{ fontSize: "9em", color: "orange" }} />
+                                     
+                                      <h4>Do you want to {txtStatus} this SQ?</h4>
+                                  </div>
+                              </Col>
+                          </Row>
+                          <Row>
+                              <Col>
+                                  <div className="text-center mt-3 button-items">
+                                      <Button className="btn btn-info" color="success" size="lg" onClick={onSwitchChange}>
+                                      Yes
+                                      </Button>
+                                      <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen(false)}>
+                                          Cancel
+                                      </Button>
+                                  </div>
+                              </Col>
+                          </Row>
+                      </ModalBody>
+                  </Modal>
+      
     </React.Fragment>
   );
 };

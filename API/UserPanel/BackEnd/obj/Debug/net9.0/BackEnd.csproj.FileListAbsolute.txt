@@ -42,3 +42,14 @@ D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd
 D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\refint\BackEnd.dll
 D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.pdb
 D:\BTG\Development\BTG-DEV\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\ref\BackEnd.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.deps.json
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\bin\Debug\net9.0\BackEnd.pdb
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.GeneratedMSBuildEditorConfig.editorconfig
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfoInputs.cache
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.AssemblyInfo.cs
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.csproj.CoreCompileInputs.cache
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\refint\BackEnd.dll
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\BackEnd.pdb
+D:\BTG\Git-Live-Latest\gasify\API\UserPanel\BackEnd\obj\Debug\net9.0\ref\BackEnd.dll

@@ -153,7 +153,7 @@ class Login extends Component {
                     </div>
 
                     <div className="p-2">
-                      {this.props.error && <Alert color="danger" fade={false}>{this.props.error}</Alert>}
+                      {this.props.error && <Alert color="danger">{this.props.error}</Alert>}
                       <Formik
                         enableReinitialize={true}
                         initialValues={{
@@ -192,29 +192,29 @@ class Login extends Component {
                                 Password
                               </Label>
                               <div className="input-group auth-pass-inputgroup">
-                                <Field
-                                  name="password"
-                                  type={this.state.showPassword ? "text" : "password"}
-                                  autoComplete="current-password"
-                                  className={
-                                    "form-control" +
-                                    (errors.password && touched.password ? " is-invalid" : "")
-                                  }
-                                />
-                                <button
-                                  className="btn btn-light"
-                                  type="button"
-                                  onClick={() => this.setState({ showPassword: !this.state.showPassword })}
-                                >
-                                  <i
-                                    className={
-                                      "mdi " +
-                                      (this.state.showPassword
-                                        ? "mdi-eye-off-outline"
-                                        : "mdi-eye-outline")
-                                    }
-                                  ></i>
-                                </button>
+                              <Field
+      name="password"
+      type={this.state.showPassword ? "text" : "password"}
+      autoComplete="current-password"
+      className={
+        "form-control" +
+        (errors.password && touched.password ? " is-invalid" : "")
+      }
+    />
+    <button
+      className="btn btn-light"
+      type="button"
+      onClick={() => this.setState({ showPassword: !this.state.showPassword })}
+    >
+      <i
+        className={
+          "mdi " +
+          (this.state.showPassword
+            ? "mdi-eye-off-outline"
+            : "mdi-eye-outline")
+        }
+      ></i>
+    </button>
                                 {/* <button className="btn btn-light" type="button" id="password-addon">
                                   <i className="mdi mdi-eye-outline"></i>
                                 </button> */}

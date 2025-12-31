@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 
 # 1. IMPORT THE ROUTERS
-from .routers import finance, invoice_api, bankbook,login ,FinanceReport
-from .routers.masters import users_master, access_right_master
+from .routers import finance, invoice_api, bankbook  # <--- Add bankbook here
+
 app = FastAPI(title="Finance API (Python)")
 
 # Allow CORS
@@ -25,10 +25,7 @@ app.add_middleware(
 
 # Existing Finance Router
 app.include_router(finance.router)
-app.include_router(FinanceReport.router)
-app.include_router(users_master.router)
-app.include_router(access_right_master.router)
-app.include_router(login.router)
+
 # Existing Invoice Router (Prefixed with /api)
 app.include_router(invoice_api.router, prefix="/api", tags=["Invoices"])
 

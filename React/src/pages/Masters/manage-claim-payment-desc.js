@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardBody, Col, Container, Row, Modal, ModalHeader, ModalBody, Label, FormGroup, Input, InputGroup } from "reactstrap";
+import { Card, CardBody, Col, Container, Row, Modal, ModalHeader, ModalBody, Label,FormGroup, Input, InputGroup } from "reactstrap"; 
 import Breadcrumbs from "../../components/Common/Breadcrumb";
 import { classNames } from 'primereact/utils';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
@@ -17,52 +17,43 @@ import { MultiSelect } from 'primereact/multiselect';
 import { Slider } from 'primereact/slider';
 import { Tag } from 'primereact/tag';
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
-import "primereact/resources/themes/lara-light-blue/theme.css";
+import "primereact/resources/themes/lara-light-blue/theme.css"; 
 import { useHistory } from "react-router-dom";
 import Flatpickr from "react-flatpickr"
 import Select from "react-select";
 import Swal from 'sweetalert2';
-import useAccess from "../../common/access/useAccess";
 import { ChangeDescriptionStatus, GetAllClaimPaymentDescriptions, GetClaimCategoryAutoComplete, GetClaimTypeAutoComplete } from "common/data/mastersapi";
 
 const initFilters = () => ({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    claimcategory: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    claimtype: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    paymentdescription: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
-    createddate: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-    createdby: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    lastmodifieddate: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-    lastmodifiedby: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    isactive: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  claimcategory: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+  claimtype: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+  paymentdescription: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
+  createddate: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+  createdby: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+  lastmodifieddate: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+  lastmodifiedby: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+  isactive: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
 });
 
 const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-    }).replace(/ /g, "-"); // e.g. "29-Aug-2025"
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).replace(/ /g, "-"); // e.g. "29-Aug-2025"
 };
 
 const ManageClaimPaymentDesc = () => {
     const history = useHistory();
-    const { access, applyAccessUI } = useAccess("Masters", "Claim & Payment Description");
-    const canViewDetails = !access.loading && access.canViewDetails;
-
-    useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
     const FilterTypes = [
-        { name: "Claim Category", value: 1 },
+        { name: "Claim Category", value: 1 }, 
         { name: "Claim Type", value: 2 },
     ];
 
-    const [items, setItems] = useState([]);
+    const [items, setItems] = useState([]); 
     const [claims, setClaims] = useState();
     const [globalFilterValue, setGlobalFilterValue] = useState("");
     const [filters, setFilters] = useState(initFilters());
@@ -87,26 +78,26 @@ const ManageClaimPaymentDesc = () => {
         const fetchClaimPayments = async () => {
             setLoading(true);
             try {
-                const response = await GetAllClaimPaymentDescriptions(
-                    orgId,
-                    branchId,
-                    0,
-                    0
-                );
+            const response = await GetAllClaimPaymentDescriptions(
+                orgId,
+                branchId,
+                0,
+                0
+            );
 
-                if (response?.status) {
-                    setClaims(response?.data || []);
+            if (response?.status) {
+                setClaims(response?.data || []);
 
-                    const initialSwitchStates = {};
+                const initialSwitchStates = {};
                     response?.data.forEach(item => {
-                        initialSwitchStates[item.paymentid] = item.isactive === 1;
-                    });
-                    setSwitchStates(initialSwitchStates);
-                }
+                    initialSwitchStates[item.paymentid] = item.isactive === 1;
+                });
+                setSwitchStates(initialSwitchStates);
+            }
             } catch (error) {
-                console.error("Error fetching claim payment descriptions:", error);
+            console.error("Error fetching claim payment descriptions:", error);
             } finally {
-                setLoading(false);
+            setLoading(false);
             }
         };
 
@@ -118,48 +109,48 @@ const ManageClaimPaymentDesc = () => {
     useEffect(() => {
         const loadOptions = async () => {
             if (!selectedFilterType) {
-                setAutoOptions([]);
-                return;
+            setAutoOptions([]);
+            return;
             }
 
             let result = [];
             switch (selectedFilterType.value) {
-                case 1: {
-                    // Category Type
-                    result = await GetClaimCategoryAutoComplete(orgId, branchId, "%");
-                    setAutoOptions(
-                        (result?.data || []).map(item => ({
-                            label: item.claimcategory,
-                            value: item.Id,
-                        }))
-                    );
-                    break;
-                }
+            case 1: {
+                // Category Type
+                result = await GetClaimCategoryAutoComplete(orgId, branchId, "%");
+                setAutoOptions(
+                (result?.data || []).map(item => ({
+                    label: item.claimcategory,
+                    value: item.Id,
+                }))
+                );
+                break;
+            }
 
-                case 2: {
-                    // Claim Type
-                    result = await GetClaimTypeAutoComplete(orgId, branchId, 0, "%");
-                    setAutoOptions(
-                        (result?.data || []).map(item => ({
-                            label: item.claimtype,
-                            value: item.claimtypeid,
-                        }))
-                    );
-                    break;
-                }
+            case 2: {
+                // Claim Type
+                result = await GetClaimTypeAutoComplete(orgId, branchId, 0, "%");
+                setAutoOptions(
+                (result?.data || []).map(item => ({
+                    label: item.claimtype,
+                    value: item.claimtypeid,
+                }))
+                );
+                break;
+            }
 
-                default:
-                    setAutoOptions([]);
+            default:
+                setAutoOptions([]);
             }
         };
 
         loadOptions();
-    }, [selectedFilterType, orgId, branchId]);
+        }, [selectedFilterType, orgId, branchId]);
 
     const [isModalOpen2, setIsModalOpen2] = useState(false);
     const toggleModal2 = () => {
         setIsModalOpen2(!isModalOpen2);
-    };
+    }; 
 
     const searchData = async () => {
         try {
@@ -169,13 +160,13 @@ const ManageClaimPaymentDesc = () => {
             let result;
 
             if (filterType === 1) {
-                // Search by Claim Category
+            // Search by Claim Category
                 result = await GetAllClaimPaymentDescriptions(orgId, branchId, filterValue, 0);
             } else if (filterType === 2) {
-                // Search by Claim Type
+            // Search by Claim Type
                 result = await GetAllClaimPaymentDescriptions(orgId, branchId, 0, filterValue);
             } else {
-                // Default – load all claim payment descriptions
+            // Default – load all claim payment descriptions
                 result = await GetAllClaimPaymentDescriptions(orgId, branchId, 0, 0);
             }
 
@@ -212,8 +203,8 @@ const ManageClaimPaymentDesc = () => {
     };
 
     const renderHeader = () => {
-        return (
-            <div className="row align-items-center g-3 clear-spa">
+        return ( 
+            <div className="row align-items-center g-3 clear-spa"> 
                 <div className="col-12 col-lg-3">
                     <Button className="btn btn-danger btn-label" onClick={clearFilter} outlined >
                         <i className="mdi mdi-filter-off label-icon" />
@@ -222,7 +213,7 @@ const ManageClaimPaymentDesc = () => {
                 </div>
                 <div className="col-12 col-lg-3">
                     <input className="form-control" type="text" value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Keyword Search" />
-                </div>
+                </div> 
             </div>
         );
     };
@@ -245,22 +236,19 @@ const ManageClaimPaymentDesc = () => {
         history.push("/add-claim-payment-desc");
     };
 
-    const editRow = (rowData) => {
+    const editRow = (rowData) => { 
         history.push(`/edit-claim-payment-desc/${rowData.paymentid}`);
     };
-
+    
     const actionBodyTemplate = (rowData) => {
-        if (!access?.canEdit) {
-            return null;
-        }
         return (
-            <div className="actions">
-                <span onClick={() => editRow(rowData)} title="Edit">
+            <div className="actions"> 
+                <span onClick={() => editRow(rowData)} title="Edit"> 
                     <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                 </span>
             </div>
         )
-    };
+    }; 
 
     const onSwitchChange = async () => {
         if (!selectedRow) return;
@@ -293,42 +281,33 @@ const ManageClaimPaymentDesc = () => {
     };
 
     const openModal = (rowData) => {
-        const value = rowData.isactive == 1 ? "deactive" : "active";
+        const value = rowData.isactive==1 ? "deactive": "active";
         setTxtStatus(value);
         setSelectedRow(rowData);
         setIsModalOpen(true);
     };
     const actionBodyTemplate2 = (rowData) => {
-        return (
+        return ( 
             <div className="square-switch">
                 <Input
                     type="checkbox"
-                    id={`square-switch-${rowData.paymentid}`}
+                    id={`square-switch-${rowData.paymentid}`} 
                     switch="bool"
-                    onChange={() => openModal(rowData)}
-                    checked={switchStates[rowData.paymentid] || false}
+                    onChange={() => openModal(rowData)} 
+                    checked={switchStates[rowData.paymentid] || false} 
                 />
-                <label htmlFor={`square-switch-${rowData.paymentid}`} data-on-label="Yes" data-off-label="No" style={{ margin: 0 }} />
-            </div>
+                <label htmlFor={`square-switch-${rowData.paymentid}`} data-on-label="Yes" data-off-label="No"  style={{margin:0}} />
+            </div> 
         );
     };
-
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
-
 
     return (
         <React.Fragment>
             <div className="page-content">
                 <Container fluid>
-                    <Breadcrumbs title="Master" breadcrumbItem="Claim & Payment Description" />
-                    <Row>
-                        <Card className="search-top">
+                    <Breadcrumbs title="Master" breadcrumbItem="Claim & Payment Description" /> 
+                    <Row>  
+                        <Card className="search-top">                             
                             <div className="row align-items-end g-3 quotation-mid p-3">
                                 {/* User Name */}
                                 <div className="col-12 col-lg-3 mt-1">
@@ -378,7 +357,7 @@ const ManageClaimPaymentDesc = () => {
                                 <div className={`col-12 ${selectedFilterType ? 'col-lg-5' : 'col-lg-9'} d-flex justify-content-end flex-wrap gap-2`} >
                                     <button type="button" className="btn btn-info" onClick={searchData}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={cancelFilter}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
-                                    <button type="button" className="btn btn-success" onClick={linkAddsupplier} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={linkAddsupplier}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
@@ -386,84 +365,84 @@ const ManageClaimPaymentDesc = () => {
                     <Row>
                         <Col lg="12">
                             <Card>
-                                <DataTable
-                                    value={claims}
-                                    paginator
-                                    showGridlines
-                                    rows={access.records || 10}
-                                    loading={loading}
-                                    dataKey="claimId"
-                                    filters={filters}
-                                    globalFilterFields={["claimcategory", "claimtype", "paymentdescription", "createddate", "lastmodifieddate", "createdby", "lastmodifiedby", "isactive"]}
-                                    header={header}
-                                    emptyMessage="No claims found."
+                                <DataTable 
+                                    value={claims} 
+                                    paginator 
+                                    showGridlines 
+                                    rows={10} 
+                                    loading={loading} 
+                                    dataKey="claimId" 
+                                    filters={filters} 
+                                    globalFilterFields={["claimcategory", "claimtype", "paymentdescription","createddate","lastmodifieddate", "createdby", "lastmodifiedby","isactive"]} 
+                                    header={header} 
+                                    emptyMessage="No claims found." 
                                     onFilter={(e) => setFilters(e.filters)}
                                 >
-                                    <Column
-                                        field="claimcategory"
-                                        header="Claim Category"
-                                        filter
-                                        filterPlaceholder="Search by category"
+                                    <Column 
+                                        field="claimcategory" 
+                                        header="Claim Category" 
+                                        filter 
+                                        filterPlaceholder="Search by category" 
                                     />
-                                    <Column
-                                        field="claimtype"
-                                        header="Claim Type"
-                                        filter
-                                        filterPlaceholder="Search by type"
+                                    <Column 
+                                        field="claimtype" 
+                                        header="Claim Type" 
+                                        filter 
+                                        filterPlaceholder="Search by type" 
                                     />
-                                    <Column
-                                        field="paymentdescription"
-                                        header="Payment Description"
-                                        filter
-                                        filterPlaceholder="Search by payment description"
-                                        style={{ width: '20%' }}
+                                    <Column 
+                                        field="paymentdescription" 
+                                        header="Payment Description" 
+                                        filter 
+                                        filterPlaceholder="Search by payment description" 
+                                        style={{ width: '20%' }} 
                                     />
-                                    <Column
-                                        field="createddate"
+                                    <Column 
+                                        field="createddate" 
                                         filter
-                                        header="Created Date"
+                                        header="Created Date" 
                                         style={{ width: '10%' }}
-                                    // body={(rowData) => formatDate(rowData.createddate)}
+                                        // body={(rowData) => formatDate(rowData.createddate)}
                                     />
 
-                                    <Column
-                                        field="createdby"
-                                        header="Created By"
-                                        filter
-                                        filterPlaceholder="Search by creator"
+                                    <Column 
+                                        field="createdby" 
+                                        header="Created By" 
+                                        filter 
+                                        filterPlaceholder="Search by creator" 
                                     />
 
-                                    <Column
-                                        field="lastmodifieddate"
+                                    <Column 
+                                        field="lastmodifieddate" 
                                         filter
-                                        header="Modified Date"
+                                        header="Modified Date" 
                                         style={{ width: '10%' }}
-                                    // body={(rowData) => formatDate(rowData.lastmodifieddate)}
+                                        // body={(rowData) => formatDate(rowData.lastmodifieddate)}
                                     />
-                                    <Column
-                                        field="lastmodifiedby"
-                                        header="Modified By"
-                                        filter
-                                        filterPlaceholder="Search by modifier"
+                                    <Column 
+                                        field="lastmodifiedby" 
+                                        header="Modified By" 
+                                        filter 
+                                        filterPlaceholder="Search by modifier" 
                                     />
-                                    <Column
-                                        field="isactive"
-                                        header="Active"
+                                    <Column 
+                                        field="isactive" 
+                                        header="Active" 
                                         // filter
-                                        showFilterMatchModes={false}
-                                        body={actionBodyTemplate2}
-                                        className="text-center"
-                                        headerClassName="text-center"
-                                        style={{ width: '8%' }}
+                                        showFilterMatchModes={false} 
+                                        body={actionBodyTemplate2} 
+                                        className="text-center" 
+                                        headerClassName="text-center" 
+                                        style={{ width: '8%' }} 
                                     />
-                                    <Column
-                                        field="actions"
-                                        header="Action"
-                                        showFilterMatchModes={false}
-                                        body={actionBodyTemplate}
-                                        className="text-center"
-                                        headerClassName="text-center"
-                                        style={{ width: '8%' }}
+                                    <Column 
+                                        field="actions" 
+                                        header="Action" 
+                                        showFilterMatchModes={false} 
+                                        body={actionBodyTemplate} 
+                                        className="text-center" 
+                                        headerClassName="text-center" 
+                                        style={{ width: '8%' }} 
                                     />
                                 </DataTable>
                             </Card>
@@ -487,7 +466,7 @@ const ManageClaimPaymentDesc = () => {
                         <Col>
                             <div className="text-center mt-3 button-items">
                                 <Button className="btn btn-info" color="success" size="lg" onClick={onSwitchChange}>
-                                    Yes
+                                Yes
                                 </Button>
                                 <Button color="danger" size="lg" className="btn btn-danger" onClick={() => setIsModalOpen(false)}>
                                     Cancel

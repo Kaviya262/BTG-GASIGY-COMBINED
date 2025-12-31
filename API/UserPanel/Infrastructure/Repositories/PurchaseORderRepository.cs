@@ -1,17 +1,11 @@
-﻿using BackEnd.Procurement.PurchaseOrder;
-using BackEnd.Shared;
-using BackEnd.Units;
+﻿using System.Data;
+using System.Dynamic;
+using BackEnd.Procurement.PurchaseOrder;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.Procurement.PurchaseOrder;
 using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using MediatR;
-using Newtonsoft.Json;
-using System.Data;
-using System.Dynamic;
+using BackEnd.Shared;
 namespace Infrastructure.Repositories
 {
     public class PurchaseOrderRepository : IPurchaseOrderRepository
@@ -19,13 +13,9 @@ namespace Infrastructure.Repositories
 
         private readonly IDbConnection _connection;
         string IPAddress = "";
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
-        public PurchaseOrderRepository(IUnitOfWorkDB2 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public PurchaseOrderRepository(IUnitOfWorkDB2 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
         public async Task<SharedModelWithResponse> GetSeqNumber(int id, string text, int type, int unit, int orgid)
@@ -57,20 +47,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetSeqNumber),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        id, text, type, unit, orgid,
-                    })
-                });
+
                 return new SharedModelWithResponse()
                 {
                     Data = null,
@@ -103,20 +80,6 @@ namespace Infrastructure.Repositories
                         Obj.Header.pono = response.Data.text;
                     }
                 }
-                foreach(var detail in Obj.Details)
-                {
-                    var existPRnos = @"SELECT COUNT(*) FROM tbl_purchaseorder_detail WHERE prid=@prid";
-                    int count = await _connection.QuerySingleAsync<int>(existPRnos, new { prid = detail.prid });
-                    if (count > 0)
-                    {
-                        return new ResponseModel()
-                        {
-                            Data = null,
-                            Status = false,
-                            Message = $"Duplicate PRNo... Please, Select SomeOther PRNo!!",
-                        };
-                    }
-                }
 
 
                 const string headerSql = @"
@@ -132,19 +95,6 @@ namespace Infrastructure.Repositories
 
                 // Get newly inserted POID
                 var poid = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: poid,
-                    branchId: Obj.Header.branchid,
-                    orgId: Obj.Header.orgid,
-                    actionType: "Insert",
-                    actionDescription: "Added new Purchase Order",
-                    oldValue: null,
-                    newValue: Obj.Header,
-                    tableName: "tbl_purchaseorder_header",
-                    userId: Obj.Header.userid
-                );
 
 
 
@@ -170,20 +120,6 @@ namespace Infrastructure.Repositories
                     });
 
                     pridToPodidMap[detail.prid] = podid;
-
-                    int insertDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertDetailsId,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Insert",
-                        actionDescription: "Added new Purchase Order Details",
-                        oldValue: null,
-                        newValue: Obj.Details,
-                        tableName: "tbl_purchaseorder_detail",
-                        userId: Obj.Header.userid
-                    );
                 }
                 //Result = await _connection.ExecuteAsync(detailSql);
 
@@ -236,20 +172,6 @@ namespace Infrastructure.Repositories
                         vatvalue = req.vatvalue,
                         itemgroupid = req.itemgroupid
                     });
-
-                    int insertrequisitionDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertrequisitionDetailsId,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Insert",
-                        actionDescription: "Added new Purchase Order Requisition",
-                        oldValue: null,
-                        newValue: Obj.Requisition,
-                        tableName: "tbl_purchaseorder_requisitions",
-                        userId: Obj.Header.userid
-                    );
                 }
 
                 var balanceAmountSql = @" UPDATE tbl_purchaseorder_header SET balance_amount = @NetTotal WHERE poid = @Poid;";
@@ -263,7 +185,7 @@ namespace Infrastructure.Repositories
 
                 int BranchId = Obj.Header.branchid;
                 var updateSeq = "UPDATE master_documentnumber SET Doc_Number = Doc_Number + 1 WHERE Doc_Type = 3 AND Unit = @branchid; update tbl_PurchaseRequisition_Header  as a inner join tbl_purchaseorder_requisitions as b on a.prid=b.prid and b.isactive=1 set IsPOUtil=1 where b.poid=@POID ;";
-                Result = await _connection.ExecuteAsync(updateSeq, new { BranchId, POID = poid });
+                Result = await _connection.ExecuteAsync(updateSeq, new { BranchId,POID= poid });
                 Result = 1;
 
                 if (Result == 0)
@@ -299,17 +221,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = Obj.Header.userid,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -320,7 +232,7 @@ namespace Infrastructure.Repositories
         }
 
 
-        public async Task<object> GetAllAsync(Int32 requestorid, int BranchId, int SupplierId, int orgid, int poid, int userid)
+        public async Task<object> GetAllAsync(Int32 requestorid, int BranchId, int SupplierId, int orgid, int poid,int userid)
         {
             try
             {
@@ -352,20 +264,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetAllAsync),
-                    UserId = 0,
-                    ScreenName = "Purchase Requisition",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        requestorid, BranchId, SupplierId, orgid, poid, userid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -435,20 +334,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetByIdAsync),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        poid, branchid, orgid,
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -462,41 +348,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_purchaseorder_header where PRId = @PRId", new { PRId = Obj.Header.poid });
-
-
-
-                var oldDetails = new List<object>();
-                var oldRequisitionDetails = new List<object>();
-
-                foreach (var d in Obj.Details)
-                {
-                    if (d.podid > 0)
-                    {
-                        var oldDetailvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_purchaseorder_detail where podid = @podid", new { podid = d.podid });
-
-
-                        oldDetails.Add(oldDetailvalue);
-                    }
-                    else
-                    {
-                        oldDetails.Add(null);
-                    }
-                }
-                foreach (var r in Obj.Requisition)
-                {
-                    if (r.porid > 0)
-                    {
-                        var oldDetailvalue = await _connection.QueryFirstOrDefaultAsync<object>("select * from tbl_purchaseorder_requisitions where porid = @porid", new { porid = r.porid });
-
-                        oldDetails.Add(oldDetailvalue);
-                    }
-                    else
-                    {
-                        oldDetails.Add(null);
-                    }
-                }
-
                 int Result = 0;
                 const string headerSql = @"
             UPDATE tbl_purchaseorder_header
@@ -528,18 +379,6 @@ namespace Infrastructure.Repositories
 
                 await _connection.ExecuteAsync(headerSql, Obj.Header);
 
-                await LogTransactionAsync(
-    id: Obj.Header.poid,
-    branchId: Obj.Header.branchid,
-    orgId: Obj.Header.orgid,
-    actionType: "Update",
-    actionDescription: "Updated Purchase Order Header",
-    oldValue: oldvalue,
-    newValue: Obj.Header,
-    tableName: "tbl_purchaseorder_header",
-    userId: Obj.Header.userid
-);
-
                 int poid = Obj.Header.poid;
                 const string deleteDetailsSql = @"UPDATE tbl_purchaseorder_detail SET IsActive = 0 WHERE poid = @poid;";
                 await _connection.ExecuteAsync(deleteDetailsSql, new { poid });
@@ -568,25 +407,15 @@ namespace Infrastructure.Repositories
                     });
 
                     pridToPodidMap[detail.prid] = podid;
-                    int insertDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertDetailsId,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Insert",
-                        actionDescription: "Added new Purchase Order Detail",
-                        oldValue: null,
-                        newValue: Obj.Details,
-                        tableName: "tbl_purchaseorder_detail",
-                        userId: Obj.Header.userid
-                    );
                 }
                 //Result = await _connection.ExecuteAsync(detailSql);
 
 
+
+                 
+
                 const string requistionsql = @"UPDATE tbl_purchaseorder_requisition SET IsActive = 0 WHERE poid = @poid; update tbl_PurchaseRequisition_Header  as a inner join tbl_purchaseorder_requisitions as b on a.prid=b.prid and b.isactive=1 set IsPOUtil=1 where b.poid=@poid ";
-                await _connection.ExecuteAsync(deleteDetailsSql, new { poid });
+                await _connection.ExecuteAsync(deleteDetailsSql, new {  poid });
                 // 3.INSERT INTO tbl_purchaseorder_requisition
                 foreach (var req in Obj.Requisition)
                 {
@@ -635,26 +464,12 @@ namespace Infrastructure.Repositories
                         vatvalue = req.vatvalue,
                         itemgroupid = req.itemgroupid
                     });
-
-                    int insertRequisitionDetailsId = await _connection.QuerySingleAsync<int>("SELECT LAST_INSERT_ID();");
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: insertRequisitionDetailsId,
-                        branchId: Obj.Header.branchid,
-                        orgId: Obj.Header.orgid,
-                        actionType: "Insert",
-                        actionDescription: "Added new Purchase Order Requisition",
-                        oldValue: null,
-                        newValue: Obj.Header,
-                        tableName: "tbl_purchaseorder_requisitions",
-                        userId: Obj.Header.userid
-                    );
                 }
 
 
-
+                 
                 var updatePR = "  update tbl_PurchaseRequisition_Header  as a inner join tbl_purchaseorder_requisitions as b on a.prid=b.prid and b.isactive=1 set IsPOUtil=1 where b.poid=@POID ;";
-                Result = await _connection.ExecuteAsync(updatePR, new { POID = poid });
+                Result = await _connection.ExecuteAsync(updatePR, new {  POID = poid });
 
                 return new ResponseModel()
                 {
@@ -666,17 +481,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = Obj.Header.userid,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(Obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -718,20 +522,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetPurchaseRequositionList),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        supplierid, branchid, orgid, currencyid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -802,20 +593,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetPurchaseRequisitionItemsList),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid, prid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -857,20 +635,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetPORequstorAutoComplete),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid, requestorname
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -912,20 +677,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetPOSupplierAutoComplete),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid, suppliername
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -963,20 +715,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetByPONoSeqAsync),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1020,20 +759,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetPOnoAutoComplete),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid, ponumber
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1096,20 +822,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetPurchaseorderPrint),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid, poid, opt
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1151,20 +864,7 @@ namespace Infrastructure.Repositories
             }
             catch (Exception Ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = Ex.Message,
-                    ErrorType = Ex.GetType().Name,
-                    StackTrace = Ex.StackTrace,
-                    Source = nameof(PurchaseOrderRepository),
-                    Method_Function = nameof(GetSupplierCurrencyList),
-                    UserId = 0,
-                    ScreenName = "Purchase Order",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        branchid, orgid, supplierid
-                    })
-                });
+
                 return new ResponseModel()
                 {
                     Data = null,
@@ -1174,28 +874,5 @@ namespace Infrastructure.Repositories
             }
         }
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Procurement",
-                ScreenName = "Purchase Order",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-                DbLog = 3
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 }

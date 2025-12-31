@@ -27,8 +27,9 @@ const ARBookReport = () => {
   const dtRef = useRef(null);
 
   const [currencyRates, setCurrencyRates] = useState({});
-  const [currencyOptions, setCurrencyOptions] = useState([{ label: "All", value: "All" }]);
-  const [selectedCurrency, setSelectedCurrency] = useState({ label: "All", value: "All" });
+  // REMOVED "All" from initial state
+  const [currencyOptions, setCurrencyOptions] = useState([]);
+  const [selectedCurrency, setSelectedCurrency] = useState(null);
 
   useEffect(() => {
     const loadMasters = async () => {
@@ -82,10 +83,10 @@ const ARBookReport = () => {
         rawData.sort((a, b) => parseDate(a.ledger_date) - parseDate(b.ledger_date));
 
         const uniqueCurrencies = [...new Set(rawData.map(item => item.currencycode || item.CurrencyCode))];
-        const newCurrencyOptions = [
-          { label: "All", value: "All" },
-          ...uniqueCurrencies.filter(c => c).map(c => ({ label: c, value: c }))
-        ];
+        
+        // REMOVED "All" option generation
+        const newCurrencyOptions = uniqueCurrencies.filter(c => c).map(c => ({ label: c, value: c }));
+        
         setCurrencyOptions(newCurrencyOptions);
 
         const processedData = rawData.map(row => {
@@ -111,18 +112,14 @@ const ARBookReport = () => {
     }
   };
 
-  // --- LOGIC UPDATE: Calculate Balance on Filtered Data ---
   const finalProcessedData = useMemo(() => {
-    // 1. Filter by Currency
-    let filtered = selectedCurrency && selectedCurrency.value !== "All"
+    // REMOVED "All" check logic
+    let filtered = selectedCurrency
       ? arBook.filter((x) => (x.CurrencyCode || x.currencycode) === selectedCurrency.value)
       : arBook;
 
-    // 2. Filter OUT "DO" (Delivery Orders)
-    // We keep it if invoice_no does NOT include "DO"
     filtered = filtered.filter(item => !item.invoice_no?.includes("DO"));
 
-    // 3. Calculate Running Balance
     let runningBalance = 0;
     return filtered.map(row => {
       runningBalance += (row.convertedInvoiceAmount + row.convertedDebitNote - row.convertedReceiptAmount - row.convertedCreditNote);
@@ -196,11 +193,9 @@ const ARBookReport = () => {
                         body={(row) => format(new Date(row.ledger_date), "dd-MMM-yyyy")} 
                         headerStyle={{ whiteSpace: 'nowrap' }} />
                     
-                    <Column 
-                      field="invoice_no" 
-                      header="Reference No." 
-                      body={(row) => (row.convertedReceiptAmount > 0 ? "" : row.invoice_no)}
-                      headerStyle={{ whiteSpace: 'nowrap' }} 
+                    <Column field="invoice_no" header="Reference No." 
+                        body={(row) => (row.convertedReceiptAmount > 0 ? "" : row.invoice_no)}
+                        headerStyle={{ whiteSpace: 'nowrap' }} 
                     />
 
                     <Column field="convertedInvoiceAmount" header="Invoice Amount (A)"

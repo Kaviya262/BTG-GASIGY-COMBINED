@@ -505,15 +505,14 @@ namespace UserPanel.Controllers.OrderManagement.Quotation
         }
 
         [HttpGet("GetBarcodeDetails")]
-        public async Task<ActionResult> GetBarcodeDetails(string Barcode, Int32 PackingId,int doid, int UomId)
+        public async Task<ActionResult> GetBarcodeDetails(string Barcode, Int32 PackingId,int doid)
         {
             var result = await _mediator.Send(new CreateCommonMasterCommand()
             {
                 Opt = -1,
                 SearchText = Barcode,
                 packingid = PackingId,
-                doid= doid,
-                UomId = UomId
+                doid= doid
 
             });
             return Ok(result);

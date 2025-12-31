@@ -1,28 +1,18 @@
-﻿using BackEnd.Country;
+﻿using System.Data;
 using BackEnd.Master;
 using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.OrderMngMaster.Customer;
 using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using Infrastructure.Repositories;
-using Newtonsoft.Json;
-using System.Data;
 using UserPanel.Infrastructure.Data;
 
 public class MasterCustomerRepository : IMasterCustomerRepository
 {
     private readonly IDbConnection _connection;
-    private readonly IErrorLogMasterRepository _errorLogRepo;
-    private readonly IUserTransactionLogRepository _transactionLogRepo;
 
-    public MasterCustomerRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogRepo, IUserTransactionLogRepository userTransactionLogRepository)
+    public MasterCustomerRepository(IUnitOfWorkDB1 unitOfWork)
     {
         _connection = unitOfWork.Connection;
-        _errorLogRepo = errorLogRepo;
-        _transactionLogRepo = userTransactionLogRepository;
     }
     public async Task<object> AddAsync(MasterCustomerModel item)
     {
@@ -54,13 +44,11 @@ public class MasterCustomerRepository : IMasterCustomerRepository
                 parameters.Add("p_ZoneId", customer.ZoneId);
                 parameters.Add("p_PoNumber", customer.PoNumber);
                 parameters.Add("p_CreditLimitinIDR", customer.CreditLimitinIDR);
-                parameters.Add("p_CustomerReviewFormPath", customer.CustomerReviewFormPath ?? string.Empty);
-
                 parameters.Add("p_LegalDocumentPath", customer.LegalDocumentPath ?? string.Empty);
                 parameters.Add("ResultCode", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
                 await _connection.ExecuteAsync(
-                   MasterCustomerMaster.MasterCreateUpdateCustomer,
+                    MasterCustomerMaster.MasterCreateUpdateCustomer,
                     parameters,
                     commandType: CommandType.StoredProcedure
                 );
@@ -72,19 +60,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
 
                 if (resultCode == 2)
                     return new ResponseModel { Status = false, Message = "Email already exists.", StatusCode = 1 };
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: resultCode,
-                    branchId: item.Customer.BranchId,
-                    orgId: item.Customer.OrgId,
-                    actionType: "Insert",
-                    actionDescription: "Added new Customer",
-                    oldValue: null,
-                    newValue: item,
-                    tableName: "MasterCustomer",
-                    userId: item.Customer.UserId
-                );
 
                 return new ResponseModel
                 {
@@ -157,19 +132,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
 
                         int newContactId = contactParams.Get<int>("p_NewContactId");
                         contact.ContactId = newContactId;
-
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: newContactId,
-                            branchId: contact.BranchId,
-                            orgId: 0,
-                            actionType: "Insert",
-                            actionDescription: "Added new Customer",
-                            oldValue: null,
-                            newValue: item,
-                            tableName: "MasterCustomer",
-                            userId: contact.UserId
-                        );
                     }
 
                     return new ResponseModel
@@ -206,7 +168,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
                         addressParams.Add("p_ContactName", address.ContactName);
 
                         addressParams.Add("p_StatusCode", dbType: DbType.Int32, direction: ParameterDirection.Output);
-                        addressParams.Add("p_NewCustomerId", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
                         await _connection.ExecuteAsync(
                             "proc_MasterCustomerAddressCreateUpdate",
@@ -215,7 +176,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
                         );
 
                         int statusCode = addressParams.Get<int>("p_StatusCode");
-                        int customerId = addressParams.Get<int>("p_NewCustomerId");
 
                         if (statusCode == 1)
                         {
@@ -235,19 +195,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
                                 StatusCode = 2
                             };
                         }
-
-                        // Log transaction
-                        await LogTransactionAsync(
-                            id: customerId,
-                            branchId: address.BranchId,
-                            orgId: 0,
-                            actionType: "Insert",
-                            actionDescription: "Added new Customer",
-                            oldValue: null,
-                            newValue: item,
-                            tableName: "MasterCustomer",
-                            userId: address.UserId
-                        );
                     }
 
                     return new ResponseModel
@@ -276,17 +223,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
         }
         catch (Exception ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = ex.Message,
-                ErrorType = ex.GetType().Name,
-                StackTrace = ex.StackTrace,
-                Source = nameof(MasterCustomerRepository),
-                Method_Function = nameof(AddAsync),
-                UserId = item.Customer.UserId,
-                ScreenName = "Customer",
-                RequestData_Payload = JsonConvert.SerializeObject(item)
-            });
             return new ResponseModel
             {
                 Status = false,
@@ -299,6 +235,7 @@ public class MasterCustomerRepository : IMasterCustomerRepository
     {
         try
         {
+
             var parameters = new DynamicParameters();
             parameters.Add("p_BranchId", branchId);
             parameters.Add("p_UserId", branchId);
@@ -327,20 +264,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
         }
         catch (Exception ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = ex.Message,
-                ErrorType = ex.GetType().Name,
-                StackTrace = ex.StackTrace,
-                Source = nameof(MasterCustomerRepository),
-                Method_Function = nameof(GetByID),
-                UserId = 0,
-                ScreenName = "Customer",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    customerId, tabId, branchId
-                })
-            });
             return new ResponseModel()
             {
                 Status = false,
@@ -375,20 +298,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
         }
         catch (Exception ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = ex.Message,
-                ErrorType = ex.GetType().Name,
-                StackTrace = ex.StackTrace,
-                Source = nameof(MasterCustomerRepository),
-                Method_Function = nameof(GetAllAsync),
-                UserId = 0,
-                ScreenName = "Customer",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    customerId, tabId, branchId, contactId, userId, addressId, cancellationToken
-                })
-            });
             return new ResponseModel
             {
                 Status = false,
@@ -416,20 +325,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
         }
         catch (Exception ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = ex.Message,
-                ErrorType = ex.GetType().Name,
-                StackTrace = ex.StackTrace,
-                Source = nameof(MasterCustomerRepository),
-                Method_Function = nameof(GetByID),
-                UserId = 0,
-                ScreenName = "Customer",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    customerId, branchId, name, userId, contactId, addressId
-                })
-            });
             return new ResponseModel { Status = false, Message = $"Error: {ex.Message}" };
         }
     }
@@ -493,17 +388,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCustomerRepository),
-                    Method_Function = nameof(ToogleStatus),
-                    UserId = item.UserId,
-                    ScreenName = "Customer",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel
                 {
                     Status = false,
@@ -551,17 +435,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCustomerRepository),
-                    Method_Function = nameof(ToogleStatus),
-                    UserId = item.UserId,
-                    ScreenName = "Customer",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel
                 {
                     Status = false,
@@ -625,17 +498,6 @@ public class MasterCustomerRepository : IMasterCustomerRepository
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterCustomerRepository),
-                    Method_Function = nameof(ToogleStatus),
-                    UserId = item.UserId,
-                    ScreenName = "Customer",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel
                 {
                     Status = false,
@@ -645,12 +507,7 @@ public class MasterCustomerRepository : IMasterCustomerRepository
             }
         }
     }
-    public async Task<ResponseModel> UploadDO(
-    int Id,
-    string legalDocPath,
-    string customerReviewFormPath,
-    int userId,
-    int branchId)
+    public async Task<ResponseModel> UploadDO(int Id, string Path,int userId,int branchId)
     {
         try
         {
@@ -658,8 +515,7 @@ public class MasterCustomerRepository : IMasterCustomerRepository
             parameters.Add("p_UserId", userId);
             parameters.Add("p_BranchId", branchId);
             parameters.Add("p_CustomerId", Id);
-            parameters.Add("p_LegalDocFilePath", legalDocPath);
-            parameters.Add("p_CustomerReviewFormPath", customerReviewFormPath);
+            parameters.Add("p_LegalDocFilePath", Path);
 
             await _connection.ExecuteAsync(
                 "sp_UploadLegalDocument",
@@ -668,61 +524,20 @@ public class MasterCustomerRepository : IMasterCustomerRepository
 
             return new ResponseModel
             {
+                Data = null,
                 Message = "File Uploaded Successfully",
                 Status = true
             };
         }
         catch (Exception ex)
         {
-            await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-            {
-                ErrorMessage = ex.Message,
-                ErrorType = ex.GetType().Name,
-                StackTrace = ex.StackTrace,
-                Source = nameof(MasterCustomerRepository),
-                Method_Function = nameof(UploadDO),
-                UserId = userId,
-                ScreenName = "Customer",
-                RequestData_Payload = JsonConvert.SerializeObject(new
-                {
-                    branchId,
-                    userId,
-                    legalDocPath,
-                    customerReviewFormPath,
-                    Id
-                })
-            });
-
             return new ResponseModel
             {
+                Data = null,
                 Message = "Something went wrong during file upload.",
                 Status = false
             };
         }
-    }
-
-
-    private async Task LogTransactionAsync(int id, int? branchId, int? orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-    {
-        var log = new UserTransactionLogModel
-        {
-            TransactionId = id.ToString(),
-            ModuleId = 1,
-            ScreenId = 1,
-            ModuleName = "Master",
-            ScreenName = "Customer",
-            UserId = userId,
-            ActionType = actionType,
-            ActionDescription = actionDescription,
-            TableName = tableName,
-            OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-            NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-            CreatedBy = userId ?? 0,
-            OrgId = orgId,
-            BranchId = branchId,
-        };
-
-        await _transactionLogRepo.LogTransactionAsync(log);
     }
 
 

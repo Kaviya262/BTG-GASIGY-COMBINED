@@ -22,11 +22,10 @@ import { use } from "react";
 import { orderBy } from "lodash";
 import ReactToPrint from "react-to-print";
 import PrintColumn from './PrintColumn';
-import useAccess from "../../../common/access/useAccess";
 
 
 const ManageOrders = () => {
-    const { access, applyAccessUI } = useAccess("Sales", "Orders");
+
     const [Gasdeliverydetails, setGasdeliverydetails] = useState([]);
     // Format number with commas
     const formatNumber = (num) => {
@@ -110,12 +109,6 @@ const ManageOrders = () => {
     };
 
     useEffect(() => {
-        if (!access.loading) {
-            applyAccessUI();
-        }
-    }, [access, applyAccessUI]);
-
-    useEffect(() => {
         const loadCustomerList = async () => {
             const data = await GetCustomer(1, -1);
             setCustomerList(data);
@@ -125,25 +118,9 @@ const ManageOrders = () => {
         initFilters();
     }, []);
 
-   const clearFilter = async () => {
-    initFilters();
-
-    const resetFilter = {
-        FCustomerId: 0,
-        FromDate: formatDate(sevenDaysAgo),
-        ToDate: formatDate(new Date()),
-        BranchId: 1,
-        FilterType: 0,
-        PO: ""
+    const clearFilter = () => {
+        initFilters();
     };
-
-    setSelectedFilter(0);
-    setSalesorderFilter(resetFilter);
-
-    await fetchAllOrders(); 
-
-};
-
 
     const onGlobalFilterChange = (e) => {
         const value = e.target.value;
@@ -216,26 +193,10 @@ const ManageOrders = () => {
     };
 
     const CustomerBodyTemplate = (rowData) => {
-        const disabled = !access.canViewDetails;   // 👈 ADD THIS
 
-        return (
-            <span
-                style={{
-                    cursor: disabled ? "not-allowed" : "pointer",
-                    color: disabled ? "gray" : "blue",
-                    opacity: disabled ? 0.6 : 1
-                }}
-                className="btn-rounded btn btn-link"
-                data-access="viewdetails"        // 👈 ADD THIS
-                onClick={() => {
-                    if (!disabled) openSOGasHistory(rowData);   // 👈 prevent click
-                }}
-            >
-                {rowData.customername}
-            </span>
-        );
+        return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+            onClick={() => openSOGasHistory(rowData)}>{rowData.customername}</span>;
     };
-
     const openSOGasHistory = async rowData => {
         debugger;
         const data = await GetSOGasCodeDetails(rowData.SO_ID);
@@ -250,34 +211,17 @@ const ManageOrders = () => {
         return <Tag value={option.label} severity={getSeverity(option.value)} />;
     };
 
-    // const actionBodyTemplate = (rowData) => {
-    //     return (
-    //         <div className="actions">
-    //             {rowData.Status != "Posted" && (
-    //                 <span style={{ marginRight: '0.5rem' }} title="Edit" onClick={() => editRow(rowData)} >
-    //                     <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
-    //                 </span>
-    //             )}
-    //         </div>
-    //     )
-    // };
     const actionBodyTemplate = (rowData) => {
         return (
             <div className="actions">
-                {rowData.Status !== "Posted" && access.canEdit && (
-                    <span
-                        style={{ marginRight: '0.5rem', cursor: 'pointer' }}
-                        title="Edit"
-                        onClick={() => editRow(rowData)}
-                        data-access="edit" // <-- Add this
-                    >
+                {rowData.Status != "Posted" && (
+                    <span style={{ marginRight: '0.5rem' }} title="Edit" onClick={() => editRow(rowData)} >
                         <i className="mdi mdi-square-edit-outline" style={{ fontSize: '1.5rem' }}></i>
                     </span>
                 )}
             </div>
-        );
+        )
     };
-
     const dateFilterTemplate = options => {
         return (
             <Calendar
@@ -430,8 +374,9 @@ const ManageOrders = () => {
             setLoading(false);
         }
     };
-    
-    const fetchAllOrders = async () => {
+
+    useEffect(() => {
+        const fetchAllOrders = async () => {
             setLoading(true);
             try {
                 const response = await GetAllSO(
@@ -454,8 +399,6 @@ const ManageOrders = () => {
                 setLoading(false);
             }
         };
-
-    useEffect(() => {       
         fetchAllOrders();
     }, []);
 
@@ -674,22 +617,22 @@ const ManageOrders = () => {
     // };
 
 
-    // useEffect(() => {
-    //     debugger
-    //     const fetchData = async () => {
-    //         setLoading(true);
-    //         try {
-    //             const response = await GetAllSO(salesOrderFilter.FCustomerId, salesOrderFilter.FromDate, salesOrderFilter.ToDate, salesOrderFilter.BranchId, salesOrderFilter.FilterType,
-    //                 salesOrderFilter.PO);
-    //             setSalesOrder(response);
-    //         } catch (error) {
-    //             console.error("Error fetching orders:", error);
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-    //     fetchData();
-    // }, []);
+    useEffect(() => {
+        debugger
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const response = await GetAllSO(salesOrderFilter.FCustomerId, salesOrderFilter.FromDate, salesOrderFilter.ToDate, salesOrderFilter.BranchId, salesOrderFilter.FilterType,
+                    salesOrderFilter.PO);
+                setSalesOrder(response);
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     const handleCustomerChange = async (option) => {
         if (!option) {
@@ -734,14 +677,6 @@ const ManageOrders = () => {
             [name]: value, // Update the specific field in state
         }));
     };
-
-    if (!access.loading && !access.canView) {
-        return (
-            <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <h3>You do not have permission to view this page.</h3>
-            </div>
-        );
-    }
 
     return (
         <React.Fragment>
@@ -888,17 +823,17 @@ const ManageOrders = () => {
                                     <button type="button" className="btn btn-info" onClick={searchData}> <i className="bx bx-search-alt label-icon font-size-16 align-middle me-2"></i> Search</button>
                                     <button type="button" className="btn btn-danger" onClick={cancelFilter}><i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i>Cancel</button>
                                     <button type="button" className="btn btn-secondary" onClick={calldownload}> <i className="bx bx-export label-icon font-size-16 align-middle me-2"></i> Export</button>
-                                    <button type="button" className="btn btn-primary" onClick={handlePrint} data-access="print">
+                                    <button type="button" className="btn btn-primary" onClick={handlePrint}>
                                         <i className="bx bx-printer label-icon font-size-16 align-middle me-2"></i> Print
                                     </button>
 
-                                    <button type="button" className="btn btn-success" onClick={dAddOrder} data-access="new"><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
+                                    <button type="button" className="btn btn-success" onClick={dAddOrder}><i className="bx bx-plus label-icon font-size-16 align-middle me-2"></i>New</button>
                                 </div>
                             </div>
                         </Card>
                         <Col lg="12">
                             <Card >
-                                <DataTable value={salesOrder} paginator showGridlines rows={access.records || 10} loading={loading} dataKey="SO_ID"
+                                <DataTable value={salesOrder} paginator showGridlines rows={10} loading={loading} dataKey="SO_ID"
                                     filters={filters} globalFilterFields={['customername', 'SO_ID', 'SO_Number', 'Status']} header={header}
                                     emptyMessage="No order found." onFilter={(e) => setFilters(e.filters)} className='blue-bg' sortField="ReqDate" sortOrder={-1} >
                                     <Column field="SO_Number" header="System Seq. No." filter filterPlaceholder="Search by System Seq. No." style={{ width: '155px' }} className="text-center" />
@@ -928,11 +863,10 @@ const ManageOrders = () => {
                                     <Column field="POnumber" header="PO No." filter filterPlaceholder="Search by PO No." className="text-left" />
                                     <Column field="Status" header="Status" filterMenuStyle={{ width: '14rem' }} body={statusBodyTemplate} filter filterElement={statusFilterTemplate} className="text-center" />
                                     <Column field="SO_Number" header="Action" showFilterMatchModes={false} body={actionBodyTemplate} className="text-center" />
-                                    {access.canPrint &&(
                                     <Column field="SO_ID" header="Print" showFilterMatchModes={false}
                                         body={(rowData) => <PrintColumn soId={rowData.SO_ID} />}
                                         className="text-center" />
-                                    )}
+
 
                                 </DataTable>
                                 <div ref={printRef} style={{ display: 'none' }} id="printableArea">

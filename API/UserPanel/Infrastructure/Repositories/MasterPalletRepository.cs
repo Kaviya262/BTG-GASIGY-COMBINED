@@ -1,17 +1,14 @@
 ﻿using BackEnd.Master;
-using Core.Abstractions;
-using Core.Master.ErrorLog;
 using Core.Master.Pallet;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Core.OrderMngMaster.Customer;
 using Dapper;
-using DocumentFormat.OpenXml.Vml.Office;
 using Newtonsoft.Json;
 using System.Data;
-using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json;
 using UserPanel.Infrastructure.Data;
+using Core.Abstractions;
 
 namespace Infrastructure.Repositories
 {
@@ -100,13 +97,9 @@ namespace Infrastructure.Repositories
         }
 
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
-        public MasterPalletRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public MasterPalletRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = userTransactionLogRepository;
         }
 
         public async Task<object> AddAsync(MasterPalletModel item)
@@ -115,12 +108,6 @@ namespace Infrastructure.Repositories
 
             try
             {
-                bool isUpdate = item.Pallet.PalletId > 0;
-                object oldvalue = null;
-                if (isUpdate)
-                {
-                    oldvalue = await _connection.QueryAsync<object>($"select * from master_pallet where palletid = {item.Pallet.PalletId}");
-                }
                 var options = new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -144,7 +131,6 @@ namespace Infrastructure.Repositories
                 parameters.Add("p_Barcode", item.Pallet.Barcode);
                 parameters.Add("p_PalletItemsJSON", palletItemsJson);
                 parameters.Add("p_ResultCode", dbType: DbType.Int32, direction: ParameterDirection.Output);
-                parameters.Add("P_newId", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
                 await _connection.ExecuteAsync(
                     "proc_SaveOrUpdateMasterPalletWithItems",
@@ -153,26 +139,6 @@ namespace Infrastructure.Repositories
                 );
 
                 int resultCode = parameters.Get<int>("p_ResultCode");
-                int? newId = parameters.Get<int?>("P_newId");
-
-                int resultid = newId ?? item.Pallet.PalletId;   
-
-
-                string actionType = isUpdate ? "Update" : "Insert";
-                string actionDescription = isUpdate ? "Updated pallet" : "Created new pallet";
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: resultid,
-                    branchId: item.Pallet.BranchId,
-                    orgId: item.Pallet.OrgId,
-                    actionType: actionType,
-                    actionDescription: actionDescription,
-                    oldValue: oldvalue,
-                    newValue: item,
-                    tableName: "master_pallet",
-                    userId: item.Pallet.UserId
-                );
 
                 response = new ResponseModel()
                 {
@@ -182,17 +148,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterPalletRepository),
-                    Method_Function = nameof(AddAsync),
-                    UserId = item.Pallet.UserId,
-                    ScreenName = "Pallet",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 response = new ResponseModel()
                 {
                     Message = $"Something went wrong - {ex.Message} - {ex.InnerException?.Message}",
@@ -246,20 +201,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterPalletRepository),
-                    Method_Function = nameof(GetByID),
-                    UserId = 0,
-                    ScreenName = "Pallet",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        palletId, branchId, orgId
-                    })
-                });
                 return new ResponseModel()
                 {
                     Message = "Something went wrong - " + ex.Message + " - " + ex.InnerException?.Message,
@@ -271,54 +212,14 @@ namespace Infrastructure.Repositories
 
         public async Task<object> GetAllAsync(int orgId, int branchId, int? palletTypeId, int? GasCodeId)
         {
-            try
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("p_OrgId", orgId);
-                parameters.Add("p_BranchId", branchId);
-                parameters.Add("p_PalletTypeID", palletTypeId ?? 0);
-                parameters.Add("p_GasCodeId", GasCodeId ?? 0);
+            var parameters = new DynamicParameters();
+            parameters.Add("p_OrgId", orgId);
+            parameters.Add("p_BranchId", branchId);
+            parameters.Add("p_PalletTypeID", palletTypeId ?? 0);
+            parameters.Add("p_GasCodeId", GasCodeId ?? 0);
 
-                var result = await _connection.QueryAsync<dynamic>(
-                    "proc_GetMasterPalletList_Filtered",
-                    parameters,
-                    commandType: CommandType.StoredProcedure
-                );
-
-                return new ResponseModel
-                {
-                    Status = true,
-                    Data = result
-                };
-            }
-            catch (Exception ex)
-            {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterPalletRepository),
-                    Method_Function = nameof(GetAllAsync),
-                    UserId = 0,
-                    ScreenName = "Pallet",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        orgId,
-                        branchId,
-                        palletTypeId,
-                        GasCodeId
-                    })
-                });
-
-                return new ResponseModel
-                {
-                    Message = $"Something went wrong - {ex.Message}",
-                    Status = false
-                };
-            }
+            return await Helper.QueryProcedure(_connection, "proc_GetMasterPalletList_Filtered", parameters);
         }
-
 
 
         public async Task<object> UpdateAsync(MasterPalletModel item)
@@ -330,22 +231,8 @@ namespace Infrastructure.Repositories
             try
             {
                 var result = 0;
-                var oldvalue = await _connection.QueryAsync<object>($"select * from master_pallet where palletid = {item.Pallet.PalletId}");
 
                 result = await _connection.ExecuteAsync(SQLQuery.updateMasterPallet, item.Pallet);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: item.Pallet.PalletId,
-                    branchId: item.Pallet.BranchId,
-                    orgId: item.Pallet.OrgId,
-                    actionType: "Update",
-                    actionDescription: "Update Pallet",
-                    oldValue: oldvalue,
-                    newValue: item,
-                    tableName: "master_pallet",
-                    userId: item.Pallet.UserId
-                );
                 if (result == 0)
                 {
                     response = new ResponseModel() { Message = "Update MasterPallet failed 0 row", Status = false };
@@ -401,17 +288,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterPalletRepository),
-                    Method_Function = nameof(UpdateAsync),
-                    UserId = item.Pallet.UserId,
-                    ScreenName = "Pallet",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel()
                 {
                     Message = "Something went wrong - " + ex.Message + " - " + ex.InnerException?.Message,
@@ -461,46 +337,12 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(MasterPalletRepository),
-                    Method_Function = nameof(ToogleStatus),
-                    UserId = item.UserId,
-                    ScreenName = "Pallet",
-                    RequestData_Payload = JsonConvert.SerializeObject(item)
-                });
                 return new ResponseModel
                 {
                     Message = $"Something went wrong - {ex.Message} - {ex.InnerException?.Message}",
                     Status = false
                 };
             }
-        }
-
-        private async Task LogTransactionAsync(int id, int? branchId, int? orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Master",
-                ScreenName = "Pallet",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
         }
 
     }

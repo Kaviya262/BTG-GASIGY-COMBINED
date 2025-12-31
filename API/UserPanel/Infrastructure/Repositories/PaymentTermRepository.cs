@@ -1,20 +1,15 @@
-﻿using BackEnd.PaymentTerms;
-using Core.Abstractions;
-using Core.Master.ErrorLog;
-using Core.Master.PaymentTerms;
-using Core.Master.Transactionlog;
-using Core.Models;
-using Dapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using MySqlX.XDevAPI.Common;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BackEnd.PaymentTerms;
+using Core.Abstractions;
+using Core.Master.PaymentTerms;
+using Core.Models;
+using Dapper;
+using MySqlX.XDevAPI.Common;
 using UserPanel.Infrastructure.Data;
 using static Core.Master.PaymentTerms.PaymentTermItem;
 
@@ -23,13 +18,9 @@ namespace Infrastructure.Repositories
     public class PaymentTermRepository : IPaymentTermRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
-        public PaymentTermRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository userTransactionLogRepository)
+        public PaymentTermRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection ;
-            _errorLogRepo = errorLogMasterRepository ;
-            _transactionLogRepo = userTransactionLogRepository ;
         }
         #region GetAllPaymentTermAsync
         public async Task<object> GetAllPaymentTermAsync(int opt, int payTermId, string payTermCode)
@@ -57,20 +48,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentTermRepository),
-                    Method_Function = nameof(GetAllPaymentTermAsync),
-                    UserId = 0,
-                    ScreenName = "PaymentTerm",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                       opt, payTermId, payTermCode
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -111,20 +88,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentTermRepository),
-                    Method_Function = nameof(GetPaymentTermByIdAsync),
-                    UserId = 0,
-                    ScreenName = "PaymentTerm",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, payTermId, payTermCode
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -168,20 +131,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentTermRepository),
-                    Method_Function = nameof(GetPaymentTermByCodeAsync),
-                    UserId = 0,
-                    ScreenName = "PaymentTerm",
-                    RequestData_Payload = JsonConvert.SerializeObject(new
-                    {
-                        opt, payTermId, payTermCode
-                    })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -203,19 +152,6 @@ namespace Infrastructure.Repositories
                                      1,@UserId, '',Now());
                                     SELECT LAST_INSERT_ID();";
                 var newid = await _connection.ExecuteScalarAsync<int>(insertquery, obj.Header);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: newid,
-                    branchId: 1,
-                    orgId: 1,
-                    actionType: "Insert",
-                    actionDescription: "Added new Payment Terms",
-                    oldValue: null,
-                    newValue: obj,
-                    tableName: "master_terms",
-                    userId: obj.Header.UserId
-                );
                 if (newid == 0)
                 {
                     return new ResponseModel()
@@ -237,17 +173,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentTermRepository),
-                    Method_Function = nameof(CreatePaymentTermAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "PaymentTerm",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -264,8 +189,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryAsync<object>($"select * from master_terms where id = {obj.Header.PaymentTermId}");
-
                 var updatequery = @"UPDATE master_terms
                            SET TermName = @PaymentTermCode,
                                Description = @PaymentTermDesc,
@@ -277,19 +200,6 @@ namespace Infrastructure.Repositories
                            WHERE Id = @PaymentTermId";
 
                 var rowsAffected = await _connection.ExecuteAsync(updatequery, obj.Header);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: obj.Header.PaymentTermId,
-                    branchId: 1,
-                    orgId: 1,
-                    actionType: "Update",
-                    actionDescription: "Update Payment Terms",
-                    oldValue: oldvalue,
-                    newValue: obj,
-                    tableName: "master_terms",
-                    userId: obj.Header.UserId
-                );
 
                 if (rowsAffected > 0)
                 {
@@ -312,17 +222,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(PaymentTermRepository),
-                    Method_Function = nameof(UpdatePaymentTermAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "PaymentTerm",
-                    RequestData_Payload = JsonConvert.SerializeObject(obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -340,28 +239,6 @@ namespace Infrastructure.Repositories
 
         #endregion
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Master",
-                ScreenName = "Payment Terms",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-            };
-
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 }
 

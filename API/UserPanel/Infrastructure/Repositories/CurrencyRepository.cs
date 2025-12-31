@@ -1,16 +1,17 @@
-﻿using BackEnd.Country;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using BackEnd.Currency;
 using Core.Abstractions;
 using Core.Master.Currency;
-using Core.Master.ErrorLog;
-using Core.Master.Transactionlog;
 using Core.Models;
 using Dapper;
 using DocumentFormat.OpenXml.Wordprocessing;
 using MySql.Data.MySqlClient;
 using Mysqlx.Crud;
-using System.Data;
-using System.Text.Json;
 using UserPanel.Infrastructure.Data;
 using static Core.Master.Currency.CurrencyItem;
 
@@ -19,14 +20,10 @@ namespace Infrastructure.Repositories
     public class CurrencyRepository : ICurrencyRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IErrorLogMasterRepository _errorLogRepo;
-        private readonly IUserTransactionLogRepository _transactionLogRepo;
 
-        public CurrencyRepository(IUnitOfWorkDB1 unitOfWork, IErrorLogMasterRepository errorLogMasterRepository, IUserTransactionLogRepository transactionLogRepo)
+        public CurrencyRepository(IUnitOfWorkDB1 unitOfWork)
         {
             _connection = unitOfWork.Connection;
-            _errorLogRepo = errorLogMasterRepository;
-            _transactionLogRepo = transactionLogRepo;
         }
         #region GetAllCurrenciesAsync
         public async Task<object> GetAllCurrenciesAsync(int opt, int Id, string currencyCode, string currencyName)
@@ -52,17 +49,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CurrencyRepository),
-                    Method_Function = nameof(GetAllCurrenciesAsync),
-                    UserId = 0,
-                    ScreenName = "Currency",
-                    RequestData_Payload = JsonSerializer.Serialize(new { opt, Id, currencyCode, currencyName })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -105,21 +91,10 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CurrencyRepository),
-                    Method_Function = nameof(GetCurrencyByIdAsync),
-                    UserId = 0,
-                    ScreenName = "Currency",
-                    RequestData_Payload = JsonSerializer.Serialize(new { opt, currencyId, curCode, curName })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
-                    Message = $"Something went wrong: {ex.Message}",
+                    Message = "Something went wrong:" + ex.Message,
                     Status = false
                 };
             }
@@ -159,21 +134,10 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CurrencyRepository),
-                    Method_Function = nameof(GetCurrencyByCodeAsync),
-                    UserId = 0,
-                    ScreenName = "Currency",
-                    RequestData_Payload = JsonSerializer.Serialize(new { opt, Id, curCode, curName })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
-                    Message = $"Something went Wrong :{ex.Message}",
+                    Message = "Something went Wrong :" + ex.Message,
                     Status = false
                 };
             }
@@ -212,21 +176,10 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CurrencyRepository),
-                    Method_Function = nameof(GetCurrencyByNameAsync),
-                    UserId = 0,
-                    ScreenName = "Currency",
-                    RequestData_Payload = JsonSerializer.Serialize(new { opt, Id, curCode, curName })
-                });
                 return new ResponseModel()
                 {
                     Data = null,
-                    Message = $"Something went Wrong :{ex.Message}",
+                    Message = "Something went Wrong :" + ex.Message,
                     Status = false
                 };
             }
@@ -251,21 +204,6 @@ namespace Infrastructure.Repositories
                                     SELECT LAST_INSERT_ID(); ";
                 var result = await _connection.ExecuteScalarAsync<int>(query, obj.Header);
 
-                int currencyid = result;
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: currencyid,
-                    branchId: 0,
-                    orgId: 0,
-                    actionType: "Insert",
-                    actionDescription: "Added new Currency",
-                    oldValue: null,
-                    newValue: obj,
-                    tableName: "MasterCurrency",
-                    userId: obj.Header.UserId
-                );
-
                 if (result > 0)
                     return new ResponseModel()
                     {
@@ -284,17 +222,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CurrencyRepository),
-                    Method_Function = nameof(CreateCurrencyAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "Currency",
-                    RequestData_Payload = JsonSerializer.Serialize(obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -310,7 +237,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryAsync<object>($"select * from master_currency where CurrencyId = {obj.Detail.CurrencyId}");
                 var Updatequery = @"
                     UPDATE master_currency
                     SET                         
@@ -322,19 +248,6 @@ namespace Infrastructure.Repositories
                 
 
                 var rowsAffected = await _connection.ExecuteAsync(Updatequery, obj.Detail);
-
-                // Log transaction
-                await LogTransactionAsync(
-                    id: obj.Detail.CurrencyId,
-                    branchId: 0,
-                    orgId: 0,
-                    actionType: "Update",
-                    actionDescription: "Update Currency",
-                    oldValue: oldvalue,
-                    newValue: obj,
-                    tableName: "MasterCurrency",
-                    userId: obj.Detail.UserId
-                );
                 if (rowsAffected > 0)
                 {
                     return new ResponseModel()
@@ -358,17 +271,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CurrencyRepository),
-                    Method_Function = nameof(UpdateCurrencyStatusAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "Currency",
-                    RequestData_Payload = JsonSerializer.Serialize(obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -385,8 +287,6 @@ namespace Infrastructure.Repositories
         {
             try
             {
-                var oldvalue = await _connection.QueryAsync<object>($"select * from master_currency where CurrencyId = {obj.Header.CurrencyId}");
-
                 var selectQuery = "SELECT CurrencyCode, CurrencyName, CurrencySymbol, ExchangeRate, " +
                     "EffectiveFromdate FROM master_currency WHERE CurrencyId = @CurrencyId";
                 var existCurr = await _connection.QueryFirstOrDefaultAsync<CurrencyItemHeader>
@@ -470,19 +370,6 @@ namespace Infrastructure.Repositories
                         UserId = obj.Header.UserId
                     });
 
-                    // Log transaction
-                    await LogTransactionAsync(
-                        id: obj.Header.CurrencyId,
-                        branchId: 0,
-                        orgId: 0,
-                        actionType: "Update",
-                        actionDescription: "Update Currency",
-                        oldValue: oldvalue,
-                        newValue: obj,
-                        tableName: "MasterCurrency",
-                        userId: obj.Header.UserId
-                    );
-
                     return new ResponseModel()
                     {
                         Data = rowsAffected,
@@ -503,17 +390,6 @@ namespace Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await _errorLogRepo.LogErrorAsync(new ErrorLogMasterModel
-                {
-                    ErrorMessage = ex.Message,
-                    ErrorType = ex.GetType().Name,
-                    StackTrace = ex.StackTrace,
-                    Source = nameof(CurrencyRepository),
-                    Method_Function = nameof(UpdateCurrencyAsync),
-                    UserId = obj.Header.UserId,
-                    ScreenName = "Currency",
-                    RequestData_Payload = JsonSerializer.Serialize(obj)
-                });
                 return new ResponseModel()
                 {
                     Data = null,
@@ -524,28 +400,7 @@ namespace Infrastructure.Repositories
         }
         #endregion
 
-        private async Task LogTransactionAsync(int id, int branchId, int orgId, string actionType, string actionDescription, object oldValue, object newValue, string tableName, int? userId = 0)
-        {
-            var log = new UserTransactionLogModel
-            {
-                TransactionId = id.ToString(),
-                ModuleId = 1,
-                ScreenId = 1,
-                ModuleName = "Master",
-                ScreenName = "Currency",
-                UserId = userId,
-                ActionType = actionType,
-                ActionDescription = actionDescription,
-                TableName = tableName,
-                OldValue = oldValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(oldValue) : null,
-                NewValue = newValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(newValue) : null,
-                CreatedBy = userId ?? 0,
-                OrgId = orgId,
-                BranchId = branchId,
-            };
 
-            await _transactionLogRepo.LogTransactionAsync(log);
-        }
     }
 }
 

@@ -6542,11 +6542,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\BTG\\BTG-Git\\gasify\\API\\UserPanel\\UserPanel\\UserPanel.csproj",
+      "projectUniqueName": "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\UserPanel\\UserPanel.csproj",
       "projectName": "UserPanel",
-      "projectPath": "D:\\BTG\\BTG-Git\\gasify\\API\\UserPanel\\UserPanel\\UserPanel.csproj",
+      "projectPath": "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\UserPanel\\UserPanel.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "D:\\BTG\\BTG-Git\\gasify\\API\\UserPanel\\UserPanel\\obj\\",
+      "outputPath": "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\UserPanel\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -6568,11 +6568,11 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "D:\\BTG\\BTG-Git\\gasify\\API\\UserPanel\\Application\\Application.csproj": {
-              "projectPath": "D:\\BTG\\BTG-Git\\gasify\\API\\UserPanel\\Application\\Application.csproj"
+            "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\Application\\Application.csproj": {
+              "projectPath": "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\Application\\Application.csproj"
             },
-            "D:\\BTG\\BTG-Git\\gasify\\API\\UserPanel\\Infrastructure\\Infrastructure.csproj": {
-              "projectPath": "D:\\BTG\\BTG-Git\\gasify\\API\\UserPanel\\Infrastructure\\Infrastructure.csproj"
+            "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\Infrastructure\\Infrastructure.csproj": {
+              "projectPath": "D:\\BTG\\Git-Live-Latest\\gasify\\API\\UserPanel\\Infrastructure\\Infrastructure.csproj"
             }
           }
         }

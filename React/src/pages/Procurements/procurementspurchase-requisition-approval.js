@@ -33,7 +33,6 @@ import 'primereact/resources/themes/lara-light-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import { Badge } from 'primereact/badge';
-import useAccess from "../../common/access/useAccess";
 // import PaymentSummaryTable from './PaymentSummaryTable'; // ✅ No curly braces
 
 import {
@@ -70,7 +69,6 @@ const getUserDetails = () => {
 }
 
 const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
-  const { access, applyAccessUI } = useAccess("Procurement", "Purchase Requisition Approval");
   const [previewUrl, setPreviewUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const types = [
@@ -154,12 +152,6 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
   const toggleRemarkModal = () => {
     setRemarkModalOpen(!remarkModalOpen);
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
 
   const handleViewRemarks = async (id) => {
@@ -966,14 +958,6 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
     }
   };
 
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
-
   return (
     <React.Fragment>
       <div className="page-content">
@@ -992,12 +976,10 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
 
                 <div className="text-end button-items">
                   <label style={{ color: "red" }}>Please click Save button to approve the selected rows</label>
-                  {access.canSave && (
-                    <button type="button" className="btn btn-primary" onClick={handleSave}>
+                  <button type="button" className="btn btn-primary" onClick={handleSave}>
 
-                      <i className="bx bx-check-circle label-icon font-size-16 align-middle me-2"></i> Save
-                    </button>
-                  )}
+                    <i className="bx bx-check-circle label-icon font-size-16 align-middle me-2"></i> Save
+                  </button>
                   <button type="button" className="btn btn-danger" onClick={cleardata}>
                     <i className="bx bx-window-close label-icon font-size-14 align-middle me-2"></i> Cancel
                   </button>
@@ -1208,7 +1190,7 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
             </Col>
           </Row>
 
-          <DataTable value={historyArray} dataKey="id" responsiveLayout="scroll" rows={access.records || 10}>
+          <DataTable value={historyArray} dataKey="id" responsiveLayout="scroll" rows={20}>
             {/* New PR info columns */}
             <Column field="pr_number" header="PR #" />
             <Column field="prdate" header="PR Date" />
@@ -1216,19 +1198,17 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
 
             <Column field="prtype" header="PR Type" />
             <Column field="SupplierName" header="Supplier" />
-            {access.canViewRate && (
-              <Column
-                field="NetAmount"
-                header="Total Amount"
-                body={(rowData) =>
-                  rowData.NetAmount?.toLocaleString('en-US', {
-                    style: 'decimal',
-                    minimumFractionDigits: 2
-                  })
-                }
-                style={{ textAlign: 'right' }}
-              />
-            )}
+            <Column
+              field="NetAmount"
+              header="Total Amount"
+              body={(rowData) =>
+                rowData.NetAmount?.toLocaleString('en-US', {
+                  style: 'decimal',
+                  minimumFractionDigits: 2
+                })
+              }
+              style={{ textAlign: 'right' }}
+            />
 
             {/* Existing columns */}
             <Column
@@ -1534,7 +1514,6 @@ const ApprovalTable = ({
   const [selectedDetail, setSelectedDetail] = useState({});
   const [previewUrl, setPreviewUrl] = useState("");
   const [fileName, setFileName] = useState("");
-  const { access, applyAccessUI } = useAccess("Procurement", "Purchase Requisition Approval");
 
   // 🔹 Reset filters
   const initFilters = () => {
@@ -1560,12 +1539,6 @@ const ApprovalTable = ({
       global: { value, matchMode: FilterMatchMode.CONTAINS },
     }));
   };
-
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
 
   const clearFilter = () => {
     initFilters();
@@ -1676,31 +1649,10 @@ const ApprovalTable = ({
     }
   };
 
-  // const actionclaimBodyTemplate = (rowData) => {
-  //   return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
-  //     onClick={() => handleShowDetails(rowData)}>{rowData.pr_number}</span>;
-  // };
   const actionclaimBodyTemplate = (rowData) => {
-
-    if (!access?.canViewDetails) {
-      return (
-        <span style={{ color: "black", cursor: "default" }}>
-          {rowData.pr_number}
-        </span>
-      );
-    }
-
-    return (
-      <span
-        style={{ cursor: "pointer", color: "blue" }}
-        className="btn-rounded btn btn-link"
-        onClick={() => handleShowDetails(rowData)}
-      >
-        {rowData.pr_number}
-      </span>
-    );
+    return <span style={{ cursor: "pointer", color: "blue" }} className="btn-rounded btn btn-link"
+      onClick={() => handleShowDetails(rowData)}>{rowData.pr_number}</span>;
   };
-
 
   const handleDownloadFile = async (data) => {
     const fileId = data.prid ? data.prid : 0;
@@ -1728,8 +1680,8 @@ const ApprovalTable = ({
   return (
 
     <>
-      <DataTable value={data} paginator rows={access.records || 10} header={header}
-        filters={filters} globalFilterFields={['pr_number', 'createdbyname', 'prdate', 'prtype', 'SupplierName', 'CurrencyCode', 'NetAmount']}
+      <DataTable value={data} paginator rows={20} header={header}
+        filters={filters} globalFilterFields={['pr_number', 'createdbyname', 'prdate', 'prtype', 'SupplierName','CurrencyCode', 'NetAmount']}
         dataKey="claimno" expandedRows={null} rowExpansionTemplate={detailTemplate}
         onRowToggle={(e) => { }} responsiveLayout="scroll"
         rowClassName={(rowData) =>
@@ -1747,20 +1699,18 @@ const ApprovalTable = ({
         <Column field="prtype" header="PR Type" filter />
         <Column field="SupplierName" header="Supplier" filter />
         <Column field="CurrencyCode" header="Currency" filter />
-        {access.canViewRate && (
-          <Column
-            field="NetAmount"
-            filter
-            header="Total Amount"
-            body={(rowData) =>
-              rowData.NetAmount?.toLocaleString('en-US', {
-                style: 'decimal',
-                minimumFractionDigits: 2
-              })
-            }
-            style={{ textAlign: 'right' }}
-          />
-        )}
+        <Column
+          field="NetAmount"
+          filter
+          header="Total Amount"
+          body={(rowData) =>
+            rowData.NetAmount?.toLocaleString('en-US', {
+              style: 'decimal',
+              minimumFractionDigits: 2
+            })
+          }
+          style={{ textAlign: 'right' }}
+        />
         <Column header="History" body={(rowData) => (
           <span onClick={() => handleViewRemarks(rowData.id)} title="View Remarks" style={{ cursor: 'pointer' }}>
             <i className="mdi mdi-comment-text-outline" style={{ fontSize: '1.5rem', color: '#17a2b8' }}></i>
@@ -1777,29 +1727,25 @@ const ApprovalTable = ({
 
             return (
               <div className="d-flex gap-2">
-                {access?.canEdit && (
-                  <Button
-                    icon="pi pi-check"
-                    className={`btn-circle p-button-rounded ${gmApproved ? 'p-button-success' : 'p-button-outlined'}`}
-                    onClick={() => handleClick1('approve', rowData.id)}
+                <Button
+                  icon="pi pi-check"
+                  className={`btn-circle p-button-rounded ${gmApproved ? 'p-button-success' : 'p-button-outlined'}`}
+                  onClick={() => handleClick1('approve', rowData.id)}
 
-                    tooltipOptions={{ position: 'top' }}
-                    disabled={gmDisabled}
-                  />
-                )}
-                {access?.canEdit && (
-                  <Button
-                    icon="pi pi-comment"
-                    className={`btn-circle p-button-rounded ${action1[rowData.id] === 'discuss' ? 'p-button-warning' : 'p-button-outlined'}`}
-                    onClick={() => {
-                      handleClick1('discuss', rowData.id);
-                      handleDiscuss(rowData);
-                    }}
-                    tooltip={rowData.comment}
-                    tooltipOptions={{ position: 'top' }}
-                    disabled={gmDisabled}
-                  />
-                )}
+                  tooltipOptions={{ position: 'top' }}
+                  disabled={gmDisabled}
+                />
+                <Button
+                  icon="pi pi-comment"
+                  className={`btn-circle p-button-rounded ${action1[rowData.id] === 'discuss' ? 'p-button-warning' : 'p-button-outlined'}`}
+                  onClick={() => {
+                    handleClick1('discuss', rowData.id);
+                    handleDiscuss(rowData);
+                  }}
+                  tooltip={rowData.comment}
+                  tooltipOptions={{ position: 'top' }}
+                  disabled={gmDisabled}
+                />
               </div>
             );
 
@@ -1808,7 +1754,7 @@ const ApprovalTable = ({
           }}
         />
 
-        {(ApproverTwo == true || ApproverFour == true || ApproverFive == true) && (
+        {(ApproverTwo == true || ApproverFour ==true || ApproverFive ==true) && (
           <Column
             style={{ textAlign: 'center' }}
             header="Director"
@@ -1818,31 +1764,27 @@ const ApprovalTable = ({
               if (rowData.approvedone === 1) {
                 return (
                   <div className="d-flex gap-2">
-                    {access?.canEdit && (
-                      <Button
-                        icon="pi pi-check"
-                        className={`btn-circle p-button-rounded ${action2[rowData.id] === 'approve' ? 'p-button-success' : 'p-button-outlined'
-                          }`}
-                        onClick={() => handleClick2('approve', rowData.id)}
-                        tooltip="Approve"
-                        tooltipOptions={{ position: 'top' }}
-                        disabled={directorDisabled}
-                      />
-                    )}
-                    {access?.canEdit && (
-                      <Button
-                        icon="pi pi-comment"
-                        className={`btn-circle p-button-rounded ${action2[rowData.id] === 'discuss' ? 'p-button-warning' : 'p-button-outlined'
-                          }`}
-                        onClick={() => {
-                          handleClick2('discuss', rowData.id);
-                          handleDiscuss(rowData);
-                        }}
-                        tooltip="Discuss"
-                        tooltipOptions={{ position: 'top' }}
-                        disabled={directorDisabled}
-                      />
-                    )}
+                    <Button
+                      icon="pi pi-check"
+                      className={`btn-circle p-button-rounded ${action2[rowData.id] === 'approve' ? 'p-button-success' : 'p-button-outlined'
+                        }`}
+                      onClick={() => handleClick2('approve', rowData.id)}
+                      tooltip="Approve"
+                      tooltipOptions={{ position: 'top' }}
+                      disabled={directorDisabled}
+                    />
+                    <Button
+                      icon="pi pi-comment"
+                      className={`btn-circle p-button-rounded ${action2[rowData.id] === 'discuss' ? 'p-button-warning' : 'p-button-outlined'
+                        }`}
+                      onClick={() => {
+                        handleClick2('discuss', rowData.id);
+                        handleDiscuss(rowData);
+                      }}
+                      tooltip="Discuss"
+                      tooltipOptions={{ position: 'top' }}
+                      disabled={directorDisabled}
+                    />
                   </div>
                 );
               }
@@ -1874,16 +1816,19 @@ const ApprovalTable = ({
                   ["Sup. Email", selectedDetail.Header?.Email],
                 ].map(([label, val], i) => (
                   <Col md="4" key={i} className="form-group row">
-                    <Label className="col-sm-5 col-form-label bold">{label}</Label>
-                    <Col sm="7" className="mt-2" style={{ wordWrap: "break-word" }}>
-                      :{" "}
-                      {(label === "Supplier" || label === "Currency") ? (
-                        <b>{val}</b>
-                      ) : (
-                        val
-                      )}
-                    </Col>
+                  <Label className="col-sm-5 col-form-label bold">{label}</Label>
+                  <Col sm="7" className="mt-2" style={{ wordWrap: "break-word" }}>
+                    :{" "}
+                    {(label === "Supplier"  ) ? (
+                      <b>{val}</b>
+                    ) : (label === "Currency") ? (
+                      <b style={{color:"green"}}>{val}</b>
+                  ) 
+                  : (
+                      val
+                    )}
                   </Col>
+                </Col>
                 ))}
               </Row>
 
@@ -1893,37 +1838,35 @@ const ApprovalTable = ({
 
 
               <DataTable value={selectedDetail.Details} footerColumnGroup={
-                <ColumnGroup>
-                  {access.canViewRate && (
-                    <Row>
-                      <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-
-
-                      <Column
-                        footer={<b>{selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                      />
-                      <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                      <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                      <Column
-                        footer={<b>{selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                      />
-                      <Column footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
-                      <Column
-                        footer={<b>{selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                      />
-
-                      <Column
-                        footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                      />
-                    </Row>
-                  )}
-                </ColumnGroup>
+                  <ColumnGroup>
+                      <Row>
+                          <Column footer="GRAND TOTAL" colSpan={6} footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                         
+                          
+                          <Column
+                              footer={<b>{selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                          />
+                           <Column     footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                           <Column     footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+                 <Column
+                              footer={<b>{selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                          />
+                <Column     footerStyle={{ textAlign: 'right', fontWeight: 'bold' }} />
+              <Column
+                              footer={<b>{selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                          />
+              
+                          <Column footerStyle={{color:"#ff5a00"}} 
+                              footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                          />
+                      </Row>
+                  </ColumnGroup>
               }>
                 <Column header="#" body={(_, { rowIndex }) => rowIndex + 1} />
                 <Column field="memo_number" header="PM No." />
                 {/* <Column field="groupname" header="Item Group" /> */}
                 <Column field="ItemName" header="Item Name" />
-
+        
                 <Column field="Qty" header="Qty"
                   body={(rowData) =>
                     rowData.Qty?.toLocaleString('en-US', {
@@ -1932,91 +1875,77 @@ const ApprovalTable = ({
                     })
                   }
                 />
-                <Column field="UOMName" header="UOM" />
-                {access.canViewRate && (
-                  <Column field="UnitPrice" header="Unit Price"
-                    body={(rowData) =>
-                      rowData.UnitPrice?.toLocaleString('en-US', {
-                        style: 'decimal',
-                        minimumFractionDigits: 2
-                      })
-                    }
-                  />
-                )}
-                {access.canViewRate && (
-                  <Column field="DiscountValue" header="Discount"
-                    body={(rowData) =>
-                      rowData.DiscountValue?.toLocaleString('en-US', {
-                        style: 'decimal',
-                        minimumFractionDigits: 2
-                      })
-                    }
-                    footer={selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  />
-                )}
+                        <Column field="UOMName" header="UOM" />
+                <Column field="UnitPrice" header="Unit Price"
+                  body={(rowData) =>
+                    rowData.UnitPrice?.toLocaleString('en-US', {
+                      style: 'decimal',
+                      minimumFractionDigits: 2
+                    })
+                  }
+                />
+                <Column field="DiscountValue" header="Discount"
+                  body={(rowData) =>
+                    rowData.DiscountValue?.toLocaleString('en-US', {
+                      style: 'decimal',
+                      minimumFractionDigits: 2
+                    })
+                  }
+                  footer={selectedDetail.Header?.HeaderDiscountValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                />
                 <Column field="taxname" header="Tax" />
-                {access.canViewRate && (
-                  <Column field="TaxPerc" header="Tax %" />
-                )}
-                {access.canViewRate && (
-                  <Column field="TaxValue" header="Tax Amount"
-                    body={(rowData) =>
-                      rowData.TaxValue?.toLocaleString('en-US', {
-                        style: 'decimal',
-                        minimumFractionDigits: 2
-                      })
-                    }
-                    footer={selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  />
-                )}
-                {access.canViewRate && (
-                  <Column field="vatPerc" header="VAT %" />
-                )}
-                {access.canViewRate && (
-                  <Column field="vatValue" header="VAT Amount"
-                    body={(rowData) =>
-                      rowData.vatValue?.toLocaleString('en-US', {
-                        style: 'decimal',
-                        minimumFractionDigits: 2
-                      })
-                    }
-                    footer={selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  />
-                )}
-                {access.canViewRate && (
-                  <Column field="NetTotal" header="Total Amount"
-                    body={(rowData) =>
-                      rowData.NetTotal?.toLocaleString('en-US', {
-                        style: 'decimal',
-                        minimumFractionDigits: 2
-                      })
-                    }
-                    footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
-                  />
-                )}
+                <Column field="TaxPerc" header="Tax %" />
+                <Column field="TaxValue" header="Tax Amount"
+                  body={(rowData) =>
+                    rowData.TaxValue?.toLocaleString('en-US', {
+                      style: 'decimal',
+                      minimumFractionDigits: 2
+                    })
+                  }
+                  footer={selectedDetail.Header?.HeaderTaxValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                />
+                <Column field="vatPerc" header="VAT %" />
+                <Column field="vatValue" header="VAT Amount"
+                  body={(rowData) =>
+                    rowData.vatValue?.toLocaleString('en-US', {
+                      style: 'decimal',
+                      minimumFractionDigits: 2
+                    })
+                  }
+                  footer={selectedDetail.Header?.HeaderVatValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                />
+                <Column field="NetTotal" header="Total Amount" bodyStyle={{color:"#ff5a00"}}
+                  body={(rowData) =>
+                    rowData.NetTotal?.toLocaleString('en-US', {
+                      style: 'decimal',
+                      minimumFractionDigits: 2
+                    })
+                  }
+                  footer={<b>{selectedDetail.Header?.HeaderNetValue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>}
+                />
               </DataTable>
 
               <Row className="mt-3">
-                <Col>
-                  <Label>PM Remarks</Label>
-                  <Card className="p-2 bg-light border">
-                    <div style={{ whiteSpace: "pre-wrap" }}>
-                      {selectedDetail.Header?.Memoremarks || "No pm remarks"}
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
+                      <Col>
+                          <Label>PM Remarks</Label>
+                          <Card className="p-2 bg-light border">
+                              <div style={{ whiteSpace: "pre-wrap" }}>
+                              {selectedDetail.Header?.Memoremarks || "No pm remarks"}
+                              </div>
+                          </Card>
+                      </Col>
+                  </Row>
 
-              <Row className="mt-3">
-                <Col>
-                  <Label>Remarks</Label>
-                  <Card className="p-2 bg-light border">
-                    <div style={{ whiteSpace: "pre-wrap" }}>
-                      {selectedDetail.Header?.Remarks || "No remarks"}
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
+                  <Row className="mt-3">
+                      <Col>
+                          <Label>Remarks</Label>
+                          <Card className="p-2 bg-light border">
+                              <div style={{ whiteSpace: "pre-wrap" }}>
+                              {selectedDetail.Header?.Remarks || "No remarks"}
+                              </div>
+                          </Card>
+                      </Col>
+                  </Row>
 
               <Row className="mt-3">
                 <DataTable tableStyle={{ width: "60%" }} value={selectedDetail.Attachment}>

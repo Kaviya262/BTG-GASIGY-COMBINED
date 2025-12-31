@@ -37,10 +37,8 @@ import { saveAs } from "file-saver";
 import { useRef } from "react";
 import { Checkbox } from 'primereact/checkbox';
 import Swal from 'sweetalert2';
-import useAccess from "../../../common/access/useAccess";
 
 const ManagePacking = () => {
-  const { access, applyAccessUI } = useAccess("Sales", "Delivery Order");
   const history = useHistory();
   const [packingList, setPackingList] = useState([]);
   const [DONOList, setDONOList] = useState([]);
@@ -148,240 +146,164 @@ const ManagePacking = () => {
     setModelType(Type);
     setisConfirmationOpen(true);
   };
+  const handleDoPrint = async (doItem) => {
+    try {
+      setLoading(true);
+      const filters = {
+        id: doItem?.id,
+      };
 
-const handleDoPrint = async (doItem) => {
-  try {
-    setLoading(true);
-    const filters = { id: doItem?.id };
+      const response = await getPackingAndDODocPrintId(filters);
+      if (!response?.status || !response?.data || response?.data?.length === 0) {
+        setErrormsg("No data found to print.");
+        setTimeout(() => setErrormsg(), 2000);
+        return;
+      }
 
-    const response = await getPackingAndDODocPrintId(filters);
-    if (!response?.status || !response?.data || response?.data?.length === 0) {
-      setErrormsg("No data found to print.");
-      setTimeout(() => setErrormsg(), 2000);
-      return;
-    }
+      const data = response.data[0];
 
-    const data = response.data[0];
+      const logoHeaderHtml = getLogoHeaderHtml();
+      const html = `
+      <html>
+        <head>
+          <title>DO (Delivery Order) - ${data.DONo || ""}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; margin: 0; }
+            h2 { margin: 0 0 20px 0; font-size: 24px; font-weight: bold; }
+            table { border-collapse: collapse; width: 100%; table-layout: auto; }
+            th, td { border: 1px solid #333; padding: 12px 10px; text-align: left; font-size: 14px; word-wrap: break-word; }
+            th { background: #f5f5f5; font-weight: bold; white-space: nowrap; font-size: 14px; }
+            .no-border td { border: none; padding: 6px 12px; font-size: 14px; }
+            .no-border { width: 100%; }
+            .section { margin-top: 20px; }
+            .data-table { font-size: 13px; }
+            .data-table th, .data-table td { padding: 12px 10px; font-size: 13px; white-space: normal; }
+            .data-table th { white-space: nowrap; font-weight: bold; }
+            @media print { 
+              @page { 
+                size: A4 landscape; 
+                margin: 10mm; 
+              }
+              body { 
+                padding: 20px; 
+                margin: 0;
+              }
+              table { 
+                width: 100%; 
+                font-size: 12px;
+              }
+              th, td { 
+                padding: 12px 10px; 
+                font-size: 12px;
+              }
+              .data-table th, .data-table td { 
+                padding: 12px 10px; 
+                font-size: 12px;
+              }
+              .data-table th {
+                font-weight: bold;
+              }
+              h2 { 
+                font-size: 22px; 
+                margin-bottom: 16px;
+              }
+              .no-border td {
+                font-size: 13px;
+                padding: 6px 12px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${logoHeaderHtml}
+          <h2>DO (Delivery Order) Header</h2>
+          <table class="no-border">
+            <tr><td><strong>Delivery Order</strong></td><td></td></tr>
+            <tr><td>DO Number System Generated</td><td>${data.DONo || "-"}</td></tr>
+            <tr><td>DO Date</td><td>${data.DO_Date ? new Date(data.DO_Date).toLocaleDateString() : "-"}</td></tr>
+            <tr><td>(Insert from PDL)</td><td></td></tr>
+            <tr><td>Customer Name</td><td>${data.customername || "-"}</td></tr>
+            <tr><td>Packer Name</td><td>${data.PackerName || "-"}</td></tr>
+            <tr><td>Date of Delivery</td><td>${data.deliverdate || data.ReqDeliveryDate || "-"}</td></tr>
+            <tr><td>PDL Number</td><td>${data.PackNo || "-"}</td></tr>
+            <tr><td>PDL Date</td><td>${data.CreatedDate ? new Date(data.CreatedDate).toLocaleDateString() : "-"}</td></tr>
+            <tr><td>Created By</td><td>${data.PackerName || "-"}</td></tr>
+          </table>
 
-    const html = `
-    <html>
-    <head>
-      <title>Delivery Order - ${data.DONo}</title>
-
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          margin: 0;
-          padding: 20px;
-          font-size: 14px;
-        }
-
-        /* -------- PRINT FIXES -------- */
-        @page {
-          margin: 0; /* Prevents unwanted second page */
-        }
-
-        @media print {
-          html, body {
-            height: 100%;
-          }
-
-          .page-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-          }
-
-          .page-content {
-            flex: 1; /* Pushes footer to bottom */
-          }
-
-          thead.print-header {
-            display: table-header-group;
-          }
-        }
-
-        /* -------- TABLES -------- */
-        .print-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .details-table td {
-          padding: 4px;
-          vertical-align: top;
-        }
-
-        .items-table {
-          margin-top: 20px;
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .items-table th,
-        .items-table td {
-          border: 1px solid #000;
-          padding: 8px;
-          text-align: left;
-          font-size: 14px;
-        }
-      </style>
-
-    </head>
-
-    <body>
-
-    <div class="page-wrapper">
-
-      <!-- ------------------ PAGE CONTENT ------------------ -->
-      <div class="page-content">
-
-        <table class="print-table">
-          <thead class="print-header">
-            <tr>
-              <td colspan="2">
-
-                <div style="text-align:center; font-size:22px; font-weight:bold; text-decoration:underline; margin-bottom:10px;">
-                  DELIVERY ORDER
-                </div>
-                <br /> <br />
-
-                <div style="display:flex; align-items:flex-start;">
-                  <div style="margin-right:15px;">
-                    <img src="${logo}" style="height:85px;" />
-                  </div>
-
-                  <div style="font-size:12px; line-height:16px;">
-                    <div style="font-weight:bold; font-size:20px;">PT. BATAM TEKNOLOGI GAS</div>
-                    <div>Jl. Brigjen Katamso KM. 3 Tanjung Uncang</div>
-                    <div>Telp: (+62) 778 462598, 391918 • Fax: (+62) 778 462944, 391919</div>
-                    <div>Website: www.ptbtg.com • Email: ptbg@ptbtg.com</div>
-                    <div>Batam Island – Indonesia</div>
-                  </div>
-                </div>
-
-                 <br /> <br />
-
-                <table class="details-table" style="width:100%;">
+          <div class="section"></div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="min-width: 60px;">GasCode</th>
+                <th style="min-width: 80px;">Description</th>
+                <th style="min-width: 50px;">Volume</th>
+                <th style="min-width: 50px;">Pressure</th>
+                <th style="min-width: 40px;">UOM</th>
+                <th style="min-width: 70px;">Driver Name</th>
+                <th style="min-width: 70px;">Truck Number</th>
+                <th style="min-width: 80px;">Req.Del.Dt.(from SO)</th>
+                <th style="min-width: 100px;">Del.Address(from SO)</th>
+                <th style="min-width: 100px;">Del.Instruction(from SO)</th>
+                <th style="min-width: 60px;">PO Number</th>
+                <th style="min-width: 60px;">BarCode</th>
+              </tr>
+            </thead>
+                      <tbody>
+      ${response.data
+          .map(
+            (item) => `
   <tr>
-    <td style="width:50%;">
-      <strong>${data.customername || "-"}</strong><br>
-      ${data.Deliveryaddress || "-"}
-    </td>
-
-    <td style="text-align:right; line-height:18px;">
-      <div><strong>${data.DO_Date ? new Date(data.DO_Date).toLocaleDateString() : "-"}</strong></div>
-      <div>${data.DONo}</div>
-      <div>PDL: ${data.PackNo || "-"}</div>
-    </td>
+    <td>${item.GasCode || "-"}</td>
+    <td>${item.GasDescriptions || "-"}</td>
+    <td>${item.Volume || "-"}</td>
+    <td>${item.Pressure || "-"}</td>
+    <td>${item.UOM || "-"}</td>
+    <td>${item.drivername || "-"}</td>
+    <td>${item.trucknumber || "-"}</td>
+    <td>${item.ReqDeliveryDate || "-"}</td>
+    <td>${item.Deliveryaddress || "-"}</td>
+    <td>${item.DeliveryInstruction || "-"}</td>
+    <td>${item.PONumber || "-"}</td>
+    <td>${item.Barcode || "-"}</td>
   </tr>
-</table>
+`
+          )
+          .join("")}
+    </tbody>
+          </table>
 
+        </body>
+      </html>`;
 
-              </td>
-            </tr>
-          </thead>
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
 
-          <tbody>
-            <tr>
-              <td colspan="2">
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
 
-                <table class="items-table">
-                  <thead>
-                    <tr>
-                      <th>No</th>
-                      <th>Qty</th>
-                      <th>Unit</th>
-                      <th>Description</th>
-                      <th>Details</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    ${response.data
-                      .map(
-                        (item, idx) => `
-                          <tr>
-                            <td>${idx + 1}</td>
-                            <td>1</td>
-                            <td>${item.UOM || "-"}</td>
-                            <td>${item.GasDescriptions || "-"}</td>
-                            <td>
-                              Volume: ${item.Volume || "-"} <br />
-                              Pressure: ${item.Pressure || "-"} <br />
-                              Barcode: ${item.Barcode || "-"}
-                            </td>
-                          </tr>
-                        `
-                      )
-                      .join("")}
-                  </tbody>
-
-                </table>
-
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-      </div> <!-- END CONTENT -->
-
-
-      <!-- ------------------ FINAL FOOTER (BOTTOM OF LAST PAGE) ------------------ -->
-
-      <div class="final-footer" style="font-size:12px; white-space:nowrap; margin-bottom:40px;padding:5px;">
-
-        * All cheques should be crossed and made payable to PT. BATAM TEKNOLOGI GAS<br />
-        * Goods sold and delivered are not subject to return.<br />
-        * Cylinders and pallets will be considered as lost if not returned within 60 days and charged <br />
-        * at SIN $ 300/Cylinder,SIN $ 3,000/ pallet Acetylene and SIN $ 4,500/ pallet Oxygen .<br /><br />
-
-      <div style="padding:10px"></div>
-        White: For adn.op.customer &nbsp;&nbsp;
-        Green: For sygatra space &nbsp;&nbsp;
-        Red: For adm.dislog/customer space &nbsp;&nbsp;
-        Yellow: For customer space &nbsp;&nbsp;
-        Blue: For adm.cyl(F)
-
-      </div>
-
-    </div> <!-- END WRAPPER -->
-
-    </body>
-    </html>
-    `;
-
-    // Create iframe and print
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(html);
-    doc.close();
-
-    iframe.onload = () => {
-      iframe.contentWindow.print();
-      setTimeout(() => document.body.removeChild(iframe), 1000);
-    };
-
-  } catch (err) {
-    console.error("Error printing DO:", err);
-    setErrormsg("Failed to print DO. Please try again.");
-    setTimeout(() => setErrormsg(), 2000);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
-
-
+      iframe.onload = () => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      };
+    } catch (err) {
+      console.error("Error printing DO:", err);
+      setErrormsg("Failed to print DO. Please try again.");
+      setTimeout(() => setErrormsg(), 2000);
+    } finally {
+      setLoading(false);
+    }
+  };
   const [rackNumberOptions, setrackNumberOptions] = useState([]);
   const openModal = id => {
     setBarcodeID(id);
@@ -423,12 +345,6 @@ const handleDoPrint = async (doItem) => {
 
   }
 
-  useEffect(() => {
-    if (!access.loading) {
-      applyAccessUI();
-    }
-  }, [access, applyAccessUI]);
-
   const getSeverity = Status => {
     switch (Status) {
       case "unqualified":
@@ -461,16 +377,11 @@ const handleDoPrint = async (doItem) => {
     }
   };
 
-  // const isStageDisabled = (rowData) => {
-  //   const anyAck = DONOList.some(
-  //     doItem => doItem.packingid === rowData.id && doItem.isacknowledged === 1
-  //   );
-  //   return anyAck;
-  // };
   const isStageDisabled = (rowData) => {
-    const doItems = DONOList.filter(item => item.packingid === rowData.id);
-    if (doItems.length === 0) return false;
-    return doItems.every(item => item.isacknowledged === 1);
+    const anyAck = DONOList.some(
+      doItem => doItem.packingid === rowData.id && doItem.isacknowledged === 1
+    );
+    return anyAck;
   };
 
   const initFilters = () => {
@@ -845,7 +756,7 @@ const handleDoPrint = async (doItem) => {
                 <Checkbox inputId={`chk-${item.id}`}
                   value={item.id} className="DOclass" onChange={(e) => handleCheckboxChange(e, item)}
 
-                  checked={checkedItems.some(x => x.id === item.id)} disabled={!access.canSave} />
+                  checked={checkedItems.some(x => x.id === item.id)} />
 
               ) :
                 item.isacknowledged == 0 && item.isdouploaded == 0 ?
@@ -860,12 +771,11 @@ const handleDoPrint = async (doItem) => {
                   )}
               <span style={{ marginLeft: '8px' }}>{item.DONo}</span>
 
-              {access.canPrint && (
-                <button className="btn btn-success" title="DO Print" data-access="print" style={{ width: '20px', height: '20px', padding: "0px", marginLeft: "12px", marginRight: "12px" }} onClick={() => handleDoPrint(item)}>
-                  <i className="bx bx-printer "></i>
-                  {/* {loading ? "Loading..." :""} */}
-                </button>
-              )}
+
+              <button className="btn btn-success" title="DO Print" style={{ width: '20px', height: '20px', padding: "0px", marginLeft: "12px", marginRight: "12px" }} onClick={() => handleDoPrint(item)}>
+                <i className="bx bx-printer "></i>
+                {/* {loading ? "Loading..." :""} */}
+              </button>
 
 
 
@@ -1408,13 +1318,13 @@ const handleDoPrint = async (doItem) => {
     //   ._flatpickr.setDate(resetFilter.ToDate, false);
     // setIsfilter(!isfilter);
   };
-  // useEffect(() => {
-  //   getAllPackingList();
-  // }, [isfilter]);
+  useEffect(() => {
+    getAllPackingList();
+  }, [isfilter]);
 
-  // useEffect(() => {
-  //   getAllPackingList();
-  // }, [CencelledFilter]);
+  useEffect(() => {
+    getAllPackingList();
+  }, [CencelledFilter]);
 
   const exportToExcel = () => {
     const filteredQuotes = packingList.map(({ IsPosted, ...rest }) => rest);
@@ -2019,14 +1929,6 @@ const handleDoPrint = async (doItem) => {
     return packingList;
   }, [packingList, DONOList, SelectedFilter, appliedFilterValue]);
 
-  if (!access.loading && !access.canView) {
-    return (
-      <div style={{ background: "white", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <h3>You do not have permission to view this page.</h3>
-      </div>
-    );
-  }
-
   return (
     <React.Fragment>
       <div className="page-content">
@@ -2140,11 +2042,11 @@ const handleDoPrint = async (doItem) => {
                     {/* <button type="button" className="btn  btn-info text-white">
                       <i className="bx bx-cog font-size-16 align-middle me-1"></i> Generate Invoice
                     </button> */}
-                    <button type="button" onClick={SaveACKData} className="btn  btn-info text-white" data-access="post">
+                    <button type="button" onClick={SaveACKData} className="btn  btn-info text-white">
                       <i className="bx bx-check-circle font-size-16 align-middle me-1"></i> ACK
                     </button>
 
-                    <button type="button" className="btn btn-primary" onClick={handlePrint} data-access="print">
+                    <button type="button" className="btn btn-primary" onClick={handlePrint}>
                       <i className="bx bx-printer label-icon font-size-16 align-middle me-2"></i> Print
                     </button>
                   </div>
@@ -2157,7 +2059,7 @@ const handleDoPrint = async (doItem) => {
                   value={filteredPackingList}
                   paginator
                   showGridlines
-                  rows={access.records || 10}
+                  rows={10}
                   loading={loading}
                   dataKey="id"
                   filters={filters}
@@ -2193,7 +2095,6 @@ const handleDoPrint = async (doItem) => {
                     className="text-center"
                     style={{ width: "155px" }}
                     body={CustomCheckboxColumn}
-                    data-access="save"
                   />
                   {/* <Column
                     field="dono"
@@ -2357,17 +2258,14 @@ const handleDoPrint = async (doItem) => {
           <Row>
             <Col>
               <div className="text-center mt-3 button-items">
-                {access.canSave && (
-                  <Button
-                    className="btn btn-info"
-                    color="success"
-                    size="lg"
-                    onClick={stagehandleConfirm}
-                    data-access="save"
-                  >
-                    Yes
-                  </Button>
-                )}
+                <Button
+                  className="btn btn-info"
+                  color="success"
+                  size="lg"
+                  onClick={stagehandleConfirm}
+                >
+                  Yes
+                </Button>
                 <Button
                   color="danger"
                   size="lg"
@@ -2769,7 +2667,7 @@ const handleDoPrint = async (doItem) => {
                             <Checkbox inputId={`chk-inv-${item.id}`}
                               value={item.id} onChange={(e) => handleInvoiceCheckboxChange(e, item)}
 
-                              checked={checkedInvoiceItems.includes(item.doid)} disabled={!access.canPost} />
+                              checked={checkedInvoiceItems.includes(item.doid)} />
                           ) : item.IsInvoiced == 1 && item.isacknowledged == 1 ? (
 
                             <Checkbox inputId={`chk-inv-${item.id}`}
@@ -2795,11 +2693,10 @@ const handleDoPrint = async (doItem) => {
           </div>
         </div>
         <div className="modal-footer">
-          {access.canPost && (
-            <button type="button" className="btn  btn-info text-white" data-access="post" disabled={checkedInvoiceItems.length === 0} onClick={generateinvoice}>
-              <i className="bx bx-cog font-size-16 align-middle me-1"></i> Generate Invoice
-            </button>
-          )}
+
+          <button type="button" className="btn  btn-info text-white" disabled={checkedInvoiceItems.length === 0} onClick={generateinvoice}>
+            <i className="bx bx-cog font-size-16 align-middle me-1"></i> Generate Invoice
+          </button>
           <button
             type="button"
             className="btn btn-danger"
