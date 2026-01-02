@@ -36,7 +36,8 @@ import {
     GetCommonProcurementProjectsDetails, GetSupplierSearchFilter, GetAllPO, GetByIdPurchaseOrder, GetPRNoBySupplierAndCurrency,
     GetPurchaseRequisitionRemarks,
     PurchaseRequisitionDownloadFileById,
-    SavePRReply
+    SavePRReply,
+    GetApprovalSettings
 } from "common/data/mastersapi";
 import Swal from 'sweetalert2';
 import * as XLSX from "xlsx";
@@ -89,6 +90,7 @@ const ProcurementManagePurchaseRequistion = () => {
     ];
 
     const [suppliers, setSuppliers] = useState(initialSuppliers);
+    const [roledetails, setRoledetails] = useState([]);
     const [prTypes, setPrTypes] = useState([]);
     const [globalFilterValue, setGlobalFilterValue] = useState("");
     const [filters, setFilters] = useState(initFilters()); // Initialize with the filters
@@ -430,6 +432,11 @@ const ProcurementManagePurchaseRequistion = () => {
             // 2. Update selectedPR to pass Valid Chain Check
             setSelectedPR(prev => ({ ...prev, pr_comment: newFullComment }));
 
+            // 3. Immediately update the main list state (Status -> Posted) without reload
+            setPurchaseRequisition(prev => prev.map(item =>
+                item.PRId === selectedPR.PRId ? { ...item, Status: 'Posted' } : item
+            ));
+
             // Update main list in background if needed
             fetchAllProcurementRequestion();
             // Do NOT close modal
@@ -603,7 +610,21 @@ const ProcurementManagePurchaseRequistion = () => {
         };
 
         loadOptions();
+        loadOptions();
     }, [selectedFilterType, orgId, branchId]);
+
+    useEffect(() => {
+        const fetchRoleDetails = async () => {
+            const userData = getUserDetails();
+            if (userData) {
+                const res = await GetApprovalSettings(userData.u_id, orgId, branchId, 27);
+                if (res.status) {
+                    setRoledetails(res.data);
+                }
+            }
+        }
+        fetchRoleDetails();
+    }, [orgId, branchId]);
 
     const requisitionWithLabels = purchaseRequisition.map(item => ({
         ...item,
@@ -766,12 +787,24 @@ const ProcurementManagePurchaseRequistion = () => {
     };
 
 
-    const ApproverGridIndicator = ({ approved, PRId, comment }) => {
+    const ApproverGridIndicator = ({ approved, PRId, comment, isDirectorField }) => {
         let severity = 'secondary'; // default gray
         if (approved === "A") severity = 'success';
         else if (approved === "D") severity = 'warning';
         else severity = 'danger';
+
         if (approved === "D") {
+            // If Director Field and status is Discussed, show badge ONLY (no chat modal)
+            if (isDirectorField) {
+                return (
+                    <Badge
+                        value={approved}
+                        severity={severity}
+                        style={{ fontSize: '13px', margin: '0' }}
+                    />
+                );
+            }
+
             return (
                 <>
                     <Tooltip target={`.badge-${PRId}`} content={`Discussion comment : ${comment}`} position="top" />
@@ -1074,10 +1107,20 @@ const ProcurementManagePurchaseRequistion = () => {
                                         className="text-center"
                                         style={{ width: "5%" }}
                                         header="GM"
-                                        body={(r) => <ApproverGridIndicator approved={r.reqdmstatus}
-                                            PRId={r.PRId}
-                                            comment={r.pr_comment}
-                                        />} />
+                                        body={(r) => {
+                                            let status = r.reqdmstatus;
+
+                                            // FIX: If Director status is D or A, GM status must be A, unless GM is explicitly discussing (Status D).
+                                            // This prevents GM status appearing as 'P' when Director is discussing with GM.
+                                            if ((r.reqdrtatus === 'D' || r.reqdrtatus === 'A') && status === 'P') {
+                                                status = 'A';
+                                            }
+
+                                            return <ApproverGridIndicator approved={status}
+                                                PRId={r.PRId}
+                                                comment={r.pr_comment}
+                                            />
+                                        }} />
                                     <Column
                                         className="text-center"
                                         style={{ width: "5%" }}
@@ -1087,6 +1130,7 @@ const ProcurementManagePurchaseRequistion = () => {
                                             approved={r.reqdrtatus}
                                             PRId={r.PRId}
                                             comment={r.pr_comment}
+                                            isDirectorField={true}
                                         />}
 
                                     />

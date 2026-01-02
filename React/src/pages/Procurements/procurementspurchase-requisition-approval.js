@@ -5,7 +5,7 @@ import {
   Row,
   Label, Input, InputGroup, Table
 } from "reactstrap";
-// import PaymentVoucher from "./PaymentVoucher";
+import axios from "axios"; // Added axios
 import Breadcrumbs from "../../components/Common/Breadcrumb"
 import { Dialog } from 'primereact/dialog';
 import { Calendar } from 'primereact/calendar';
@@ -47,6 +47,7 @@ import {
   DownloadPurchaseRequisitionFileById,
   SavePRReply
 } from "common/data/mastersapi";
+import { PYTHON_API_URL } from "../../common/pyapiconfig";
 
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
@@ -111,6 +112,119 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
   const [PPPPVAction1, setPPPPVAction1] = useState({});
   const [PPPPVAction2, setPPPPVAction2] = useState({});
   const [UserData, setUserData] = useState(null);
+
+  // Director Discussion State
+  const [directorDiscussModal, setDirectorDiscussModal] = useState(false);
+  const [directorComments, setDirectorComments] = useState("");
+  const [directorReply, setDirectorReply] = useState("");
+  const [selectedDirectorClaim, setSelectedDirectorClaim] = useState(null);
+
+  const parseDirectorComments = (rawText) => {
+    if (!rawText) return [];
+    // If exact format is controlled by backend: [Sender at Timestamp]: ...
+    // We can rely on splitting by `\n[` but this assumes no message starts with [ unless it's a header.
+    // Safer: Regex match all headers and split.
+    // Or just iterate lines if we assume 1 header = 1 line + content.
+
+    // Let's assume standard log format.
+    const messages = [];
+    const lines = rawText.split('\n');
+    let currentMsg = null;
+
+    // Regex matching: [Role at YYYY-MM-DD HH:mm:ss]: Message
+    const headerRegex = /^\[(.*?)\s+at\s+(.*?)\]:\s*(.*)/;
+
+    lines.forEach(line => {
+      const match = line.match(headerRegex);
+      if (match) {
+        if (currentMsg) messages.push(currentMsg);
+        currentMsg = {
+          sender: match[1],
+          time: match[2],
+          text: match[3]
+        };
+      } else {
+        if (currentMsg) {
+          currentMsg.text += "\n" + line;
+        } else {
+          // content with no header (shouldn't happen with new API but legacy might exist)
+        }
+      }
+    });
+    if (currentMsg) messages.push(currentMsg);
+
+    return messages;
+  };
+
+
+
+  const fetchDirectorComments = async (prId) => {
+    try {
+      const response = await axios.get(`${PYTHON_API_URL}/procurement/get_director_comments/${prId}`);
+      if (response.data) {
+        setDirectorComments(response.data.comments || "");
+      }
+    } catch (error) {
+      console.error("Error fetching director comments:", error);
+      setDirectorComments("");
+    }
+  };
+
+  const handleDirectorDiscuss = (rowData) => {
+    setSelectedDirectorClaim(rowData);
+    fetchDirectorComments(rowData.id);
+    setDirectorDiscussModal(true);
+  };
+
+  const handleDirectorSend = async () => {
+    if (!selectedDirectorClaim || !directorReply.trim()) return;
+
+    try {
+      const isDirector = roledetails?.[0]?.ApproverTwo === 1;
+      const payload = {
+        pr_id: selectedDirectorClaim.id,
+        reply: directorReply,
+        name: UserData?.name || "User",
+        sender: isDirector ? "Director" : "GM"
+      };
+
+      const response = await axios.post(`${PYTHON_API_URL}/procurement/save_director_discussion`, payload);
+
+      if (response.data.success) {
+        Swal.fire("Success", "Discussion sent.", "success");
+        setDirectorComments(response.data.new_comment);
+        setDirectorReply("");
+
+        if (!isDirector) {
+          // GM CASE: Remove from UI immediately as it is now actionable by Director (Level 2)
+          // The backend API `save_director_discussion` already sets `pr_gm_isapproved=1`.
+          setclaims(prev => prev.filter(c => c.id !== selectedDirectorClaim.id));
+
+          // Clean up action states
+          setAction1(prev => { const n = { ...prev }; delete n[selectedDirectorClaim.id]; return n; });
+          setAction2(prev => { const n = { ...prev }; delete n[selectedDirectorClaim.id]; return n; });
+
+          setDirectorDiscussModal(false);
+        } else {
+          // DIRECTOR CASE: Update UI to show discussed status
+          setclaims(prev => prev.map(c =>
+            c.id === selectedDirectorClaim.id
+              ? {
+                ...c,
+                discussedtwo: 1,
+                pr_dir_comment: response.data.new_comment
+              }
+              : c
+          ));
+          setAction2(prev => ({ ...prev, [selectedDirectorClaim.id]: 'discuss' }));
+        }
+      }
+    } catch (error) {
+      console.error("Error sending discussion:", error);
+      Swal.fire("Error", "Failed to send discussion.", "error");
+    }
+  };
+
 
   const exportToExcel = () => {
     const allPRs = claims.map(item => ({
@@ -1004,6 +1118,9 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
         // 3. Update selectedClaim so the open modal sees the new header
         setSelectedClaim(prev => ({ ...prev, comment: newFullComment }));
 
+        // 4. Set action to 'discuss' so the icon turns orange
+        handleClick1('discuss', pr_id);
+
         setGmReply("");
         // Toggle removed so modal stays open
         // toggleRemarkModal(); 
@@ -1089,6 +1206,7 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
                         handlePVSave={handlePVSave}
                         pvgroupedBySummary={pvgroupedBySummary}
                         handleViewRemarks={handleViewRemarks}
+                        handleDirectorDiscuss={handleDirectorDiscuss} // Pass new handler
                       />
                     </AccordionTab>
                   ))}
@@ -1143,6 +1261,80 @@ const PurchaseRequisitionApproval = ({ selectedType, setSelectedType }) => {
           <Button label="Close" icon="pi pi-check" onClick={handleSaveComment} />
         </div>
       </Dialog>
+
+      {/* Director Discussion Modal */}
+      <Dialog
+        header="Director Discussion Points"
+        visible={directorDiscussModal}
+        onHide={() => setDirectorDiscussModal(false)}
+        style={{ width: '50vw', maxWidth: '600px' }}
+        breakpoints={{ '960px': '75vw', '640px': '100vw' }}
+        contentStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
+      >
+        <div className="mb-3">
+          <Label className="fw-bold">History:</Label>
+          <div className="p-2 border rounded bg-light" style={{ maxHeight: "400px", overflowY: "auto" }}>
+            {(() => {
+              const parsedMsgs = parseDirectorComments(directorComments);
+              if (parsedMsgs.length === 0) return <div className="text-muted p-2">No discussion yet.</div>;
+
+              const myRole = roledetails?.[0]?.ApproverTwo === 1 ? "Director" : "GM";
+
+              return parsedMsgs.map((msg, idx) => {
+                const isMe = msg.sender === myRole;
+                const isDirector = msg.sender === "Director";
+
+                // Alignment: Me -> Right, Other -> Left
+                // Color: Director -> Blueish, GM -> Greenish? Or just Me -> Blue, Other -> Gray
+
+                const alignSelf = isMe ? "flex-end" : "flex-start";
+                const bgColor = isMe ? "#dcf8c6" : "#ffffff"; // WhatsApp style (Green for me)
+                // Or specific: Director (Blue), GM (Green)
+                // Let's stick to "Me vs Them" for standard chat feel, or Role based is requested?
+                // Request: "Director's msg and Gm's reply in different boxes".
+
+                // Let use Role-based colors to be clear.
+                const roleColor = isDirector ? "#e3f2fd" : "#f1f8e9"; // Blue vs Green light
+
+                return (
+                  <div key={idx} className="d-flex flex-column mb-2" style={{ alignItems: alignSelf }}>
+                    <div style={{
+                      backgroundColor: roleColor,
+                      borderRadius: "10px",
+                      padding: "8px 12px",
+                      maxWidth: "80%",
+                      boxShadow: "0 1px 1px rgba(0,0,0,0.1)"
+                    }}>
+                      <div className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: "0.75rem", color: "#555" }}>
+                        <strong className="me-2">{msg.sender}</strong>
+                        <span>{msg.time}</span>
+                      </div>
+                      <div style={{ whiteSpace: "pre-wrap", fontSize: "0.9rem" }}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
+
+        <Label className="fw-bold">Reply:</Label>
+        <Input
+          type="textarea"
+          className="custom-textarea"
+          value={directorReply}
+          onChange={(e) => setDirectorReply(e.target.value)}
+          placeholder="Type your discussion point..."
+          rows={3}
+        />
+        <div className="mt-3 text-end">
+          <Button label="Send Reply" icon="pi pi-send" className="p-button-primary" onClick={handleDirectorSend} />
+          <Button label="Cancel" icon="pi pi-times" className="p-button-secondary ms-2" onClick={() => setDirectorDiscussModal(false)} />
+        </div>
+      </Dialog>
+
 
 
       <Dialog
@@ -1616,7 +1808,8 @@ const ApprovalTable = ({
   PPPPVAction2,
   handlePPPClick1,
   handlePPPClick2, handlePPPClick3, handleVoucherClick, handlePPPPVClick3, handlePPPPVDirector, handleClickgmapprovan
-  , selectedPPPRows, confirmRemove, handleRemove, updateselectedrows, PaymentSummaryTable, groupedBySummary, handlePVSave, pvgroupedBySummary, handleViewRemarks
+  , selectedPPPRows, confirmRemove, handleRemove, updateselectedrows, PaymentSummaryTable, groupedBySummary, handlePVSave, pvgroupedBySummary, handleViewRemarks,
+  handleDirectorDiscuss // Receive prop
 }) => {
 
   const [filters, setFilters] = useState({
@@ -1658,6 +1851,15 @@ const ApprovalTable = ({
   const [selectedDetail, setSelectedDetail] = useState({});
   const [previewUrl, setPreviewUrl] = useState("");
   const [fileName, setFileName] = useState("");
+
+  // 🔹 History Remarks Modal State
+  const [historyRemarksVisible, setHistoryRemarksVisible] = useState(false);
+  const [selectedHistoryRemark, setSelectedHistoryRemark] = useState("");
+
+  const handleShowHistoryRemarks = (rowData) => {
+    setSelectedHistoryRemark(rowData.comment || "No remarks");
+    setHistoryRemarksVisible(true);
+  };
 
   // 🔹 Reset filters
   const initFilters = () => {
@@ -1856,7 +2058,7 @@ const ApprovalTable = ({
           style={{ textAlign: 'right' }}
         />
         <Column header="History" body={(rowData) => (
-          <span onClick={() => handleViewRemarks(rowData.id, rowData)} title="View Remarks" style={{ cursor: 'pointer' }}>
+          <span onClick={() => handleShowHistoryRemarks(rowData)} title="View Remarks" style={{ cursor: 'pointer' }}>
             <i className="mdi mdi-comment-text-outline" style={{ fontSize: '1.5rem', color: '#17a2b8' }}></i>
           </span>
 
@@ -1883,7 +2085,7 @@ const ApprovalTable = ({
                   icon="pi pi-comment"
                   className={`btn-circle p-button-rounded ${action1[rowData.id] === 'discuss' ? 'p-button-warning' : 'p-button-outlined'}`}
                   onClick={() => {
-                    handleClick1('discuss', rowData.id);
+                    // handleClick1('discuss', rowData.id); // Don't set state immediately
                     // handleDiscuss(rowData); // OLD modal
                     handleViewRemarks(rowData.id, rowData); // NEW modal
                   }}
@@ -1899,13 +2101,31 @@ const ApprovalTable = ({
           }}
         />
 
-        {(ApproverTwo == true || ApproverFour == true || ApproverFive == true) && (
+        {(ApproverOne === true || ApproverTwo == true || ApproverFour == true || ApproverFive == true) && (
           <Column
             style={{ textAlign: 'center' }}
             header="Director"
             body={(rowData) => {
               const directorDisabled =
-                !ApproverTwo || rowData.approvedone === 0 || rowData.approvedtwo === 1;
+                (!ApproverTwo) || rowData.approvedone === 0 || rowData.approvedtwo === 1;
+
+              // GM View Logic: Show Director column with Discuss icon only
+              if (ApproverOne) {
+                const isDiscussed = rowData.discussedtwo === 1 || action2[rowData.id] === 'discuss';
+                return (
+                  <div className="d-flex gap-2 justify-content-center">
+                    <Button
+                      icon="pi pi-comment"
+                      className={`btn-circle p-button-rounded ${isDiscussed ? 'p-button-warning' : 'p-button-outlined'}`}
+                      onClick={() => handleDirectorDiscuss(rowData)}
+                      tooltip="Director Discussion"
+                      tooltipOptions={{ position: 'top' }}
+                    />
+                  </div>
+                );
+              }
+
+              // Director View Logic
               if (rowData.approvedone === 1) {
                 return (
                   <div className="d-flex gap-2">
@@ -1916,20 +2136,19 @@ const ApprovalTable = ({
                       onClick={() => handleClick2('approve', rowData.id)}
                       tooltip="Approve"
                       tooltipOptions={{ position: 'top' }}
-                      disabled={directorDisabled}
+                      disabled={directorDisabled && !ApproverTwo} // Allow Director to act
                     />
                     <Button
                       icon="pi pi-comment"
                       className={`btn-circle p-button-rounded ${action2[rowData.id] === 'discuss' ? 'p-button-warning' : 'p-button-outlined'
                         }`}
                       onClick={() => {
-                        handleClick2('discuss', rowData.id);
-                        // handleDiscuss(rowData); // OLD modal
-                        handleViewRemarks(rowData.id, rowData); // NEW modal
+                        // For Director, use the NEW handler for Director-GM discussion
+                        handleDirectorDiscuss(rowData);
                       }}
                       tooltip="Discuss"
                       tooltipOptions={{ position: 'top' }}
-                      disabled={directorDisabled}
+                      disabled={directorDisabled && !ApproverTwo}
                     />
                   </div>
                 );
@@ -2110,6 +2329,29 @@ const ApprovalTable = ({
           </button>
         </ModalFooter>
       </Modal>
+
+      {/* History Remarks Dialog */}
+      <Dialog
+        header="Remarks"
+        visible={historyRemarksVisible}
+        onHide={() => setHistoryRemarksVisible(false)}
+        style={{ width: '30vw', maxWidth: '400px' }}
+        breakpoints={{ '960px': '75vw', '640px': '100vw' }}
+      >
+        <div className="p-3">
+          <Input
+            type="textarea"
+            rows={5}
+            value={selectedHistoryRemark}
+            readOnly
+            className="form-control"
+            style={{ width: '100%', resize: 'none', backgroundColor: '#f9f9f9' }}
+          />
+        </div>
+        <div className="d-flex justify-content-end p-2">
+          <Button label="Close" icon="pi pi-times" onClick={() => setHistoryRemarksVisible(false)} className="p-button-danger" />
+        </div>
+      </Dialog>
     </>
 
   );
